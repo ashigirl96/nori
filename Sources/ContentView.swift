@@ -6342,9 +6342,9 @@ struct ContentView: View {
         case "palette.editWorkspaceDescription":
             return .editWorkspaceDescription
         case "palette.nextWorkspace":
-            return .nextSidebarTab
+            return .nextSidebarWorkspace
         case "palette.previousWorkspace":
-            return .prevSidebarTab
+            return .prevSidebarWorkspace
         case "palette.nextTabInPane":
             return .nextSurface
         case "palette.previousTabInPane":

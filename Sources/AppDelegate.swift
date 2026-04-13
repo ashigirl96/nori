@@ -11029,7 +11029,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         // Workspace navigation: Cmd+Ctrl+] / Cmd+Ctrl+[
         // Prefer moving down/up across horizontal splits within the current workspace;
         // only fall through to sidebar workspace switching when at the vertical boundary.
-        if matchConfiguredShortcut(event: event, action: .nextSidebarTab) {
+        if matchConfiguredShortcut(event: event, action: .nextSidebarWorkspace) {
 #if DEBUG
             let selected = workspaceManager?.selectedWorkspaceId.map { String($0.uuidString.prefix(5)) } ?? "nil"
             dlog(
@@ -11043,7 +11043,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             return true
         }
 
-        if matchConfiguredShortcut(event: event, action: .prevSidebarTab) {
+        if matchConfiguredShortcut(event: event, action: .prevSidebarWorkspace) {
 #if DEBUG
             let selected = workspaceManager?.selectedWorkspaceId.map { String($0.uuidString.prefix(5)) } ?? "nil"
             dlog(

@@ -39,8 +39,8 @@ enum KeyboardShortcutSettings {
         case nextSurface
         case prevSurface
         case selectSurfaceByNumber
-        case nextSidebarTab
-        case prevSidebarTab
+        case nextSidebarWorkspace
+        case prevSidebarWorkspace
         case selectWorkspaceByNumber
         case renameTab
         case renameWorkspace
@@ -109,8 +109,8 @@ enum KeyboardShortcutSettings {
             case .nextSurface: return String(localized: "shortcut.nextSurface.label", defaultValue: "Next Surface")
             case .prevSurface: return String(localized: "shortcut.previousSurface.label", defaultValue: "Previous Surface")
             case .selectSurfaceByNumber: return String(localized: "shortcut.selectSurfaceByNumber.label", defaultValue: "Select Surface 1…9")
-            case .nextSidebarTab: return String(localized: "shortcut.nextWorkspace.label", defaultValue: "Next Workspace")
-            case .prevSidebarTab: return String(localized: "shortcut.previousWorkspace.label", defaultValue: "Previous Workspace")
+            case .nextSidebarWorkspace: return String(localized: "shortcut.nextWorkspace.label", defaultValue: "Next Workspace")
+            case .prevSidebarWorkspace: return String(localized: "shortcut.previousWorkspace.label", defaultValue: "Previous Workspace")
             case .selectWorkspaceByNumber: return String(localized: "shortcut.selectWorkspaceByNumber.label", defaultValue: "Select Workspace 1…9")
             case .renameTab: return String(localized: "shortcut.renameTab.label", defaultValue: "Rename Tab")
             case .renameWorkspace: return String(localized: "shortcut.renameWorkspace.label", defaultValue: "Rename Workspace")
@@ -154,6 +154,38 @@ enum KeyboardShortcutSettings {
 
         var defaultsKey: String { "shortcut.\(rawValue)" }
 
+        /// Legacy rawValue strings that should resolve to a current case when
+        /// parsing persisted settings (UserDefaults keys or settings.json keys)
+        /// written by earlier versions of nori. See `fromPersistedRawValue`.
+        static let legacyRawValueAliases: [String: Action] = [
+            "nextSidebarTab": .nextSidebarWorkspace,
+            "prevSidebarTab": .prevSidebarWorkspace,
+        ]
+
+        /// Resolve a rawValue produced by any nori version (including legacy
+        /// names) to the current `Action` case. Use this instead of
+        /// `Action(rawValue:)` when reading persisted settings.
+        static func fromPersistedRawValue(_ rawValue: String) -> Action? {
+            if let action = Action(rawValue: rawValue) {
+                return action
+            }
+            return legacyRawValueAliases[rawValue]
+        }
+
+        /// If this action was previously persisted under an older rawValue,
+        /// return that legacy string. Used for one-time UserDefaults migration
+        /// in `shortcut(for:)`.
+        var legacyRawValue: String? {
+            for (legacy, action) in Self.legacyRawValueAliases where action == self {
+                return legacy
+            }
+            return nil
+        }
+
+        var legacyDefaultsKey: String? {
+            legacyRawValue.map { "shortcut.\($0)" }
+        }
+
         var defaultShortcut: StoredShortcut {
             switch self {
             case .openSettings:
@@ -192,9 +224,9 @@ enum KeyboardShortcutSettings {
                 return StoredShortcut(key: "u", command: true, shift: true, option: false, control: false)
             case .triggerFlash:
                 return StoredShortcut(key: "h", command: true, shift: true, option: false, control: false)
-            case .nextSidebarTab:
+            case .nextSidebarWorkspace:
                 return StoredShortcut(key: "]", command: true, shift: false, option: false, control: true)
-            case .prevSidebarTab:
+            case .prevSidebarWorkspace:
                 return StoredShortcut(key: "[", command: true, shift: false, option: false, control: true)
             case .renameTab:
                 return StoredShortcut(key: "r", command: true, shift: false, option: false, control: false)
@@ -399,11 +431,34 @@ enum KeyboardShortcutSettings {
         if let managedShortcut = settingsFileStore.override(for: action) {
             return managedShortcut
         }
+        migrateLegacyDefaultsIfNeeded(for: action)
         guard let data = UserDefaults.standard.data(forKey: action.defaultsKey),
               let shortcut = try? JSONDecoder().decode(StoredShortcut.self, from: data) else {
             return action.defaultShortcut
         }
         return shortcut
+    }
+
+    /// One-time UserDefaults migration for actions whose rawValue was renamed.
+    /// If the current defaultsKey is absent and a legacy key exists, copy the
+    /// legacy value to the new key and remove the old one so subsequent reads
+    /// and writes use only the new key. No-op for actions without a legacy
+    /// alias or when migration is not needed.
+    private static func migrateLegacyDefaultsIfNeeded(for action: Action) {
+        guard let legacyKey = action.legacyDefaultsKey else { return }
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: action.defaultsKey) == nil,
+              let legacyData = defaults.data(forKey: legacyKey) else {
+            // Either already migrated, never persisted, or new key already set.
+            // If new key is set AND legacy key also exists, drop the stale
+            // legacy key so it doesn't linger.
+            if defaults.object(forKey: legacyKey) != nil {
+                defaults.removeObject(forKey: legacyKey)
+            }
+            return
+        }
+        defaults.set(legacyData, forKey: action.defaultsKey)
+        defaults.removeObject(forKey: legacyKey)
     }
 
     static func isManagedBySettingsFile(_ action: Action) -> Bool {
@@ -482,8 +537,8 @@ enum KeyboardShortcutSettings {
     static func jumpToUnreadShortcut() -> StoredShortcut { shortcut(for: .jumpToUnread) }
     static func setJumpToUnreadShortcut(_ shortcut: StoredShortcut) { setShortcut(shortcut, for: .jumpToUnread) }
 
-    static func nextSidebarTabShortcut() -> StoredShortcut { shortcut(for: .nextSidebarTab) }
-    static func prevSidebarTabShortcut() -> StoredShortcut { shortcut(for: .prevSidebarTab) }
+    static func nextSidebarWorkspaceShortcut() -> StoredShortcut { shortcut(for: .nextSidebarWorkspace) }
+    static func prevSidebarWorkspaceShortcut() -> StoredShortcut { shortcut(for: .prevSidebarWorkspace) }
     static func renameWorkspaceShortcut() -> StoredShortcut { shortcut(for: .renameWorkspace) }
     static func closeWorkspaceShortcut() -> StoredShortcut { shortcut(for: .closeWorkspace) }
 

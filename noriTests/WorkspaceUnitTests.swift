@@ -130,19 +130,19 @@ final class WorkspaceRenameShortcutDefaultsTests: XCTestCase {
     }
 
     func testNextPreviousWorkspaceShortcutDefaultsAndMetadata() {
-        XCTAssertEqual(KeyboardShortcutSettings.Action.nextSidebarTab.label, "Next Workspace")
-        XCTAssertEqual(KeyboardShortcutSettings.Action.prevSidebarTab.label, "Previous Workspace")
-        XCTAssertEqual(KeyboardShortcutSettings.Action.nextSidebarTab.defaultsKey, "shortcut.nextSidebarTab")
-        XCTAssertEqual(KeyboardShortcutSettings.Action.prevSidebarTab.defaultsKey, "shortcut.prevSidebarTab")
+        XCTAssertEqual(KeyboardShortcutSettings.Action.nextSidebarWorkspace.label, "Next Workspace")
+        XCTAssertEqual(KeyboardShortcutSettings.Action.prevSidebarWorkspace.label, "Previous Workspace")
+        XCTAssertEqual(KeyboardShortcutSettings.Action.nextSidebarWorkspace.defaultsKey, "shortcut.nextSidebarWorkspace")
+        XCTAssertEqual(KeyboardShortcutSettings.Action.prevSidebarWorkspace.defaultsKey, "shortcut.prevSidebarWorkspace")
 
-        let nextShortcut = KeyboardShortcutSettings.Action.nextSidebarTab.defaultShortcut
+        let nextShortcut = KeyboardShortcutSettings.Action.nextSidebarWorkspace.defaultShortcut
         XCTAssertEqual(nextShortcut.key, "]")
         XCTAssertTrue(nextShortcut.command)
         XCTAssertFalse(nextShortcut.shift)
         XCTAssertFalse(nextShortcut.option)
         XCTAssertTrue(nextShortcut.control)
 
-        let prevShortcut = KeyboardShortcutSettings.Action.prevSidebarTab.defaultShortcut
+        let prevShortcut = KeyboardShortcutSettings.Action.prevSidebarWorkspace.defaultShortcut
         XCTAssertEqual(prevShortcut.key, "[")
         XCTAssertTrue(prevShortcut.command)
         XCTAssertFalse(prevShortcut.shift)
@@ -151,13 +151,13 @@ final class WorkspaceRenameShortcutDefaultsTests: XCTestCase {
     }
 
     func testNextPreviousWorkspaceShortcutsConvertToMenuShortcut() {
-        let nextShortcut = KeyboardShortcutSettings.Action.nextSidebarTab.defaultShortcut
+        let nextShortcut = KeyboardShortcutSettings.Action.nextSidebarWorkspace.defaultShortcut
         XCTAssertNotNil(nextShortcut.keyEquivalent)
         XCTAssertEqual(nextShortcut.menuItemKeyEquivalent, "]")
         XCTAssertTrue(nextShortcut.eventModifiers.contains(.command))
         XCTAssertTrue(nextShortcut.eventModifiers.contains(.control))
 
-        let prevShortcut = KeyboardShortcutSettings.Action.prevSidebarTab.defaultShortcut
+        let prevShortcut = KeyboardShortcutSettings.Action.prevSidebarWorkspace.defaultShortcut
         XCTAssertNotNil(prevShortcut.keyEquivalent)
         XCTAssertEqual(prevShortcut.menuItemKeyEquivalent, "[")
         XCTAssertTrue(prevShortcut.eventModifiers.contains(.command))
@@ -193,6 +193,42 @@ final class WorkspaceRenameShortcutDefaultsTests: XCTestCase {
     func testShortcutDefaultsKeysRemainUnique() {
         let keys = KeyboardShortcutSettings.Action.allCases.map(\.defaultsKey)
         XCTAssertEqual(Set(keys).count, keys.count)
+    }
+
+    func testLegacyRawValueAliasesResolveToCurrentAction() {
+        // Sidebar workspace navigation cases were renamed from nextSidebarTab /
+        // prevSidebarTab. settings.json / UserDefaults values written by
+        // earlier nori versions must still resolve.
+        XCTAssertEqual(
+            KeyboardShortcutSettings.Action.fromPersistedRawValue("nextSidebarTab"),
+            .nextSidebarWorkspace
+        )
+        XCTAssertEqual(
+            KeyboardShortcutSettings.Action.fromPersistedRawValue("prevSidebarTab"),
+            .prevSidebarWorkspace
+        )
+
+        // Current rawValues still resolve.
+        XCTAssertEqual(
+            KeyboardShortcutSettings.Action.fromPersistedRawValue("nextSidebarWorkspace"),
+            .nextSidebarWorkspace
+        )
+
+        // Unknown strings still return nil.
+        XCTAssertNil(KeyboardShortcutSettings.Action.fromPersistedRawValue("bogusAction"))
+    }
+
+    func testLegacyDefaultsKeyProvidesOldUserDefaultsKey() {
+        XCTAssertEqual(
+            KeyboardShortcutSettings.Action.nextSidebarWorkspace.legacyDefaultsKey,
+            "shortcut.nextSidebarTab"
+        )
+        XCTAssertEqual(
+            KeyboardShortcutSettings.Action.prevSidebarWorkspace.legacyDefaultsKey,
+            "shortcut.prevSidebarTab"
+        )
+        // Actions without a rename return nil.
+        XCTAssertNil(KeyboardShortcutSettings.Action.closeWorkspace.legacyDefaultsKey)
     }
 
     func testChordedShortcutDisplayDisablesMenuKeyEquivalent() {
