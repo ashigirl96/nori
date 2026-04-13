@@ -10111,6 +10111,30 @@ final class Workspace: Identifiable, ObservableObject {
 
     }
 
+    /// Move the focused tab to an adjacent pane in `direction`.
+    /// If no adjacent pane exists, creates a new split in that direction.
+    func moveTabToAdjacentPane(direction: NavigationDirection) {
+        guard let paneId = bonsplitController.focusedPaneId,
+              let tab = bonsplitController.selectedTab(inPane: paneId) else { return }
+
+        if let prevPanelId = focusedPanelId, let prev = panels[prevPanelId] {
+            prev.unfocus()
+        }
+
+        if let adjacentPaneId = bonsplitController.adjacentPane(to: paneId, direction: direction) {
+            bonsplitController.moveTab(tab.id, toPane: adjacentPaneId)
+        } else {
+            let orientation: SplitOrientation = (direction == .left || direction == .right) ? .horizontal : .vertical
+            let insertFirst = (direction == .left || direction == .up)
+            bonsplitController.splitPane(orientation: orientation, movingTab: tab.id, insertFirst: insertFirst)
+        }
+
+        if let newPaneId = bonsplitController.focusedPaneId,
+           let tabId = bonsplitController.selectedTab(inPane: newPaneId)?.id {
+            applyTabSelection(tabId: tabId, inPane: newPaneId)
+        }
+    }
+
     /// Attempts to move pane focus in `direction`. Returns true iff the focused pane changed.
     /// Use this to chain pane navigation with a fallback (e.g. workspace switch) at the boundary.
     /// Short-circuits when there's only one pane so the common single-split case doesn't pay for

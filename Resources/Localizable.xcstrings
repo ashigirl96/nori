@@ -13381,6 +13381,40 @@
         }
       }
     },
+    "shortcut.movePaneLeft.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move Tab to Left Pane"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タブを左ペインに移動"
+          }
+        }
+      }
+    },
+    "shortcut.movePaneRight.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move Tab to Right Pane"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タブを右ペインに移動"
+          }
+        }
+      }
+    },
     "shortcut.splitDown.label": {
       "extractionState": "manual",
       "localizations": {

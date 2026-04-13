@@ -62,6 +62,8 @@ enum KeyboardShortcutSettings {
         case toggleSplitZoom
         case splitBrowserRight
         case splitBrowserDown
+        case movePaneRight
+        case movePaneLeft
 
         // File Explorer
         case toggleFileExplorer
@@ -128,6 +130,8 @@ enum KeyboardShortcutSettings {
             case .toggleSplitZoom: return String(localized: "shortcut.togglePaneZoom.label", defaultValue: "Toggle Pane Zoom")
             case .splitBrowserRight: return String(localized: "shortcut.splitBrowserRight.label", defaultValue: "Split Browser Right")
             case .splitBrowserDown: return String(localized: "shortcut.splitBrowserDown.label", defaultValue: "Split Browser Down")
+            case .movePaneRight: return String(localized: "shortcut.movePaneRight.label", defaultValue: "Move Tab to Right Pane")
+            case .movePaneLeft: return String(localized: "shortcut.movePaneLeft.label", defaultValue: "Move Tab to Left Pane")
             case .toggleFileExplorer: return String(localized: "shortcut.toggleFileExplorer.label", defaultValue: "Toggle File Explorer")
             case .openBrowser: return String(localized: "shortcut.openBrowser.label", defaultValue: "Open Browser")
             case .focusBrowserAddressBar: return String(localized: "command.browserFocusAddressBar.title", defaultValue: "Focus Address Bar")
@@ -224,6 +228,10 @@ enum KeyboardShortcutSettings {
                 return StoredShortcut(key: "d", command: true, shift: false, option: true, control: false)
             case .splitBrowserDown:
                 return StoredShortcut(key: "d", command: true, shift: true, option: true, control: false)
+            case .movePaneRight:
+                return StoredShortcut(key: "l", command: false, shift: true, option: false, control: true)
+            case .movePaneLeft:
+                return StoredShortcut(key: "h", command: false, shift: true, option: false, control: true)
             case .nextSurface:
                 return StoredShortcut(key: "]", command: true, shift: true, option: false, control: false)
             case .prevSurface:

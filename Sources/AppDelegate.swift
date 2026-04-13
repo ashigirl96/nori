@@ -11294,6 +11294,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             return true
         }
 
+        if matchConfiguredShortcut(event: event, action: .movePaneRight) {
+#if DEBUG
+            dlog("shortcut.action name=movePaneRight \(debugShortcutRouteSnapshot(event: event))")
+#endif
+            tabManager?.moveTabToAdjacentPane(direction: .right)
+            return true
+        }
+
+        if matchConfiguredShortcut(event: event, action: .movePaneLeft) {
+#if DEBUG
+            dlog("shortcut.action name=movePaneLeft \(debugShortcutRouteSnapshot(event: event))")
+#endif
+            tabManager?.moveTabToAdjacentPane(direction: .left)
+            return true
+        }
+
         // Surface navigation (legacy Ctrl+Tab support)
         if matchTabShortcut(event: event, shortcut: StoredShortcut(key: "\t", command: false, shift: false, option: false, control: true)) {
             tabManager?.selectNextSurface()

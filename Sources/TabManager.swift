@@ -4962,6 +4962,11 @@ class TabManager: ObservableObject {
         tab.moveFocus(direction: direction)
     }
 
+    /// Move the focused tab to an adjacent pane in `direction`, creating a split if needed.
+    func moveTabToAdjacentPane(direction: NavigationDirection) {
+        selectedWorkspace?.moveTabToAdjacentPane(direction: direction)
+    }
+
     // MARK: - Recent Tab History Navigation
 
     private func recordTabInHistory(_ tabId: UUID) {
