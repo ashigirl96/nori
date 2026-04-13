@@ -559,7 +559,7 @@ final class WorkspaceRemoteConnectionTests: XCTestCase {
 
     @MainActor
     func testClosingRemoteWorkspaceRequestsControlMasterCleanup() throws {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let remainingWorkspace = try XCTUnwrap(manager.selectedWorkspace)
         let remoteWorkspace = manager.addWorkspace()
         let config = WorkspaceRemoteConfiguration(
@@ -594,9 +594,9 @@ final class WorkspaceRemoteConnectionTests: XCTestCase {
 
         wait(for: [cleanupRequested], timeout: 1.0)
 
-        XCTAssertEqual(manager.tabs.count, 1)
-        XCTAssertEqual(manager.tabs.first?.id, remainingWorkspace.id)
-        XCTAssertFalse(manager.tabs.contains(where: { $0.id == remoteWorkspace.id }))
+        XCTAssertEqual(manager.workspaces.count, 1)
+        XCTAssertEqual(manager.workspaces.first?.id, remainingWorkspace.id)
+        XCTAssertFalse(manager.workspaces.contains(where: { $0.id == remoteWorkspace.id }))
         XCTAssertFalse(remoteWorkspace.isRemoteWorkspace)
         XCTAssertEqual(
             capturedArguments,
@@ -662,7 +662,7 @@ final class WorkspaceRemoteConnectionTests: XCTestCase {
 
     @MainActor
     func testClosingSourceWorkspaceAfterDetachingRemoteSurfaceSkipsControlMasterCleanup() throws {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let sourceWorkspace = try XCTUnwrap(manager.selectedWorkspace)
         let destinationWorkspace = manager.addWorkspace()
         let config = WorkspaceRemoteConfiguration(
@@ -709,13 +709,13 @@ final class WorkspaceRemoteConnectionTests: XCTestCase {
 
         wait(for: [cleanupRequested], timeout: 1.0)
 
-        XCTAssertFalse(manager.tabs.contains(where: { $0.id == sourceWorkspace.id }))
+        XCTAssertFalse(manager.workspaces.contains(where: { $0.id == sourceWorkspace.id }))
         XCTAssertTrue(destinationWorkspace.panels.keys.contains(detached.panelId))
     }
 
     @MainActor
     func testClosingMixedSourceWorkspaceAfterDetachingLastRemoteSurfaceSkipsControlMasterCleanup() throws {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let sourceWorkspace = try XCTUnwrap(manager.selectedWorkspace)
         let destinationWorkspace = manager.addWorkspace()
         let sourcePaneID = try XCTUnwrap(sourceWorkspace.bonsplitController.allPaneIds.first)
@@ -764,13 +764,13 @@ final class WorkspaceRemoteConnectionTests: XCTestCase {
 
         wait(for: [cleanupRequested], timeout: 1.0)
 
-        XCTAssertFalse(manager.tabs.contains(where: { $0.id == sourceWorkspace.id }))
+        XCTAssertFalse(manager.workspaces.contains(where: { $0.id == sourceWorkspace.id }))
         XCTAssertTrue(destinationWorkspace.panels.keys.contains(detached.panelId))
     }
 
     @MainActor
     func testTransferredRemoteSurfaceCleansUpControlMasterWhenSessionEndsInLocalWorkspace() throws {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let sourceWorkspace = try XCTUnwrap(manager.selectedWorkspace)
         let destinationWorkspace = manager.addWorkspace()
         let config = WorkspaceRemoteConfiguration(

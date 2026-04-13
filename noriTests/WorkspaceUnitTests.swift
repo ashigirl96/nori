@@ -1118,8 +1118,8 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
             startWatching: false
         )
 
-        let manager = TabManager()
-        guard let first = manager.tabs.first else {
+        let manager = WorkspaceManager()
+        guard let first = manager.workspaces.first else {
             XCTFail("Expected initial workspace")
             return
         }
@@ -1130,8 +1130,8 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
 
         let inserted = manager.addWorkspace()
 
-        XCTAssertEqual(manager.tabs.map(\.id), [inserted.id, first.id, second.id, third.id])
-        XCTAssertEqual(manager.selectedTabId, inserted.id)
+        XCTAssertEqual(manager.workspaces.map(\.id), [inserted.id, first.id, second.id, third.id])
+        XCTAssertEqual(manager.selectedWorkspaceId, inserted.id)
     }
 
     private func makeTemporaryDirectory() throws -> URL {
@@ -1379,7 +1379,7 @@ final class WorkspacePlacementSettingsTests: XCTestCase {
 
 @MainActor
 final class WorkspaceCreationPlacementTests: XCTestCase {
-    private final class SnapshotMutatingTabManager: TabManager {
+    private final class SnapshotMutatingWorkspaceManager: WorkspaceManager {
         var afterCaptureWorkspaceCreationSnapshot: (() -> Void)?
         var beforeCreateWorkspace: (() -> Void)?
 
@@ -1411,35 +1411,35 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
         let currentPlacement = WorkspacePlacementSettings.current()
 
         let defaultManager = makeManagerWithThreeWorkspaces()
-        let defaultBaselineOrder = defaultManager.tabs.map(\.id)
+        let defaultBaselineOrder = defaultManager.workspaces.map(\.id)
         let defaultInserted = defaultManager.addWorkspace()
-        guard let defaultInsertedIndex = defaultManager.tabs.firstIndex(where: { $0.id == defaultInserted.id }) else {
+        guard let defaultInsertedIndex = defaultManager.workspaces.firstIndex(where: { $0.id == defaultInserted.id }) else {
             XCTFail("Expected inserted workspace in tab list")
             return
         }
-        XCTAssertEqual(defaultManager.tabs.map(\.id).filter { $0 != defaultInserted.id }, defaultBaselineOrder)
+        XCTAssertEqual(defaultManager.workspaces.map(\.id).filter { $0 != defaultInserted.id }, defaultBaselineOrder)
 
         let explicitManager = makeManagerWithThreeWorkspaces()
-        let explicitBaselineOrder = explicitManager.tabs.map(\.id)
+        let explicitBaselineOrder = explicitManager.workspaces.map(\.id)
         let explicitInserted = explicitManager.addWorkspace(placementOverride: currentPlacement)
-        guard let explicitInsertedIndex = explicitManager.tabs.firstIndex(where: { $0.id == explicitInserted.id }) else {
+        guard let explicitInsertedIndex = explicitManager.workspaces.firstIndex(where: { $0.id == explicitInserted.id }) else {
             XCTFail("Expected inserted workspace in tab list")
             return
         }
-        XCTAssertEqual(explicitManager.tabs.map(\.id).filter { $0 != explicitInserted.id }, explicitBaselineOrder)
+        XCTAssertEqual(explicitManager.workspaces.map(\.id).filter { $0 != explicitInserted.id }, explicitBaselineOrder)
         XCTAssertEqual(defaultInsertedIndex, explicitInsertedIndex)
     }
 
     func testAddWorkspaceEndOverrideAlwaysAppends() {
         let manager = makeManagerWithThreeWorkspaces()
-        let baselineCount = manager.tabs.count
+        let baselineCount = manager.workspaces.count
         guard baselineCount >= 3 else {
             XCTFail("Expected at least three workspaces for placement regression test")
             return
         }
 
         let inserted = manager.addWorkspace(placementOverride: .end)
-        guard let insertedIndex = manager.tabs.firstIndex(where: { $0.id == inserted.id }) else {
+        guard let insertedIndex = manager.workspaces.firstIndex(where: { $0.id == inserted.id }) else {
             XCTFail("Expected inserted workspace in tab list")
             return
         }
@@ -1448,26 +1448,26 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
     }
 
     func testAddWorkspaceAfterCurrentOverrideAppendsAfterLastSelectedWorkspace() {
-        let manager = TabManager()
-        guard !manager.tabs.isEmpty else {
-            XCTFail("Expected TabManager to initialise with at least one workspace")
+        let manager = WorkspaceManager()
+        guard !manager.workspaces.isEmpty else {
+            XCTFail("Expected WorkspaceManager to initialise with at least one workspace")
             return
         }
         _ = manager.addWorkspace()
         _ = manager.addWorkspace()
         let fourth = manager.addWorkspace()
-        let baselineOrder = manager.tabs.map(\.id)
+        let baselineOrder = manager.workspaces.map(\.id)
 
         manager.selectWorkspace(fourth)
         let inserted = manager.addWorkspace(placementOverride: .afterCurrent)
 
-        XCTAssertEqual(manager.tabs.map(\.id).filter { $0 != inserted.id }, baselineOrder)
-        XCTAssertEqual(manager.tabs.last?.id, inserted.id)
+        XCTAssertEqual(manager.workspaces.map(\.id).filter { $0 != inserted.id }, baselineOrder)
+        XCTAssertEqual(manager.workspaces.last?.id, inserted.id)
     }
 
     func testAddWorkspaceAfterCurrentUsesPrecreationSnapshotWhenSelectionMutatesDuringBootstrap() {
-        let manager = SnapshotMutatingTabManager()
-        guard let first = manager.tabs.first else {
+        let manager = SnapshotMutatingWorkspaceManager()
+        guard let first = manager.workspaces.first else {
             XCTFail("Expected initial workspace")
             return
         }
@@ -1477,21 +1477,21 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
         let third = manager.addWorkspace()
         manager.selectWorkspace(third)
 
-        let baselineOrder = manager.tabs.map(\.id)
+        let baselineOrder = manager.workspaces.map(\.id)
         manager.beforeCreateWorkspace = {
             manager.selectWorkspace(first)
         }
 
         let inserted = manager.addWorkspace(placementOverride: .afterCurrent)
 
-        XCTAssertEqual(manager.tabs.map(\.id).filter { $0 != inserted.id }, baselineOrder)
-        XCTAssertEqual(manager.tabs.map(\.id), [first.id, second.id, third.id, inserted.id])
-        XCTAssertEqual(manager.selectedTabId, inserted.id)
+        XCTAssertEqual(manager.workspaces.map(\.id).filter { $0 != inserted.id }, baselineOrder)
+        XCTAssertEqual(manager.workspaces.map(\.id), [first.id, second.id, third.id, inserted.id])
+        XCTAssertEqual(manager.selectedWorkspaceId, inserted.id)
     }
 
     func testAddWorkspaceAfterCurrentDoesNotReinsertClosedWorkspaceCapturedInSnapshot() {
-        let manager = SnapshotMutatingTabManager()
-        guard let first = manager.tabs.first else {
+        let manager = SnapshotMutatingWorkspaceManager()
+        guard let first = manager.workspaces.first else {
             XCTFail("Expected initial workspace")
             return
         }
@@ -1506,14 +1506,14 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
 
         let inserted = manager.addWorkspace(placementOverride: .afterCurrent)
 
-        XCTAssertEqual(manager.tabs.map(\.id), [first.id, third.id, inserted.id])
-        XCTAssertFalse(manager.tabs.contains(where: { $0.id == second.id }))
-        XCTAssertEqual(manager.selectedTabId, inserted.id)
+        XCTAssertEqual(manager.workspaces.map(\.id), [first.id, third.id, inserted.id])
+        XCTAssertFalse(manager.workspaces.contains(where: { $0.id == second.id }))
+        XCTAssertEqual(manager.selectedWorkspaceId, inserted.id)
     }
 
     func testAddWorkspaceSurvivesSelectedWorkspaceClosingAfterSnapshot() {
-        let manager = SnapshotMutatingTabManager()
-        guard let first = manager.tabs.first else {
+        let manager = SnapshotMutatingWorkspaceManager()
+        guard let first = manager.workspaces.first else {
             XCTFail("Expected initial workspace")
             return
         }
@@ -1528,14 +1528,14 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
 
         let inserted = manager.addWorkspace(placementOverride: .afterCurrent)
 
-        XCTAssertEqual(manager.tabs.map(\.id), [first.id, second.id, inserted.id])
-        XCTAssertFalse(manager.tabs.contains(where: { $0.id == third.id }))
-        XCTAssertEqual(manager.selectedTabId, inserted.id)
+        XCTAssertEqual(manager.workspaces.map(\.id), [first.id, second.id, inserted.id])
+        XCTAssertFalse(manager.workspaces.contains(where: { $0.id == third.id }))
+        XCTAssertEqual(manager.selectedWorkspaceId, inserted.id)
     }
 
     func testAddWorkspaceSurvivesMidCreationClose() {
-        let manager = SnapshotMutatingTabManager()
-        guard let first = manager.tabs.first else {
+        let manager = SnapshotMutatingWorkspaceManager()
+        guard let first = manager.workspaces.first else {
             XCTFail("Expected initial workspace")
             return
         }
@@ -1545,10 +1545,10 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
         manager.selectWorkspace(third)
 
         let closingWorkspaceId = closingWorkspace.id
-        XCTAssertEqual(manager.tabs.map(\.id), [first.id, closingWorkspaceId, third.id])
+        XCTAssertEqual(manager.workspaces.map(\.id), [first.id, closingWorkspaceId, third.id])
 
         manager.afterCaptureWorkspaceCreationSnapshot = {
-            guard let liveWorkspace = manager.tabs.first(where: { $0.id == closingWorkspaceId }) else {
+            guard let liveWorkspace = manager.workspaces.first(where: { $0.id == closingWorkspaceId }) else {
                 XCTFail("Expected captured workspace to still be present when closing after snapshot")
                 return
             }
@@ -1557,14 +1557,14 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
 
         let inserted = manager.addWorkspace(placementOverride: .afterCurrent)
 
-        XCTAssertFalse(manager.tabs.contains(where: { $0.id == closingWorkspaceId }))
-        XCTAssertEqual(manager.tabs.map(\.id), [first.id, third.id, inserted.id])
-        XCTAssertEqual(manager.selectedTabId, inserted.id)
+        XCTAssertFalse(manager.workspaces.contains(where: { $0.id == closingWorkspaceId }))
+        XCTAssertEqual(manager.workspaces.map(\.id), [first.id, third.id, inserted.id])
+        XCTAssertEqual(manager.selectedWorkspaceId, inserted.id)
     }
 
     func testAddWorkspaceAfterCurrentUsesSnapshotPinnedStateWhenPinningMutatesAfterSnapshot() {
-        let manager = SnapshotMutatingTabManager()
-        guard let first = manager.tabs.first else {
+        let manager = SnapshotMutatingWorkspaceManager()
+        guard let first = manager.workspaces.first else {
             XCTFail("Expected initial workspace")
             return
         }
@@ -1573,7 +1573,7 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
         let second = manager.addWorkspace()
         let third = manager.addWorkspace()
         manager.selectWorkspace(first)
-        let baselineOrder = manager.tabs.map(\.id)
+        let baselineOrder = manager.workspaces.map(\.id)
 
         manager.afterCaptureWorkspaceCreationSnapshot = {
             manager.setPinned(first, pinned: false)
@@ -1581,14 +1581,14 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
 
         let inserted = manager.addWorkspace(placementOverride: .afterCurrent)
 
-        XCTAssertEqual(manager.tabs.map(\.id).filter { $0 != inserted.id }, baselineOrder)
-        XCTAssertEqual(manager.tabs.map(\.id), [first.id, inserted.id, second.id, third.id])
-        XCTAssertEqual(manager.selectedTabId, inserted.id)
+        XCTAssertEqual(manager.workspaces.map(\.id).filter { $0 != inserted.id }, baselineOrder)
+        XCTAssertEqual(manager.workspaces.map(\.id), [first.id, inserted.id, second.id, third.id])
+        XCTAssertEqual(manager.selectedWorkspaceId, inserted.id)
     }
 
     func testAddWorkspaceAfterCurrentFollowsLiveReorderUsingSnapshotTabValues() {
-        let manager = SnapshotMutatingTabManager()
-        guard let first = manager.tabs.first else {
+        let manager = SnapshotMutatingWorkspaceManager()
+        guard let first = manager.workspaces.first else {
             XCTFail("Expected initial workspace")
             return
         }
@@ -1607,18 +1607,18 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
         let inserted = manager.addWorkspace(placementOverride: .afterCurrent)
 
         XCTAssertEqual(
-            manager.tabs.map(\.id).filter { $0 != inserted.id },
+            manager.workspaces.map(\.id).filter { $0 != inserted.id },
             [third.id, first.id, second.id]
         )
-        XCTAssertEqual(manager.tabs.map(\.id), [third.id, first.id, second.id, inserted.id])
-        XCTAssertEqual(manager.selectedTabId, inserted.id)
+        XCTAssertEqual(manager.workspaces.map(\.id), [third.id, first.id, second.id, inserted.id])
+        XCTAssertEqual(manager.selectedWorkspaceId, inserted.id)
     }
 
-    private func makeManagerWithThreeWorkspaces() -> TabManager {
-        let manager = TabManager()
+    private func makeManagerWithThreeWorkspaces() -> WorkspaceManager {
+        let manager = WorkspaceManager()
         _ = manager.addWorkspace()
         _ = manager.addWorkspace()
-        if let first = manager.tabs.first {
+        if let first = manager.workspaces.first {
             manager.selectWorkspace(first)
         }
         return manager
@@ -1627,7 +1627,7 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
 
 @MainActor
 final class WorkspaceCreationConfigSanitizationTests: XCTestCase {
-    private final class UnsafeConfigSnapshotTabManager: TabManager {
+    private final class UnsafeConfigSnapshotWorkspaceManager: WorkspaceManager {
         private var injectedConfig: NoriSurfaceConfigTemplate?
         var capturedConfigTemplate: NoriSurfaceConfigTemplate?
 
@@ -1667,7 +1667,7 @@ final class WorkspaceCreationConfigSanitizationTests: XCTestCase {
     }
 
     func testAddWorkspacePassesSanitizedInheritedConfigTemplate() {
-        let manager = UnsafeConfigSnapshotTabManager()
+        let manager = UnsafeConfigSnapshotWorkspaceManager()
         manager.installInjectedConfig(fontSize: 19)
 
         _ = manager.addWorkspace()
@@ -2020,60 +2020,60 @@ final class SidebarWorkspaceAuxiliaryDetailVisibilityTests: XCTestCase {
 final class WorkspaceReorderTests: XCTestCase {
     @MainActor
     func testReorderWorkspaceMovesWorkspaceToRequestedIndex() {
-        let manager = TabManager()
-        let first = manager.tabs[0]
+        let manager = WorkspaceManager()
+        let first = manager.workspaces[0]
         let second = manager.addWorkspace()
         let third = manager.addWorkspace()
 
         manager.selectWorkspace(second)
-        XCTAssertEqual(manager.selectedTabId, second.id)
+        XCTAssertEqual(manager.selectedWorkspaceId, second.id)
 
         XCTAssertTrue(manager.reorderWorkspace(tabId: second.id, toIndex: 0))
-        XCTAssertEqual(manager.tabs.map(\.id), [second.id, first.id, third.id])
-        XCTAssertEqual(manager.selectedTabId, second.id)
+        XCTAssertEqual(manager.workspaces.map(\.id), [second.id, first.id, third.id])
+        XCTAssertEqual(manager.selectedWorkspaceId, second.id)
     }
 
     @MainActor
     func testReorderWorkspaceClampsOutOfRangeTargetIndex() {
-        let manager = TabManager()
-        let first = manager.tabs[0]
+        let manager = WorkspaceManager()
+        let first = manager.workspaces[0]
         let second = manager.addWorkspace()
         let third = manager.addWorkspace()
 
         XCTAssertTrue(manager.reorderWorkspace(tabId: first.id, toIndex: 999))
-        XCTAssertEqual(manager.tabs.map(\.id), [second.id, third.id, first.id])
+        XCTAssertEqual(manager.workspaces.map(\.id), [second.id, third.id, first.id])
     }
 
     @MainActor
     func testReorderWorkspaceReturnsFalseForUnknownWorkspace() {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         XCTAssertFalse(manager.reorderWorkspace(tabId: UUID(), toIndex: 0))
     }
 
     @MainActor
     func testReorderWorkspaceKeepsUnpinnedWorkspaceBelowPinnedSegment() {
-        let manager = TabManager()
-        let firstPinned = manager.tabs[0]
+        let manager = WorkspaceManager()
+        let firstPinned = manager.workspaces[0]
         manager.setPinned(firstPinned, pinned: true)
         let secondPinned = manager.addWorkspace()
         manager.setPinned(secondPinned, pinned: true)
         let unpinned = manager.addWorkspace()
 
         XCTAssertTrue(manager.reorderWorkspace(tabId: unpinned.id, toIndex: 0))
-        XCTAssertEqual(manager.tabs.map(\.id), [firstPinned.id, secondPinned.id, unpinned.id])
+        XCTAssertEqual(manager.workspaces.map(\.id), [firstPinned.id, secondPinned.id, unpinned.id])
     }
 
     @MainActor
     func testReorderWorkspaceKeepsPinnedWorkspaceInsidePinnedSegment() {
-        let manager = TabManager()
-        let firstPinned = manager.tabs[0]
+        let manager = WorkspaceManager()
+        let firstPinned = manager.workspaces[0]
         manager.setPinned(firstPinned, pinned: true)
         let secondPinned = manager.addWorkspace()
         manager.setPinned(secondPinned, pinned: true)
         let unpinned = manager.addWorkspace()
 
         XCTAssertTrue(manager.reorderWorkspace(tabId: firstPinned.id, toIndex: 999))
-        XCTAssertEqual(manager.tabs.map(\.id), [secondPinned.id, firstPinned.id, unpinned.id])
+        XCTAssertEqual(manager.workspaces.map(\.id), [secondPinned.id, firstPinned.id, unpinned.id])
     }
 }
 
@@ -2082,10 +2082,10 @@ final class WorkspaceReorderTests: XCTestCase {
 final class WorkspaceNotificationReorderTests: XCTestCase {
     func testNotificationAutoReorderDoesNotMovePinnedWorkspace() {
         let appDelegate = AppDelegate.shared ?? AppDelegate()
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let notificationStore = TerminalNotificationStore.shared
 
-        let originalTabManager = appDelegate.tabManager
+        let originalWorkspaceManager = appDelegate.workspaceManager
         let originalNotificationStore = appDelegate.notificationStore
         let defaults = UserDefaults.standard
         let originalAutoReorderSetting = defaults.object(forKey: WorkspaceAutoReorderSettings.key)
@@ -2093,7 +2093,7 @@ final class WorkspaceNotificationReorderTests: XCTestCase {
 
         notificationStore.replaceNotificationsForTesting([])
         notificationStore.configureNotificationDeliveryHandlerForTesting { _, _ in }
-        appDelegate.tabManager = manager
+        appDelegate.workspaceManager = manager
         appDelegate.notificationStore = notificationStore
         defaults.set(true, forKey: WorkspaceAutoReorderSettings.key)
         AppFocusState.overrideIsFocused = false
@@ -2101,7 +2101,7 @@ final class WorkspaceNotificationReorderTests: XCTestCase {
         defer {
             notificationStore.replaceNotificationsForTesting([])
             notificationStore.resetNotificationDeliveryHandlerForTesting()
-            appDelegate.tabManager = originalTabManager
+            appDelegate.workspaceManager = originalWorkspaceManager
             appDelegate.notificationStore = originalNotificationStore
             AppFocusState.overrideIsFocused = originalAppFocusOverride
             if let originalAutoReorderSetting {
@@ -2111,7 +2111,7 @@ final class WorkspaceNotificationReorderTests: XCTestCase {
             }
         }
 
-        let firstPinned = manager.tabs[0]
+        let firstPinned = manager.workspaces[0]
         manager.setPinned(firstPinned, pinned: true)
         let secondPinned = manager.addWorkspace()
         manager.setPinned(secondPinned, pinned: true)
@@ -2126,7 +2126,7 @@ final class WorkspaceNotificationReorderTests: XCTestCase {
             body: "Pinned workspaces should stay put"
         )
 
-        XCTAssertEqual(manager.tabs.map(\.id), expectedOrder)
+        XCTAssertEqual(manager.workspaces.map(\.id), expectedOrder)
     }
 }
 
@@ -2541,7 +2541,7 @@ final class WorkspaceTerminalFocusRecoveryTests: XCTestCase {
 @MainActor
 final class WorkspaceTerminalConfigInheritanceSelectionTests: XCTestCase {
     func testPrefersSelectedTerminalInTargetPaneOverFocusedTerminalElsewhere() {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         guard let workspace = manager.selectedWorkspace,
               let leftPanelId = workspace.focusedPanelId,
               let rightPanel = workspace.newTerminalSplit(from: leftPanelId, orientation: .horizontal),
@@ -2562,7 +2562,7 @@ final class WorkspaceTerminalConfigInheritanceSelectionTests: XCTestCase {
     }
 
     func testFallsBackToAnotherTerminalInPaneWhenSelectedTabIsBrowser() {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         guard let workspace = manager.selectedWorkspace,
               let terminalPanelId = workspace.focusedPanelId,
               let paneId = workspace.paneId(forPanelId: terminalPanelId),
@@ -2582,7 +2582,7 @@ final class WorkspaceTerminalConfigInheritanceSelectionTests: XCTestCase {
     }
 
     func testPreferredTerminalPanelWinsWhenProvided() {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         guard let workspace = manager.selectedWorkspace,
               let terminalPanelId = workspace.focusedPanelId else {
             XCTFail("Expected selected workspace with a terminal panel")
@@ -2594,7 +2594,7 @@ final class WorkspaceTerminalConfigInheritanceSelectionTests: XCTestCase {
     }
 
     func testPrefersLastFocusedTerminalWhenBrowserFocusedInDifferentPane() {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         guard let workspace = manager.selectedWorkspace,
               let leftTerminalPanelId = workspace.focusedPanelId,
               let rightTerminalPanel = workspace.newTerminalSplit(from: leftTerminalPanelId, orientation: .horizontal),
@@ -2640,7 +2640,7 @@ final class WorkspaceAttentionFlashTests: XCTestCase {
         defaults.set(true, forKey: TmuxOverlayExperimentSettings.enabledKey)
         defaults.set(TmuxOverlayExperimentTarget.bonsplitPane.rawValue, forKey: TmuxOverlayExperimentSettings.targetKey)
 
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         guard let workspace = manager.selectedWorkspace,
               let leftPanelId = workspace.focusedPanelId,
               let rightPanel = workspace.newTerminalSplit(from: leftPanelId, orientation: .horizontal) else {
@@ -2675,10 +2675,10 @@ final class WorkspaceAttentionFlashTests: XCTestCase {
 
     func testMoveFocusSuppressesWorkspacePaneFlashWhenAnotherPaneOwnsUnreadAttention() {
         let appDelegate = AppDelegate.shared ?? AppDelegate()
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let notificationStore = TerminalNotificationStore.shared
         let defaults = UserDefaults.standard
-        let originalTabManager = appDelegate.tabManager
+        let originalWorkspaceManager = appDelegate.workspaceManager
         let originalNotificationStore = appDelegate.notificationStore
         let originalExperimentEnabled = defaults.object(forKey: TmuxOverlayExperimentSettings.enabledKey)
         let originalExperimentTarget = defaults.object(forKey: TmuxOverlayExperimentSettings.targetKey)
@@ -2686,7 +2686,7 @@ final class WorkspaceAttentionFlashTests: XCTestCase {
         defer {
             notificationStore.replaceNotificationsForTesting([])
             notificationStore.resetNotificationDeliveryHandlerForTesting()
-            appDelegate.tabManager = originalTabManager
+            appDelegate.workspaceManager = originalWorkspaceManager
             appDelegate.notificationStore = originalNotificationStore
             AppFocusState.overrideIsFocused = originalAppFocusOverride
             if let originalExperimentEnabled {
@@ -2703,7 +2703,7 @@ final class WorkspaceAttentionFlashTests: XCTestCase {
 
         notificationStore.replaceNotificationsForTesting([])
         notificationStore.configureNotificationDeliveryHandlerForTesting { _, _ in }
-        appDelegate.tabManager = manager
+        appDelegate.workspaceManager = manager
         appDelegate.notificationStore = notificationStore
         AppFocusState.overrideIsFocused = true
         defaults.set(true, forKey: TmuxOverlayExperimentSettings.enabledKey)

@@ -536,10 +536,10 @@ struct BrowserPanelView: View {
 
     private var owningWorkspace: Workspace? {
         guard let app = AppDelegate.shared,
-              let manager = app.tabManagerFor(tabId: panel.workspaceId) else {
+              let manager = app.workspaceManagerFor(tabId: panel.workspaceId) else {
             return nil
         }
-        return manager.tabs.first(where: { $0.id == panel.workspaceId })
+        return manager.workspaces.first(where: { $0.id == panel.workspaceId })
     }
 
     private var isCurrentPaneOwner: Bool {
@@ -1410,9 +1410,9 @@ struct BrowserPanelView: View {
 
     private func isPanelFocusedInModel() -> Bool {
         guard let app = AppDelegate.shared,
-              let manager = app.tabManagerFor(tabId: panel.workspaceId),
-              manager.selectedTabId == panel.workspaceId,
-              let workspace = manager.tabs.first(where: { $0.id == panel.workspaceId }) else {
+              let manager = app.workspaceManagerFor(tabId: panel.workspaceId),
+              manager.selectedWorkspaceId == panel.workspaceId,
+              let workspace = manager.workspaces.first(where: { $0.id == panel.workspaceId }) else {
             return false
         }
         return workspace.focusedPanelId == panel.id
@@ -1475,7 +1475,7 @@ struct BrowserPanelView: View {
             return true
         }
 
-        if let manager = app.tabManagerFor(tabId: panel.workspaceId),
+        if let manager = app.workspaceManagerFor(tabId: panel.workspaceId),
            let windowId = app.windowId(for: manager),
            let window = app.mainWindow(for: windowId),
            app.isCommandPaletteVisible(for: window) {
@@ -1849,7 +1849,7 @@ struct BrowserPanelView: View {
         omnibarState.isUserEditing = false
         switch suggestion.kind {
         case .switchToTab(let tabId, let panelId, _, _):
-            AppDelegate.shared?.tabManager?.focusTab(tabId, surfaceId: panelId)
+            AppDelegate.shared?.workspaceManager?.focusTab(tabId, surfaceId: panelId)
         default:
             panel.navigateSmart(suggestion.completion)
         }
@@ -2100,8 +2100,8 @@ struct BrowserPanelView: View {
         let loweredQuery = query.lowercased()
         let singleCharacterQuery = omnibarSingleCharacterQuery(for: query)
         let includeCurrentPanelForSingleCharacterQuery = singleCharacterQuery != nil
-        let tabManager = AppDelegate.shared?.tabManager
-        let currentPanelWorkspaceId = tabManager?.tabs.first(where: { tab in
+        let workspaceManager = AppDelegate.shared?.workspaceManager
+        let currentPanelWorkspaceId = workspaceManager?.workspaces.first(where: { tab in
             tab.panels[panel.id] is BrowserPanel
         })?.id
         var matches: [OmnibarOpenTabMatch] = []
@@ -2153,9 +2153,9 @@ struct BrowserPanelView: View {
             }
         }
 
-        guard let tabManager else { return matches }
+        guard let workspaceManager else { return matches }
 
-        for tab in tabManager.tabs {
+        for tab in workspaceManager.workspaces {
             for (panelId, anyPanel) in tab.panels {
                 guard let browserPanel = anyPanel as? BrowserPanel else { continue }
                 guard let currentURL = preferredPanelURL(browserPanel),
@@ -6777,8 +6777,8 @@ struct WebViewRepresentable: NSViewRepresentable {
 
     private func currentPaneDropContext() -> BrowserPaneDropContext? {
         guard let app = AppDelegate.shared,
-              let manager = app.tabManagerFor(tabId: panel.workspaceId),
-              let workspace = manager.tabs.first(where: { $0.id == panel.workspaceId }),
+              let manager = app.workspaceManagerFor(tabId: panel.workspaceId),
+              let workspace = manager.workspaces.first(where: { $0.id == panel.workspaceId }),
               let paneId = workspace.paneId(forPanelId: panel.id) else {
             return nil
         }

@@ -220,7 +220,7 @@ final class ReactGrabPastebackTargetTests: XCTestCase {
     }
 
     func testShortcutStillRoutesTerminalPastebackWhenWebViewFocusIsDeferred() {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         guard let workspace = manager.selectedWorkspace,
               let terminalId = workspace.focusedPanelId,
               let browserPanel = workspace.newBrowserSplit(
@@ -239,7 +239,7 @@ final class ReactGrabPastebackTargetTests: XCTestCase {
     }
 
     func testShortcutClearsSplitZoomBeforeRoutingToBrowserPane() {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         guard let workspace = manager.selectedWorkspace,
               let terminalId = workspace.focusedPanelId,
               let browserPanel = workspace.newBrowserSplit(

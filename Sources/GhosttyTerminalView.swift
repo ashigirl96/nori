@@ -1690,8 +1690,8 @@ class GhosttyApp {
                 // Close requests must be resolved by the callback's workspace/surface IDs only.
                 // If the mapping is already gone (duplicate/stale callback), ignore it.
                 if let callbackTabId,
-                   let manager = app.tabManagerFor(tabId: callbackTabId) ?? app.tabManager,
-                   let workspace = manager.tabs.first(where: { $0.id == callbackTabId }),
+                   let manager = app.workspaceManagerFor(tabId: callbackTabId) ?? app.workspaceManager,
+                   let workspace = manager.workspaces.first(where: { $0.id == callbackTabId }),
                    workspace.panels[callbackSurfaceId] != nil {
                     if needsConfirmClose {
                         manager.closeRuntimeSurfaceWithConfirmation(
@@ -2824,22 +2824,22 @@ class GhosttyApp {
                 let actionBody = action.action.desktop_notification.body
                     .flatMap { String(cString: $0) } ?? ""
                 return performOnMain {
-                    guard let tabManager = AppDelegate.shared?.tabManager,
-                          let tabId = tabManager.selectedTabId else {
+                    guard let workspaceManager = AppDelegate.shared?.workspaceManager,
+                          let tabId = workspaceManager.selectedWorkspaceId else {
                         return false
                     }
                     // Suppress OSC notifications for workspaces with active Claude hook sessions.
                     // The hook system manages notifications with proper lifecycle tracking;
                     // raw OSC notifications would duplicate or outlive the structured hooks.
-                    let owningManager = AppDelegate.shared?.tabManagerFor(tabId: tabId) ?? tabManager
-                    if let workspace = owningManager.tabs.first(where: { $0.id == tabId }),
+                    let owningManager = AppDelegate.shared?.workspaceManagerFor(tabId: tabId) ?? workspaceManager
+                    if let workspace = owningManager.workspaces.first(where: { $0.id == tabId }),
                        workspace.agentPIDs["claude_code"] != nil {
                         return true
                     }
                     let tabTitle = owningManager.titleForTab(tabId) ?? "Terminal"
                     let command = actionTitle.isEmpty ? tabTitle : actionTitle
                     let body = actionBody
-                    let surfaceId = tabManager.focusedSurfaceId(for: tabId)
+                    let surfaceId = workspaceManager.focusedSurfaceId(for: tabId)
                     TerminalNotificationStore.shared.addNotification(
                         tabId: tabId,
                         surfaceId: surfaceId,
@@ -2932,8 +2932,8 @@ class GhosttyApp {
                 guard let app = AppDelegate.shared else { return }
                 if let callbackTabId,
                    let callbackSurfaceId,
-                   let manager = app.tabManagerFor(tabId: callbackTabId) ?? app.tabManager,
-                   let workspace = manager.tabs.first(where: { $0.id == callbackTabId }),
+                   let manager = app.workspaceManagerFor(tabId: callbackTabId) ?? app.workspaceManager,
+                   let workspace = manager.workspaces.first(where: { $0.id == callbackTabId }),
                    workspace.panels[callbackSurfaceId] != nil {
                     manager.closePanelAfterChildExited(tabId: callbackTabId, surfaceId: callbackSurfaceId)
                 }
@@ -2963,10 +2963,10 @@ class GhosttyApp {
             }
             return performOnMain {
                 guard let app = AppDelegate.shared,
-                      let tabManager = app.tabManagerFor(tabId: tabId) ?? app.tabManager else {
+                      let workspaceManager = app.workspaceManagerFor(tabId: tabId) ?? app.workspaceManager else {
                     return false
                 }
-                return tabManager.createSplit(tabId: tabId, surfaceId: surfaceId, direction: direction) != nil
+                return workspaceManager.createSplit(tabId: tabId, surfaceId: surfaceId, direction: direction) != nil
             }
         case GHOSTTY_ACTION_RING_BELL:
             performOnMain {
@@ -2980,8 +2980,8 @@ class GhosttyApp {
                 return false
             }
             return performOnMain {
-                guard let tabManager = AppDelegate.shared?.tabManager else { return false }
-                return tabManager.moveSplitFocus(tabId: tabId, surfaceId: surfaceId, direction: direction)
+                guard let workspaceManager = AppDelegate.shared?.workspaceManager else { return false }
+                return workspaceManager.moveSplitFocus(tabId: tabId, surfaceId: surfaceId, direction: direction)
             }
         case GHOSTTY_ACTION_RESIZE_SPLIT:
             guard let tabId = surfaceView.tabId,
@@ -2991,8 +2991,8 @@ class GhosttyApp {
             }
             let amount = action.action.resize_split.amount
             return performOnMain {
-                guard let tabManager = AppDelegate.shared?.tabManager else { return false }
-                return tabManager.resizeSplit(
+                guard let workspaceManager = AppDelegate.shared?.workspaceManager else { return false }
+                return workspaceManager.resizeSplit(
                     tabId: tabId,
                     surfaceId: surfaceId,
                     direction: direction,
@@ -3004,8 +3004,8 @@ class GhosttyApp {
                 return false
             }
             return performOnMain {
-                guard let tabManager = AppDelegate.shared?.tabManager else { return false }
-                return tabManager.equalizeSplits(tabId: tabId)
+                guard let workspaceManager = AppDelegate.shared?.workspaceManager else { return false }
+                return workspaceManager.equalizeSplits(tabId: tabId)
             }
         case GHOSTTY_ACTION_TOGGLE_SPLIT_ZOOM:
             guard let tabId = surfaceView.tabId,
@@ -3013,8 +3013,8 @@ class GhosttyApp {
                 return false
             }
             return performOnMain {
-                guard let tabManager = AppDelegate.shared?.tabManager else { return false }
-                return tabManager.toggleSplitZoom(tabId: tabId, surfaceId: surfaceId)
+                guard let workspaceManager = AppDelegate.shared?.workspaceManager else { return false }
+                return workspaceManager.toggleSplitZoom(tabId: tabId, surfaceId: surfaceId)
             }
         case GHOSTTY_ACTION_SCROLLBAR:
             let scrollbar = GhosttyScrollbar(c: action.action.scrollbar)
@@ -3093,7 +3093,7 @@ class GhosttyApp {
                   let surfaceId = surfaceView.terminalSurface?.id else { return true }
             let pwd = action.action.pwd.pwd.flatMap { String(cString: $0) } ?? ""
             DispatchQueue.main.async {
-                AppDelegate.shared?.tabManagerFor(tabId: tabId)?.updateSurfaceDirectory(
+                AppDelegate.shared?.workspaceManagerFor(tabId: tabId)?.updateSurfaceDirectory(
                     tabId: tabId,
                     surfaceId: surfaceId,
                     directory: pwd
@@ -3109,8 +3109,8 @@ class GhosttyApp {
                 .flatMap { String(cString: $0) } ?? ""
             performOnMain {
                 // Suppress OSC notifications for workspaces with active Claude hook sessions.
-                let owningManager = AppDelegate.shared?.tabManagerFor(tabId: tabId) ?? AppDelegate.shared?.tabManager
-                if let workspace = owningManager?.tabs.first(where: { $0.id == tabId }),
+                let owningManager = AppDelegate.shared?.workspaceManagerFor(tabId: tabId) ?? AppDelegate.shared?.workspaceManager
+                if let workspace = owningManager?.workspaces.first(where: { $0.id == tabId }),
                    workspace.agentPIDs["claude_code"] != nil {
                     return
                 }
@@ -5393,9 +5393,9 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
     func applyWindowBackgroundIfActive() {
         guard let window else { return }
         let appDelegate = AppDelegate.shared
-        let owningManager = tabId.flatMap { appDelegate?.tabManagerFor(tabId: $0) }
-        let owningSelectedTabId = owningManager?.selectedTabId
-        let activeSelectedTabId = owningManager == nil ? appDelegate?.tabManager?.selectedTabId : nil
+        let owningManager = tabId.flatMap { appDelegate?.workspaceManagerFor(tabId: $0) }
+        let owningSelectedTabId = owningManager?.selectedWorkspaceId
+        let activeSelectedTabId = owningManager == nil ? appDelegate?.workspaceManager?.selectedWorkspaceId : nil
         guard Self.shouldApplyWindowBackground(
             surfaceTabId: tabId,
             owningManagerExists: owningManager != nil,
@@ -6551,7 +6551,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 #if DEBUG
             let dismissNotificationStart = ProcessInfo.processInfo.systemUptime
 #endif
-            AppDelegate.shared?.tabManager?.dismissNotificationOnDirectInteraction(
+            AppDelegate.shared?.workspaceManager?.dismissNotificationOnDirectInteraction(
                 tabId: terminalSurface.tabId,
                 surfaceId: terminalSurface.id
             )
@@ -7355,7 +7355,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         requestPointerFocusRecovery()
         window?.makeFirstResponder(self)
         if let terminalSurface {
-            AppDelegate.shared?.tabManager?.dismissNotificationOnDirectInteraction(
+            AppDelegate.shared?.workspaceManager?.dismissNotificationOnDirectInteraction(
                 tabId: terminalSurface.tabId,
                 surfaceId: terminalSurface.id
             )
@@ -8079,8 +8079,8 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         guard let tabId,
               let surfaceId = terminalSurface?.id,
               let app = AppDelegate.shared,
-              let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
-              let workspace = manager.tabs.first(where: { $0.id == tabId }) else {
+              let manager = app.workspaceManagerFor(tabId: tabId) ?? app.workspaceManager,
+              let workspace = manager.workspaces.first(where: { $0.id == tabId }) else {
             return false
         }
         return workspace.panels[surfaceId] != nil
@@ -8099,7 +8099,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         guard let tabId,
               let surfaceId = terminalSurface?.id,
               let app = AppDelegate.shared,
-              let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager else {
+              let manager = app.workspaceManagerFor(tabId: tabId) ?? app.workspaceManager else {
             return false
         }
         return manager.createSplit(tabId: tabId, surfaceId: surfaceId, direction: direction) != nil
@@ -8649,13 +8649,13 @@ private final class GhosttyPassthroughVisualEffectView: NSVisualEffectView {
 }
 
 func shouldAllowEnsureFocusWindowActivation(
-    activeTabManager: TabManager?,
-    targetTabManager: TabManager,
+    activeWorkspaceManager: WorkspaceManager?,
+    targetWorkspaceManager: WorkspaceManager,
     keyWindow: NSWindow?,
     mainWindow: NSWindow?,
     targetWindow: NSWindow
 ) -> Bool {
-    guard activeTabManager === targetTabManager || (keyWindow == nil && mainWindow == nil) else {
+    guard activeWorkspaceManager === targetWorkspaceManager || (keyWindow == nil && mainWindow == nil) else {
         return false
     }
 
@@ -9826,9 +9826,9 @@ final class GhosttySurfaceScrollView: NSView {
     private func canApplyMountedSearchFieldFocusRequest() -> Bool {
         guard let terminalSurface = surfaceView.terminalSurface,
               let app = AppDelegate.shared,
-              let manager = app.tabManagerFor(tabId: terminalSurface.tabId),
-              manager.selectedTabId == terminalSurface.tabId,
-              let workspace = manager.tabs.first(where: { $0.id == terminalSurface.tabId }) else {
+              let manager = app.workspaceManagerFor(tabId: terminalSurface.tabId),
+              manager.selectedWorkspaceId == terminalSurface.tabId,
+              let workspace = manager.workspaces.first(where: { $0.id == terminalSurface.tabId }) else {
             return false
         }
         return workspace.focusedPanelId == terminalSurface.id
@@ -10286,7 +10286,7 @@ final class GhosttySurfaceScrollView: NSView {
 
 #if DEBUG
     private func debugLogWorkspaceSwitchTiming(event: String, suffix: String) {
-        guard let snapshot = AppDelegate.shared?.tabManager?.debugCurrentWorkspaceSwitchSnapshot() else {
+        guard let snapshot = AppDelegate.shared?.workspaceManager?.debugCurrentWorkspaceSwitchSnapshot() else {
             dlog("\(event) id=none \(suffix)")
             return
         }
@@ -10530,13 +10530,13 @@ final class GhosttySurfaceScrollView: NSView {
         }
 
         guard let delegate = AppDelegate.shared,
-              let tabManager = delegate.tabManagerFor(tabId: tabId) ?? delegate.tabManager,
-              tabManager.selectedTabId == tabId else {
+              let workspaceManager = delegate.workspaceManagerFor(tabId: tabId) ?? delegate.workspaceManager,
+              workspaceManager.selectedWorkspaceId == tabId else {
             scheduleAutomaticFirstResponderApply(reason: "ensureFocus.inactiveTab")
             return
         }
 
-        guard let tab = tabManager.tabs.first(where: { $0.id == tabId }),
+        guard let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
               let tabIdForSurface = tab.surfaceIdFromPanelId(surfaceId),
               let paneId = tab.bonsplitController.allPaneIds.first(where: { paneId in
                   tab.bonsplitController.tabs(inPane: paneId).contains(where: { $0.id == tabIdForSurface })
@@ -10572,8 +10572,8 @@ final class GhosttySurfaceScrollView: NSView {
 
         if !window.isKeyWindow {
             guard shouldAllowEnsureFocusWindowActivation(
-                activeTabManager: delegate.tabManager,
-                targetTabManager: tabManager,
+                activeWorkspaceManager: delegate.workspaceManager,
+                targetWorkspaceManager: workspaceManager,
                 keyWindow: NSApp.keyWindow,
                 mainWindow: NSApp.mainWindow,
                 targetWindow: window
@@ -10600,9 +10600,9 @@ final class GhosttySurfaceScrollView: NSView {
 
     private func matchesCurrentTerminalFocusTarget(tabId: UUID, surfaceId: UUID) -> Bool {
         guard let delegate = AppDelegate.shared,
-              let tabManager = delegate.tabManagerFor(tabId: tabId) ?? delegate.tabManager,
-              tabManager.selectedTabId == tabId,
-              let tab = tabManager.tabs.first(where: { $0.id == tabId }),
+              let workspaceManager = delegate.workspaceManagerFor(tabId: tabId) ?? delegate.workspaceManager,
+              workspaceManager.selectedWorkspaceId == tabId,
+              let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
               let tabIdForSurface = tab.surfaceIdFromPanelId(surfaceId),
               let paneId = tab.bonsplitController.allPaneIds.first(where: { paneId in
                   tab.bonsplitController.tabs(inPane: paneId).contains(where: { $0.id == tabIdForSurface })
@@ -12131,7 +12131,7 @@ struct GhosttyTerminalView: NSViewRepresentable {
         coordinator.hostedView = hostedView
 #if DEBUG
         if desiredStateChanged {
-            if let snapshot = AppDelegate.shared?.tabManager?.debugCurrentWorkspaceSwitchSnapshot() {
+            if let snapshot = AppDelegate.shared?.workspaceManager?.debugCurrentWorkspaceSwitchSnapshot() {
                 let dtMs = (CACurrentMediaTime() - snapshot.startedAt) * 1000
                 dlog(
                     "ws.swiftui.update id=\(snapshot.id) dt=\(String(format: "%.2fms", dtMs)) " +
@@ -12380,7 +12380,7 @@ struct GhosttyTerminalView: NSViewRepresentable {
         let hostedView = coordinator.hostedView
 #if DEBUG
         if let hostedView {
-            if let snapshot = AppDelegate.shared?.tabManager?.debugCurrentWorkspaceSwitchSnapshot() {
+            if let snapshot = AppDelegate.shared?.workspaceManager?.debugCurrentWorkspaceSwitchSnapshot() {
                 let dtMs = (CACurrentMediaTime() - snapshot.startedAt) * 1000
                 dlog(
                     "ws.swiftui.dismantle id=\(snapshot.id) dt=\(String(format: "%.2fms", dtMs)) " +

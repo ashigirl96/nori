@@ -135,7 +135,7 @@ enum UITestLaunchManifest {
 
 @main
 struct noriApp: App {
-    @StateObject private var tabManager: TabManager
+    @StateObject private var workspaceManager: WorkspaceManager
     @StateObject private var notificationStore = TerminalNotificationStore.shared
     @StateObject private var sidebarState = SidebarState()
     @StateObject private var sidebarSelectionState = SidebarSelectionState()
@@ -167,7 +167,7 @@ struct noriApp: App {
 
         let startupAppearance = AppearanceSettings.resolvedMode()
         Self.applyAppearance(startupAppearance)
-        _tabManager = StateObject(wrappedValue: TabManager())
+        _workspaceManager = StateObject(wrappedValue: WorkspaceManager())
         // Migrate legacy and old-format socket mode values to the new enum.
         let defaults = UserDefaults.standard
         if let stored = defaults.string(forKey: SocketControlSettings.appStorageKey) {
@@ -192,7 +192,7 @@ struct noriApp: App {
 
         // UI tests depend on AppDelegate wiring happening even if SwiftUI view appearance
         // callbacks (e.g. `.onAppear`) are delayed or skipped.
-        appDelegate.configure(tabManager: tabManager, notificationStore: notificationStore, sidebarState: sidebarState)
+        appDelegate.configure(workspaceManager: workspaceManager, notificationStore: notificationStore, sidebarState: sidebarState)
     }
 
     private static func configureGhosttyEnvironment() {
@@ -308,7 +308,7 @@ struct noriApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(windowId: primaryWindowId)
-                .environmentObject(tabManager)
+                .environmentObject(workspaceManager)
                 .environmentObject(notificationStore)
                 .environmentObject(sidebarState)
                 .environmentObject(sidebarSelectionState)
@@ -317,9 +317,9 @@ struct noriApp: App {
                 .onAppear {
                     // Start the Unix socket controller for programmatic access
                     updateSocketController()
-                    appDelegate.configure(tabManager: tabManager, notificationStore: notificationStore, sidebarState: sidebarState)
+                    appDelegate.configure(workspaceManager: workspaceManager, notificationStore: notificationStore, sidebarState: sidebarState)
                     appDelegate.fileExplorerState = fileExplorerState
-                    noriConfigStore.wireDirectoryTracking(tabManager: tabManager)
+                    noriConfigStore.wireDirectoryTracking(workspaceManager: workspaceManager)
                     noriConfigStore.loadAll()
                     applyAppearance()
                     if ProcessInfo.processInfo.environment["NORI_UI_TEST_SHOW_SETTINGS"] == "1" {
@@ -532,7 +532,7 @@ struct noriApp: App {
                             appDelegate.openNewMainWindow(nil)
                         }
                     } else {
-                        activeTabManager.addTab()
+                        activeWorkspaceManager.addTab()
                     }
                 }
 
@@ -577,7 +577,7 @@ struct noriApp: App {
                 splitCommandButton(title: String(localized: "menu.file.closeOtherTabs", defaultValue: "Close Other Tabs in Pane"), shortcut: menuShortcut(for: .closeOtherTabsInPane)) {
                     closeOtherTabsInFocusedPane()
                 }
-                .disabled(!activeTabManager.canCloseOtherTabsInFocusedPane())
+                .disabled(!activeWorkspaceManager.canCloseOtherTabsInFocusedPane())
 
                 // Cmd+Shift+W closes the current workspace (with confirmation if needed). If this
                 // is the last workspace, it closes the window.
@@ -586,11 +586,11 @@ struct noriApp: App {
                 }
 
                 Menu(String(localized: "commandPalette.switcher.workspaceLabel", defaultValue: "Workspace")) {
-                    workspaceCommandMenuContent(manager: activeTabManager)
+                    workspaceCommandMenuContent(manager: activeWorkspaceManager)
                 }
 
                 splitCommandButton(title: String(localized: "menu.file.reopenClosedBrowserPanel", defaultValue: "Reopen Closed Browser Panel"), shortcut: menuShortcut(for: .reopenClosedBrowserPanel)) {
-                    _ = activeTabManager.reopenMostRecentlyClosedBrowserPanel()
+                    _ = activeWorkspaceManager.reopenMostRecentlyClosedBrowserPanel()
                 }
             }
 
@@ -601,30 +601,30 @@ struct noriApp: App {
 #if DEBUG
                         dlog("find.menu Cmd+F fired")
 #endif
-                        activeTabManager.startSearch()
+                        activeWorkspaceManager.startSearch()
                     }
 
                     splitCommandButton(title: String(localized: "menu.find.findNext", defaultValue: "Find Next"), shortcut: menuShortcut(for: .findNext)) {
-                        activeTabManager.findNext()
+                        activeWorkspaceManager.findNext()
                     }
 
                     splitCommandButton(title: String(localized: "menu.find.findPrevious", defaultValue: "Find Previous"), shortcut: menuShortcut(for: .findPrevious)) {
-                        activeTabManager.findPrevious()
+                        activeWorkspaceManager.findPrevious()
                     }
 
                     Divider()
 
                     splitCommandButton(title: String(localized: "menu.find.hideFindBar", defaultValue: "Hide Find Bar"), shortcut: menuShortcut(for: .hideFind)) {
-                        activeTabManager.hideFind()
+                        activeWorkspaceManager.hideFind()
                     }
-                    .disabled(!(activeTabManager.isFindVisible))
+                    .disabled(!(activeWorkspaceManager.isFindVisible))
 
                     Divider()
 
                     splitCommandButton(title: String(localized: "menu.find.useSelectionForFind", defaultValue: "Use Selection for Find"), shortcut: menuShortcut(for: .useSelectionForFind)) {
-                        activeTabManager.searchSelection()
+                        activeWorkspaceManager.searchSelection()
                     }
-                    .disabled(!(activeTabManager.canUseSelectionForFind))
+                    .disabled(!(activeWorkspaceManager.canUseSelectionForFind))
                 }
             }
 
@@ -639,55 +639,55 @@ struct noriApp: App {
                 Divider()
 
                 splitCommandButton(title: String(localized: "menu.view.nextSurface", defaultValue: "Next Surface"), shortcut: menuShortcut(for: .nextSurface)) {
-                    activeTabManager.selectNextSurface()
+                    activeWorkspaceManager.selectNextSurface()
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.previousSurface", defaultValue: "Previous Surface"), shortcut: menuShortcut(for: .prevSurface)) {
-                    activeTabManager.selectPreviousSurface()
+                    activeWorkspaceManager.selectPreviousSurface()
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.back", defaultValue: "Back"), shortcut: menuShortcut(for: .browserBack)) {
-                    activeTabManager.focusedBrowserPanel?.goBack()
+                    activeWorkspaceManager.focusedBrowserPanel?.goBack()
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.forward", defaultValue: "Forward"), shortcut: menuShortcut(for: .browserForward)) {
-                    activeTabManager.focusedBrowserPanel?.goForward()
+                    activeWorkspaceManager.focusedBrowserPanel?.goForward()
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.reloadPage", defaultValue: "Reload Page"), shortcut: menuShortcut(for: .browserReload)) {
-                    activeTabManager.focusedBrowserPanel?.reload()
+                    activeWorkspaceManager.focusedBrowserPanel?.reload()
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.toggleDevTools", defaultValue: "Toggle Developer Tools"), shortcut: menuShortcut(for: .toggleBrowserDeveloperTools)) {
-                    let manager = activeTabManager
+                    let manager = activeWorkspaceManager
                     if !manager.toggleDeveloperToolsFocusedBrowser() {
                         NSSound.beep()
                     }
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.showJSConsole", defaultValue: "Show JavaScript Console"), shortcut: menuShortcut(for: .showBrowserJavaScriptConsole)) {
-                    let manager = activeTabManager
+                    let manager = activeWorkspaceManager
                     if !manager.showJavaScriptConsoleFocusedBrowser() {
                         NSSound.beep()
                     }
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.toggleReactGrab", defaultValue: "Toggle React Grab"), shortcut: menuShortcut(for: .toggleReactGrab)) {
-                    if !activeTabManager.toggleReactGrabFromCurrentFocus() {
+                    if !activeWorkspaceManager.toggleReactGrabFromCurrentFocus() {
                         NSSound.beep()
                     }
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.zoomIn", defaultValue: "Zoom In"), shortcut: menuShortcut(for: .browserZoomIn)) {
-                    _ = activeTabManager.zoomInFocusedBrowser()
+                    _ = activeWorkspaceManager.zoomInFocusedBrowser()
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.zoomOut", defaultValue: "Zoom Out"), shortcut: menuShortcut(for: .browserZoomOut)) {
-                    _ = activeTabManager.zoomOutFocusedBrowser()
+                    _ = activeWorkspaceManager.zoomOutFocusedBrowser()
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.actualSize", defaultValue: "Actual Size"), shortcut: menuShortcut(for: .browserZoomReset)) {
-                    _ = activeTabManager.resetZoomFocusedBrowser()
+                    _ = activeWorkspaceManager.resetZoomFocusedBrowser()
                 }
 
                 Button(String(localized: "menu.view.clearBrowserHistory", defaultValue: "Clear Browser History")) {
@@ -702,11 +702,11 @@ struct noriApp: App {
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.nextWorkspace", defaultValue: "Next Workspace"), shortcut: menuShortcut(for: .nextSidebarTab)) {
-                    activeTabManager.selectNextTab()
+                    activeWorkspaceManager.selectNextTab()
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.previousWorkspace", defaultValue: "Previous Workspace"), shortcut: menuShortcut(for: .prevSidebarTab)) {
-                    activeTabManager.selectPreviousTab()
+                    activeWorkspaceManager.selectPreviousTab()
                 }
 
                 splitCommandButton(title: String(localized: "menu.view.renameWorkspace", defaultValue: "Rename Workspace…"), shortcut: menuShortcut(for: .renameWorkspace)) {
@@ -747,15 +747,15 @@ struct noriApp: App {
                     let selectWorkspaceByNumberShortcut = menuShortcut(for: .selectWorkspaceByNumber)
                     if selectWorkspaceByNumberShortcut.hasChord {
                         Button(String(localized: "menu.view.workspace", defaultValue: "Workspace \(number)")) {
-                            let manager = activeTabManager
-                            if let targetIndex = WorkspaceShortcutMapper.workspaceIndex(forDigit: number, workspaceCount: manager.tabs.count) {
+                            let manager = activeWorkspaceManager
+                            if let targetIndex = WorkspaceShortcutMapper.workspaceIndex(forDigit: number, workspaceCount: manager.workspaces.count) {
                                 manager.selectTab(at: targetIndex)
                             }
                         }
                     } else {
                         Button(String(localized: "menu.view.workspace", defaultValue: "Workspace \(number)")) {
-                            let manager = activeTabManager
-                            if let targetIndex = WorkspaceShortcutMapper.workspaceIndex(forDigit: number, workspaceCount: manager.tabs.count) {
+                            let manager = activeWorkspaceManager
+                            if let targetIndex = WorkspaceShortcutMapper.workspaceIndex(forDigit: number, workspaceCount: manager.workspaces.count) {
                                 manager.selectTab(at: targetIndex)
                             }
                         }
@@ -808,7 +808,7 @@ struct noriApp: App {
         let mode = SocketControlSettings.effectiveMode(userMode: currentSocketMode)
         if mode != .off {
             TerminalController.shared.start(
-                tabManager: tabManager,
+                workspaceManager: workspaceManager,
                 socketPath: SocketControlSettings.socketPath(),
                 accessMode: mode
             )
@@ -830,10 +830,10 @@ struct noriApp: App {
         NotificationMenuSnapshotBuilder.make(notifications: notificationStore.notifications)
     }
 
-    private var activeTabManager: TabManager {
+    private var activeWorkspaceManager: WorkspaceManager {
         AppDelegate.shared?.synchronizeActiveMainWindowContext(
             preferredWindow: NSApp.keyWindow ?? NSApp.mainWindow
-        ) ?? tabManager
+        ) ?? workspaceManager
     }
 
     private func notificationMenuItemTitle(for notification: TerminalNotification) -> String {
@@ -853,110 +853,110 @@ struct noriApp: App {
         if AppDelegate.shared?.performSplitShortcut(direction: direction) == true {
             return
         }
-        tabManager.createSplit(direction: direction)
+        workspaceManager.createSplit(direction: direction)
     }
 
     private func performBrowserSplitFromMenu(direction: SplitDirection) {
         if AppDelegate.shared?.performBrowserSplitShortcut(direction: direction) == true {
             return
         }
-        _ = tabManager.createBrowserSplit(direction: direction)
+        _ = workspaceManager.createBrowserSplit(direction: direction)
     }
 
-    private func selectedWorkspaceIndex(in manager: TabManager, workspaceId: UUID) -> Int? {
-        manager.tabs.firstIndex { $0.id == workspaceId }
+    private func selectedWorkspaceIndex(in manager: WorkspaceManager, workspaceId: UUID) -> Int? {
+        manager.workspaces.firstIndex { $0.id == workspaceId }
     }
 
-    private func selectedWorkspaceWindowMoveTargets(in manager: TabManager) -> [AppDelegate.WindowMoveTarget] {
+    private func selectedWorkspaceWindowMoveTargets(in manager: WorkspaceManager) -> [AppDelegate.WindowMoveTarget] {
         let referenceWindowId = AppDelegate.shared?.windowId(for: manager)
         return AppDelegate.shared?.windowMoveTargets(referenceWindowId: referenceWindowId) ?? []
     }
 
-    private func toggleSelectedWorkspacePinned(in manager: TabManager) {
+    private func toggleSelectedWorkspacePinned(in manager: WorkspaceManager) {
         guard let workspace = manager.selectedWorkspace else { return }
         manager.setPinned(workspace, pinned: !workspace.isPinned)
     }
 
-    private func clearSelectedWorkspaceCustomName(in manager: TabManager) {
+    private func clearSelectedWorkspaceCustomName(in manager: WorkspaceManager) {
         guard let workspace = manager.selectedWorkspace else { return }
         manager.clearCustomTitle(tabId: workspace.id)
     }
 
-    private func moveSelectedWorkspace(in manager: TabManager, by delta: Int) {
+    private func moveSelectedWorkspace(in manager: WorkspaceManager, by delta: Int) {
         guard let workspace = manager.selectedWorkspace,
               let currentIndex = selectedWorkspaceIndex(in: manager, workspaceId: workspace.id) else { return }
         let targetIndex = currentIndex + delta
-        guard targetIndex >= 0, targetIndex < manager.tabs.count else { return }
+        guard targetIndex >= 0, targetIndex < manager.workspaces.count else { return }
         _ = manager.reorderWorkspace(tabId: workspace.id, toIndex: targetIndex)
         manager.selectWorkspace(workspace)
     }
 
-    private func moveSelectedWorkspaceToTop(in manager: TabManager) {
+    private func moveSelectedWorkspaceToTop(in manager: WorkspaceManager) {
         guard let workspace = manager.selectedWorkspace else { return }
         manager.moveTabsToTop([workspace.id])
         manager.selectWorkspace(workspace)
     }
 
-    private func moveSelectedWorkspace(in manager: TabManager, toWindow windowId: UUID) {
+    private func moveSelectedWorkspace(in manager: WorkspaceManager, toWindow windowId: UUID) {
         guard let workspace = manager.selectedWorkspace else { return }
         _ = AppDelegate.shared?.moveWorkspaceToWindow(workspaceId: workspace.id, windowId: windowId, focus: true)
     }
 
-    private func moveSelectedWorkspaceToNewWindow(in manager: TabManager) {
+    private func moveSelectedWorkspaceToNewWindow(in manager: WorkspaceManager) {
         guard let workspace = manager.selectedWorkspace else { return }
         _ = AppDelegate.shared?.moveWorkspaceToNewWindow(workspaceId: workspace.id, focus: true)
     }
 
     private func closeWorkspaceIds(
         _ workspaceIds: [UUID],
-        in manager: TabManager,
+        in manager: WorkspaceManager,
         allowPinned: Bool
     ) {
         manager.closeWorkspacesWithConfirmation(workspaceIds, allowPinned: allowPinned)
     }
 
-    private func closeOtherSelectedWorkspacePeers(in manager: TabManager) {
+    private func closeOtherSelectedWorkspacePeers(in manager: WorkspaceManager) {
         guard let workspace = manager.selectedWorkspace else { return }
-        let workspaceIds = manager.tabs.compactMap { $0.id == workspace.id ? nil : $0.id }
+        let workspaceIds = manager.workspaces.compactMap { $0.id == workspace.id ? nil : $0.id }
         closeWorkspaceIds(workspaceIds, in: manager, allowPinned: true)
     }
 
-    private func closeSelectedWorkspacesBelow(in manager: TabManager) {
+    private func closeSelectedWorkspacesBelow(in manager: WorkspaceManager) {
         guard let workspace = manager.selectedWorkspace,
               let anchorIndex = selectedWorkspaceIndex(in: manager, workspaceId: workspace.id) else { return }
-        let workspaceIds = manager.tabs.suffix(from: anchorIndex + 1).map(\.id)
+        let workspaceIds = manager.workspaces.suffix(from: anchorIndex + 1).map(\.id)
         closeWorkspaceIds(workspaceIds, in: manager, allowPinned: true)
     }
 
-    private func closeSelectedWorkspacesAbove(in manager: TabManager) {
+    private func closeSelectedWorkspacesAbove(in manager: WorkspaceManager) {
         guard let workspace = manager.selectedWorkspace,
               let anchorIndex = selectedWorkspaceIndex(in: manager, workspaceId: workspace.id) else { return }
-        let workspaceIds = manager.tabs.prefix(upTo: anchorIndex).map(\.id)
+        let workspaceIds = manager.workspaces.prefix(upTo: anchorIndex).map(\.id)
         closeWorkspaceIds(workspaceIds, in: manager, allowPinned: true)
     }
 
-    private func selectedWorkspaceHasUnreadNotifications(in manager: TabManager) -> Bool {
+    private func selectedWorkspaceHasUnreadNotifications(in manager: WorkspaceManager) -> Bool {
         guard let workspaceId = manager.selectedWorkspace?.id else { return false }
         return notificationStore.notifications.contains { $0.tabId == workspaceId && !$0.isRead }
     }
 
-    private func selectedWorkspaceHasReadNotifications(in manager: TabManager) -> Bool {
+    private func selectedWorkspaceHasReadNotifications(in manager: WorkspaceManager) -> Bool {
         guard let workspaceId = manager.selectedWorkspace?.id else { return false }
         return notificationStore.notifications.contains { $0.tabId == workspaceId && $0.isRead }
     }
 
-    private func markSelectedWorkspaceRead(in manager: TabManager) {
+    private func markSelectedWorkspaceRead(in manager: WorkspaceManager) {
         guard let workspaceId = manager.selectedWorkspace?.id else { return }
         notificationStore.markRead(forTabId: workspaceId)
     }
 
-    private func markSelectedWorkspaceUnread(in manager: TabManager) {
+    private func markSelectedWorkspaceUnread(in manager: WorkspaceManager) {
         guard let workspaceId = manager.selectedWorkspace?.id else { return }
         notificationStore.markUnread(forTabId: workspaceId)
     }
 
     @ViewBuilder
-    private func workspaceCommandMenuContent(manager: TabManager) -> some View {
+    private func workspaceCommandMenuContent(manager: WorkspaceManager) -> some View {
         let workspace = manager.selectedWorkspace
         let workspaceIndex = workspace.flatMap { selectedWorkspaceIndex(in: manager, workspaceId: $0.id) }
         let windowMoveTargets = selectedWorkspaceWindowMoveTargets(in: manager)
@@ -996,7 +996,7 @@ struct noriApp: App {
         Button(String(localized: "contextMenu.moveDown", defaultValue: "Move Down")) {
             moveSelectedWorkspace(in: manager, by: 1)
         }
-        .disabled(workspaceIndex == nil || workspaceIndex == manager.tabs.count - 1)
+        .disabled(workspaceIndex == nil || workspaceIndex == manager.workspaces.count - 1)
 
         Button(String(localized: "contextMenu.moveToTop", defaultValue: "Move to Top")) {
             moveSelectedWorkspaceToTop(in: manager)
@@ -1032,12 +1032,12 @@ struct noriApp: App {
         Button(String(localized: "contextMenu.closeOtherWorkspaces", defaultValue: "Close Other Workspaces")) {
             closeOtherSelectedWorkspacePeers(in: manager)
         }
-        .disabled(workspace == nil || manager.tabs.count <= 1)
+        .disabled(workspace == nil || manager.workspaces.count <= 1)
 
         Button(String(localized: "contextMenu.closeWorkspacesBelow", defaultValue: "Close Workspaces Below")) {
             closeSelectedWorkspacesBelow(in: manager)
         }
-        .disabled(workspaceIndex == nil || workspaceIndex == manager.tabs.count - 1)
+        .disabled(workspaceIndex == nil || workspaceIndex == manager.workspaces.count - 1)
 
         Button(String(localized: "contextMenu.closeWorkspacesAbove", defaultValue: "Close Workspaces Above")) {
             closeSelectedWorkspacesAbove(in: manager)
@@ -1073,15 +1073,15 @@ struct noriApp: App {
             window.performClose(nil)
             return
         }
-        activeTabManager.closeCurrentPanelWithConfirmation()
+        activeWorkspaceManager.closeCurrentPanelWithConfirmation()
     }
 
     private func closeOtherTabsInFocusedPane() {
-        activeTabManager.closeOtherTabsInFocusedPaneWithConfirmation()
+        activeWorkspaceManager.closeOtherTabsInFocusedPaneWithConfirmation()
     }
 
     private func closeTabOrWindow() {
-        activeTabManager.closeCurrentTabWithConfirmation()
+        activeWorkspaceManager.closeCurrentTabWithConfirmation()
     }
 
     private func showNotificationsPopover() {

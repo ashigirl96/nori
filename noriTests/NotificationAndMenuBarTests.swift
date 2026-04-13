@@ -456,10 +456,10 @@ final class NotificationDockBadgeTests: XCTestCase {
             XCTFail("AppDelegate.shared must be set for this test")
             return
         }
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let store = TerminalNotificationStore.shared
 
-        let originalTabManager = appDelegate.tabManager
+        let originalWorkspaceManager = appDelegate.workspaceManager
         let originalNotificationStore = appDelegate.notificationStore
         let originalAppFocusOverride = AppFocusState.overrideIsFocused
 
@@ -473,13 +473,13 @@ final class NotificationDockBadgeTests: XCTestCase {
         store.configureSuppressedNotificationFeedbackHandlerForTesting { _, notification in
             localFeedbackNotificationIDs.append(notification.id)
         }
-        appDelegate.tabManager = manager
+        appDelegate.workspaceManager = manager
         appDelegate.notificationStore = store
         AppFocusState.overrideIsFocused = true
 
         defer {
             store.replaceNotificationsForTesting([])
-            appDelegate.tabManager = originalTabManager
+            appDelegate.workspaceManager = originalWorkspaceManager
             appDelegate.notificationStore = originalNotificationStore
             AppFocusState.overrideIsFocused = originalAppFocusOverride
         }
@@ -510,13 +510,13 @@ final class NotificationDockBadgeTests: XCTestCase {
             XCTFail("AppDelegate.shared must be set for this test")
             return
         }
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let store = TerminalNotificationStore.shared
         let defaults = UserDefaults.standard
         let commandOutputURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("nori-notification-command-\(UUID().uuidString).txt", isDirectory: false)
 
-        let originalTabManager = appDelegate.tabManager
+        let originalWorkspaceManager = appDelegate.workspaceManager
         let originalNotificationStore = appDelegate.notificationStore
         let originalAppFocusOverride = AppFocusState.overrideIsFocused
         let hadSoundValue = defaults.object(forKey: NotificationSoundSettings.key) != nil
@@ -530,7 +530,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         store.configureNotificationDeliveryHandlerForTesting { _, notification in
             deliveredNotificationIDs.append(notification.id)
         }
-        appDelegate.tabManager = manager
+        appDelegate.workspaceManager = manager
         appDelegate.notificationStore = store
         AppFocusState.overrideIsFocused = true
         defaults.set("none", forKey: NotificationSoundSettings.key)
@@ -541,7 +541,7 @@ final class NotificationDockBadgeTests: XCTestCase {
 
         defer {
             store.replaceNotificationsForTesting([])
-            appDelegate.tabManager = originalTabManager
+            appDelegate.workspaceManager = originalWorkspaceManager
             appDelegate.notificationStore = originalNotificationStore
             AppFocusState.overrideIsFocused = originalAppFocusOverride
             if hadSoundValue {
@@ -854,23 +854,23 @@ final class MenuBarBadgeLabelFormatterTests: XCTestCase {
 final class FocusedNotificationIndicatorTests: XCTestCase {
     func testFocusedNotificationIndicatorRemainsVisibleAfterFocusedNotificationIsRead() {
         let appDelegate = AppDelegate.shared ?? AppDelegate()
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let store = TerminalNotificationStore.shared
 
-        let originalTabManager = appDelegate.tabManager
+        let originalWorkspaceManager = appDelegate.workspaceManager
         let originalNotificationStore = appDelegate.notificationStore
         let originalAppFocusOverride = AppFocusState.overrideIsFocused
 
         store.replaceNotificationsForTesting([])
         store.configureNotificationDeliveryHandlerForTesting { _, _ in }
-        appDelegate.tabManager = manager
+        appDelegate.workspaceManager = manager
         appDelegate.notificationStore = store
         AppFocusState.overrideIsFocused = true
 
         defer {
             store.replaceNotificationsForTesting([])
             store.resetNotificationDeliveryHandlerForTesting()
-            appDelegate.tabManager = originalTabManager
+            appDelegate.workspaceManager = originalWorkspaceManager
             appDelegate.notificationStore = originalNotificationStore
             AppFocusState.overrideIsFocused = originalAppFocusOverride
         }
@@ -904,23 +904,23 @@ final class FocusedNotificationIndicatorTests: XCTestCase {
 
     func testNewNotificationOnDifferentSurfaceClearsPreviousFocusedReadIndicator() {
         let appDelegate = AppDelegate.shared ?? AppDelegate()
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let store = TerminalNotificationStore.shared
 
-        let originalTabManager = appDelegate.tabManager
+        let originalWorkspaceManager = appDelegate.workspaceManager
         let originalNotificationStore = appDelegate.notificationStore
         let originalAppFocusOverride = AppFocusState.overrideIsFocused
 
         store.replaceNotificationsForTesting([])
         store.configureNotificationDeliveryHandlerForTesting { _, _ in }
-        appDelegate.tabManager = manager
+        appDelegate.workspaceManager = manager
         appDelegate.notificationStore = store
         AppFocusState.overrideIsFocused = true
 
         defer {
             store.replaceNotificationsForTesting([])
             store.resetNotificationDeliveryHandlerForTesting()
-            appDelegate.tabManager = originalTabManager
+            appDelegate.workspaceManager = originalWorkspaceManager
             appDelegate.notificationStore = originalNotificationStore
             AppFocusState.overrideIsFocused = originalAppFocusOverride
         }

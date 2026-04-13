@@ -6,13 +6,13 @@ struct NoriConfigExecutor {
 
     static func execute(
         command: NoriCommandDefinition,
-        tabManager: TabManager,
+        workspaceManager: WorkspaceManager,
         baseCwd: String,
         configSourcePath: String?,
         globalConfigPath: String
     ) {
         if let workspace = command.workspace {
-            executeWorkspaceCommand(command: command, workspace: workspace, tabManager: tabManager, baseCwd: baseCwd)
+            executeWorkspaceCommand(command: command, workspace: workspace, workspaceManager: workspaceManager, baseCwd: baseCwd)
         } else if let rawCommand = command.command {
             let shellCommand = sanitizeForDisplay(rawCommand)
             let needsConfirm = command.confirm ?? false
@@ -25,7 +25,7 @@ struct NoriConfigExecutor {
                     guard showConfirmDialog(command: shellCommand, configPath: sourcePath) else { return }
                 }
             }
-            guard let terminal = tabManager.selectedWorkspace?.focusedTerminalPanel else { return }
+            guard let terminal = workspaceManager.selectedWorkspace?.focusedTerminalPanel else { return }
             terminal.sendInput(shellCommand + "\n")
         }
     }
@@ -84,19 +84,19 @@ struct NoriConfigExecutor {
     private static func executeWorkspaceCommand(
         command: NoriCommandDefinition,
         workspace wsDef: NoriWorkspaceDefinition,
-        tabManager: TabManager,
+        workspaceManager: WorkspaceManager,
         baseCwd: String
     ) {
         let workspaceName = wsDef.name ?? command.name
         let restart = command.restart ?? .ignore
 
-        if let existing = tabManager.tabs.first(where: { $0.customTitle == workspaceName }) {
+        if let existing = workspaceManager.workspaces.first(where: { $0.customTitle == workspaceName }) {
             switch restart {
             case .ignore:
-                tabManager.selectWorkspace(existing)
+                workspaceManager.selectWorkspace(existing)
                 return
             case .recreate:
-                tabManager.closeWorkspace(existing)
+                workspaceManager.closeWorkspace(existing)
             case .confirm:
                 let alert = NSAlert()
                 alert.messageText = String(
@@ -111,15 +111,15 @@ struct NoriConfigExecutor {
                 alert.addButton(withTitle: String(localized: "dialog.noriConfig.confirmRestart.recreate", defaultValue: "Recreate"))
                 alert.addButton(withTitle: String(localized: "dialog.noriConfig.confirmRestart.cancel", defaultValue: "Cancel"))
                 guard alert.runModal() == .alertFirstButtonReturn else {
-                    tabManager.selectWorkspace(existing)
+                    workspaceManager.selectWorkspace(existing)
                     return
                 }
-                tabManager.closeWorkspace(existing)
+                workspaceManager.closeWorkspace(existing)
             }
         }
 
         let resolvedCwd = NoriConfigStore.resolveCwd(wsDef.cwd, relativeTo: baseCwd)
-        let newWorkspace = tabManager.addWorkspace(workingDirectory: resolvedCwd)
+        let newWorkspace = workspaceManager.addWorkspace(workingDirectory: resolvedCwd)
         newWorkspace.setCustomTitle(workspaceName)
         if let color = wsDef.color {
             newWorkspace.setCustomColor(color)
