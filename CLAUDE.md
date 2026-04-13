@@ -235,7 +235,7 @@ git commit -m "Update ghostty submodule"
 Use the `/release` command to prepare a new release. This will:
 1. Determine the new version (bumps minor by default)
 2. Gather commits since the last tag and update the changelog
-3. Update `CHANGELOG.md` (the docs changelog page at `web/app/docs/changelog/page.tsx` reads from it)
+3. Update `CHANGELOG.md`
 4. Run `./scripts/bump-version.sh` to update both versions
 5. Commit, run `./scripts/release-pretag-guard.sh`, tag, and push
 
