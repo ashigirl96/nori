@@ -19,8 +19,8 @@
       <responds-to command="new window">
         <cocoa method="handleNewWindowScriptCommand:"/>
       </responds-to>
-      <responds-to command="new tab">
-        <cocoa method="handleNewTabScriptCommand:"/>
+      <responds-to command="new workspace">
+        <cocoa method="handleNewWorkspaceScriptCommand:"/>
       </responds-to>
       <responds-to command="quit">
         <cocoa method="handleQuitScriptCommand:"/>
@@ -41,8 +41,8 @@
       <property name="name" code="pnam" type="text" access="r" description="The title of the window.">
         <cocoa key="title"/>
       </property>
-      <property name="selected tab" code="CMsT" type="tab" access="r" description="The selected workspace in this window.">
-        <cocoa key="selectedTab"/>
+      <property name="selected workspace" code="CMsT" type="workspace" access="r" description="The selected workspace in this window.">
+        <cocoa key="selectedWorkspace"/>
       </property>
       <responds-to command="activate window">
         <cocoa method="handleActivateWindowCommand:"/>
@@ -50,16 +50,16 @@
       <responds-to command="close window">
         <cocoa method="handleCloseWindowCommand:"/>
       </responds-to>
-      <element type="tab" access="r">
-        <cocoa key="tabs"/>
+      <element type="workspace" access="r">
+        <cocoa key="workspaces"/>
       </element>
       <element type="terminal" access="r">
         <cocoa key="terminals"/>
       </element>
     </class>
 
-    <class name="tab" code="CMtb" plural="tabs" description="A nori workspace.">
-      <cocoa class="NoriScriptTab"/>
+    <class name="workspace" code="CMtb" plural="workspaces" description="A nori workspace.">
+      <cocoa class="NoriScriptWorkspace"/>
       <property name="id" code="ID  " type="text" access="r" description="Stable ID for this workspace."/>
       <property name="name" code="pnam" type="text" access="r" description="The title of the workspace.">
         <cocoa key="title"/>
@@ -69,11 +69,11 @@
       <property name="focused terminal" code="CMfT" type="terminal" access="r" description="The currently focused terminal panel in this workspace.">
         <cocoa key="focusedTerminal"/>
       </property>
-      <responds-to command="select tab">
-        <cocoa method="handleSelectTabCommand:"/>
+      <responds-to command="select workspace">
+        <cocoa method="handleSelectWorkspaceCommand:"/>
       </responds-to>
-      <responds-to command="close tab">
-        <cocoa method="handleCloseTabCommand:"/>
+      <responds-to command="close workspace">
+        <cocoa method="handleCloseWorkspaceCommand:"/>
       </responds-to>
       <element type="terminal" access="r">
         <cocoa key="terminals"/>
@@ -119,11 +119,11 @@
       <result type="window" description="The newly created window."/>
     </command>
 
-    <command name="new tab" code="NoriNTab" description="Create a new workspace.">
+    <command name="new workspace" code="NoriNTab" description="Create a new workspace.">
       <parameter name="in" code="CMtW" type="window" optional="yes" description="Target window for the new workspace.">
         <cocoa key="window"/>
       </parameter>
-      <result type="tab" description="The newly created workspace."/>
+      <result type="workspace" description="The newly created workspace."/>
     </command>
 
     <command name="split" code="NoriSplt" description="Split a terminal in the given direction.">
@@ -146,11 +146,11 @@
       <direct-parameter type="specifier" description="The window to activate."/>
     </command>
 
-    <command name="select tab" code="NoriSlTb" description="Select a workspace in its window.">
+    <command name="select workspace" code="NoriSlTb" description="Select a workspace in its window.">
       <direct-parameter type="specifier" description="The workspace to select."/>
     </command>
 
-    <command name="close tab" code="NoriClTb" description="Close a workspace.">
+    <command name="close workspace" code="NoriClTb" description="Close a workspace.">
       <direct-parameter type="specifier" description="The workspace to close."/>
     </command>
 

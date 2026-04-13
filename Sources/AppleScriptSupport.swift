@@ -193,8 +193,8 @@ extension NSApplication {
         return ScriptWindow(windowId: windowId)
     }
 
-    @objc(handleNewTabScriptCommand:)
-    func handleNewTabScriptCommand(_ command: NSScriptCommand) -> ScriptTab? {
+    @objc(handleNewWorkspaceScriptCommand:)
+    func handleNewWorkspaceScriptCommand(_ command: NSScriptCommand) -> ScriptWorkspace? {
         guard validateScript(command: command) else { return nil }
 
         guard let appDelegate = AppDelegate.shared else {
@@ -209,16 +209,16 @@ extension NSApplication {
                 command.scriptErrorString = AppleScriptStrings.failedToCreateWorkspace
                 return nil
             }
-            return ScriptTab(windowId: targetWindow.windowId, tabId: workspaceId)
+            return ScriptWorkspace(windowId: targetWindow.windowId, tabId: workspaceId)
         }
 
         if let frontWindow = scriptWindows.first,
            let workspaceId = appDelegate.addWorkspace(windowId: frontWindow.windowId, bringToFront: false) {
-            return ScriptTab(windowId: frontWindow.windowId, tabId: workspaceId)
+            return ScriptWorkspace(windowId: frontWindow.windowId, tabId: workspaceId)
         }
 
         let windowId = appDelegate.createMainWindow()
-        return ScriptWindow(windowId: windowId).selectedTab
+        return ScriptWindow(windowId: windowId).selectedWorkspace
     }
 
     @objc(handleQuitScriptCommand:)
@@ -262,22 +262,22 @@ final class ScriptWindow: NSObject {
         return state.workspaceManager.selectedWorkspace?.title ?? ""
     }
 
-    @objc(tabs)
-    var tabs: [ScriptTab] {
+    @objc(workspaces)
+    var workspaces: [ScriptWorkspace] {
         guard NSApp.isAppleScriptEnabled,
               let state else {
             return []
         }
-        return state.workspaceManager.workspaces.map { ScriptTab(windowId: windowId, tabId: $0.id) }
+        return state.workspaceManager.workspaces.map { ScriptWorkspace(windowId: windowId, tabId: $0.id) }
     }
 
-    @objc(selectedTab)
-    var selectedTab: ScriptTab? {
+    @objc(selectedWorkspace)
+    var selectedWorkspace: ScriptWorkspace? {
         guard NSApp.isAppleScriptEnabled,
               let selectedId = state?.workspaceManager.selectedWorkspaceId else {
             return nil
         }
-        return ScriptTab(windowId: windowId, tabId: selectedId)
+        return ScriptWorkspace(windowId: windowId, tabId: selectedId)
     }
 
     @objc(terminals)
@@ -293,15 +293,15 @@ final class ScriptWindow: NSObject {
         }
     }
 
-    @objc(valueInTabsWithUniqueID:)
-    func valueInTabs(uniqueID: String) -> ScriptTab? {
+    @objc(valueInWorkspacesWithUniqueID:)
+    func valueInWorkspaces(uniqueID: String) -> ScriptWorkspace? {
         guard NSApp.isAppleScriptEnabled,
               let tabId = UUID(uuidString: uniqueID),
               let state,
               state.workspaceManager.workspaces.contains(where: { $0.id == tabId }) else {
             return nil
         }
-        return ScriptTab(windowId: windowId, tabId: tabId)
+        return ScriptWorkspace(windowId: windowId, tabId: tabId)
     }
 
     @objc(valueInTerminalsWithUniqueID:)
@@ -362,8 +362,8 @@ final class ScriptWindow: NSObject {
 }
 
 @MainActor
-@objc(NoriScriptTab)
-final class ScriptTab: NSObject {
+@objc(NoriScriptWorkspace)
+final class ScriptWorkspace: NSObject {
     let windowId: UUID
     let tabId: UUID
 
@@ -443,8 +443,8 @@ final class ScriptTab: NSObject {
         return ScriptTerminal(workspaceId: tabId, terminalId: terminalId)
     }
 
-    @objc(handleSelectTabCommand:)
-    func handleSelectTab(_ command: NSScriptCommand) -> Any? {
+    @objc(handleSelectWorkspaceCommand:)
+    func handleSelectWorkspace(_ command: NSScriptCommand) -> Any? {
         guard NSApp.validateScript(command: command) else { return nil }
 
         guard let state,
@@ -458,8 +458,8 @@ final class ScriptTab: NSObject {
         return nil
     }
 
-    @objc(handleCloseTabCommand:)
-    func handleCloseTab(_ command: NSScriptCommand) -> Any? {
+    @objc(handleCloseWorkspaceCommand:)
+    func handleCloseWorkspace(_ command: NSScriptCommand) -> Any? {
         guard NSApp.validateScript(command: command) else { return nil }
 
         guard let state,
@@ -494,7 +494,7 @@ final class ScriptTab: NSObject {
         return NSUniqueIDSpecifier(
             containerClassDescription: windowClassDescription,
             containerSpecifier: windowSpecifier,
-            key: "tabs",
+            key: "workspaces",
             uniqueID: tabId.uuidString
         )
     }
