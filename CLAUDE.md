@@ -10,19 +10,14 @@ Run the setup script to initialize submodules and build GhosttyKit:
 
 ## Local dev
 
-After making code changes, always run the reload script with a tag to build the Debug app:
+After making code changes, run the reload script to build the Debug app:
 
 ```bash
-./scripts/reload.sh --tag fix-zsh-autosuggestions
+./scripts/reload.sh           # build only; prints `App path:` for cmd-click
+./scripts/reload.sh --launch  # build, quit any running instance, then open
 ```
 
-**Default tag**: when the user does not specify a tag (e.g. asks to "build" or "reload"), use `--tag build`. Only pick a different tag if the user explicitly names one or the work is clearly a distinct feature branch.
-
-By default, `reload.sh` builds but does **not** launch the app. The script prints the `.app` path so the user can cmd-click to open it. Pass `--launch` to kill any existing instance and open the app automatically:
-
-```bash
-./scripts/reload.sh --tag fix-zsh-autosuggestions --launch
-```
+The build is pinned to `~/Library/Developer/Xcode/DerivedData/GhosttyTabs`. Output is `cmux DEV.app` (Debug configuration, bundle ID `com.cmuxterm.app.debug`, socket `/tmp/cmux-debug.sock`). Bundle ID and socket are isolated from any production `/Applications/cmux.app`, so the dev build can coexist with it.
 
 `reload.sh` prints an `App path:` line with the absolute path to the built `.app`. Use that path to build a cmd-clickable `file://` URL. Steps:
 
@@ -30,39 +25,21 @@ By default, `reload.sh` builds but does **not** launch the app. The script print
 2. Prepend `file://` and URL-encode spaces as `%20`. Do not hardcode any part of the path.
 3. Format it as a markdown link using the template for your agent type.
 
-Example. If `reload.sh` output contains:
-```
-App path:
-  /Users/someone/Library/Developer/Xcode/DerivedData/cmux-my-tag/Build/Products/Debug/cmux DEV my-tag.app
-```
-
 **Claude Code** outputs:
 ```markdown
 =======================================================
-[cmux DEV my-tag.app](file:///Users/someone/Library/Developer/Xcode/DerivedData/cmux-my-tag/Build/Products/Debug/cmux%20DEV%20my-tag.app)
+[cmux DEV.app](file:///Users/someone/Library/Developer/Xcode/DerivedData/GhosttyTabs/Build/Products/Debug/cmux%20DEV.app)
 =======================================================
 ```
 
 **Codex** outputs:
 ```
 =======================================================
-[my-tag: file:///Users/someone/Library/Developer/Xcode/DerivedData/cmux-my-tag/Build/Products/Debug/cmux%20DEV%20my-tag.app](file:///Users/someone/Library/Developer/Xcode/DerivedData/cmux-my-tag/Build/Products/Debug/cmux%20DEV%20my-tag.app)
+[cmux DEV.app: file:///Users/someone/Library/Developer/Xcode/DerivedData/GhosttyTabs/Build/Products/Debug/cmux%20DEV.app](file:///Users/someone/Library/Developer/Xcode/DerivedData/GhosttyTabs/Build/Products/Debug/cmux%20DEV.app)
 =======================================================
 ```
 
-Never use `/tmp/cmux-<tag>/...` app links in chat output.
-
-After making code changes, always use `reload.sh --tag` to build. **Never run bare `xcodebuild` or `open` an untagged `cmux DEV.app`.** Untagged builds share the default debug socket and bundle ID with other agents, causing conflicts and stealing focus.
-
-```bash
-./scripts/reload.sh --tag <your-branch-slug>
-```
-
-If you only need to verify the build compiles (no launch), use a tagged derivedDataPath:
-
-```bash
-xcodebuild -project GhosttyTabs.xcodeproj -scheme cmux -configuration Debug -destination 'platform=macOS' -derivedDataPath /tmp/cmux-<your-tag> build
-```
+If you only need to verify the build compiles (no launch), `./scripts/reload.sh` without `--launch` is the right call.
 
 When rebuilding GhosttyKit.xcframework, always use Release optimizations:
 
@@ -70,60 +47,34 @@ When rebuilding GhosttyKit.xcframework, always use Release optimizations:
 cd ghostty && zig build -Demit-xcframework=true -Dxcframework-target=universal -Doptimize=ReleaseFast
 ```
 
-When rebuilding cmuxd for release/bundling, always use ReleaseFast:
+`reload.sh` automatically rebuilds `cmuxd` (ReleaseFast) and copies it into the bundle.
+
+## Install over `/Applications/cmux.app`
+
+When you want to replace the production install with a local Release build of
+this fork:
 
 ```bash
-cd cmuxd && zig build -Doptimize=ReleaseFast
+./scripts/install.sh           # build Release + copy to /Applications/cmux.app
+./scripts/install.sh --launch  # build, install, then open
 ```
 
-`reload` = build the Debug app (tag required). Pass `--launch` to also kill existing and open:
+This builds `cmux.app` under the Release configuration (bundle ID
+`com.cmuxterm.app`, `PRODUCT_NAME=cmux`), quits any running production
+instance, removes the existing `/Applications/cmux.app`, and copies the new
+bundle in place. Debug `cmux DEV.app` builds from `reload.sh` are unaffected
+because they use a distinct bundle ID (`com.cmuxterm.app.debug`).
 
-```bash
-./scripts/reload.sh --tag <tag>
-./scripts/reload.sh --tag <tag> --launch
-```
-
-`reloadp` = kill and launch the Release app:
-
-```bash
-./scripts/reloadp.sh
-```
-
-`reloads` = kill and launch the Release app as "cmux STAGING" (isolated from production cmux):
-
-```bash
-./scripts/reloads.sh
-```
-
-`reload2` = reload both Debug and Release (tag required for Debug reload):
-
-```bash
-./scripts/reload2.sh --tag <tag>
-```
-
-For parallel/isolated builds (e.g., testing a feature alongside the main app), use `--tag` with a short descriptive name:
-
-```bash
-./scripts/reload.sh --tag fix-blur-effect
-```
-
-This creates an isolated app with its own name, bundle ID, socket, and derived data path so it runs side-by-side with the main app. Important: use a non-`/tmp` derived data path if you need xcframework resolution (the script handles this automatically).
-
-Before launching a new tagged run, clean up any older tags you started in this session (quit old tagged app + remove its `/tmp` socket/derived data).
+Use `reload.sh` for iterative dev (Debug, fast feedback). Use `install.sh`
+when you actually want to ship the fork as your daily driver.
 
 ## Debug event log
 
-All debug events (keys, mouse, focus, splits, tabs) go to a unified log in DEBUG builds:
+All debug events (keys, mouse, focus, splits, tabs) go to `/tmp/cmux-debug.log` in DEBUG builds:
 
 ```bash
-tail -f "$(cat /tmp/cmux-last-debug-log-path 2>/dev/null || echo /tmp/cmux-debug.log)"
+tail -f /tmp/cmux-debug.log
 ```
-
-- Untagged Debug app: `/tmp/cmux-debug.log`
-- Tagged Debug app (`./scripts/reload.sh --tag <tag>`): `/tmp/cmux-debug-<tag>.log`
-- `reload.sh` writes the current path to `/tmp/cmux-last-debug-log-path`
-- `reload.sh` writes the selected dev CLI path to `/tmp/cmux-last-cli-path`
-- `reload.sh` updates `/tmp/cmux-cli` and `$HOME/.local/bin/cmux-dev` to that CLI
 
 - Implementation: `vendor/bonsplit/Sources/Bonsplit/Public/DebugEventLog.swift`
 - Free function `dlog("message")` — logs with timestamp and appends to file in real time
@@ -195,8 +146,7 @@ The app has a **Debug** menu in the macOS menu bar (only in DEBUG builds). Use i
 
 - **E2E / UI tests:** trigger via `gh workflow run test-e2e.yml` (see cmuxterm-hq CLAUDE.md for details)
 - **Unit tests:** `xcodebuild -scheme cmux-unit` is safe (no app launch), but prefer CI
-- **Python socket tests (tests_v2/):** these connect to a running cmux instance's socket. Never launch an untagged `cmux DEV.app` to run them. If you must test locally, use a tagged build's socket (`/tmp/cmux-debug-<tag>.sock`) with `CMUX_SOCKET=/tmp/cmux-debug-<tag>.sock`
-- **Never `open` an untagged `cmux DEV.app`** from DerivedData. It conflicts with the user's running debug instance.
+- **Python socket tests (tests_v2/):** these connect to a running cmux instance's socket. If you must test locally, point them at the dev build's socket (`/tmp/cmux-debug.sock`) with `CMUX_SOCKET=/tmp/cmux-debug.sock`.
 
 ## Ghostty submodule workflow
 

@@ -21,4 +21,4 @@ fi
 echo "==> Setup complete!"
 echo ""
 echo "You can now build and run the app:"
-echo "  ./scripts/reload.sh --tag first-run"
+echo "  ./scripts/reload.sh --launch"

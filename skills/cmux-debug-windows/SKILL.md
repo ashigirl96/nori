@@ -11,8 +11,7 @@ Keep this workflow focused on existing debug windows and menu entries. Do not ad
 
 1. Verify debug menu wiring in `Sources/cmuxApp.swift` under `CommandMenu("Debug")`.
    - Menu path in app: `Debug` → `Debug Windows` → window entry.
-   - The `Debug` menu only exists in DEBUG builds (`./scripts/reload.sh --tag ...`).
-   - Release builds (`reloadp.sh`, `reloads.sh`) do not show this menu.
+   - The `Debug` menu only exists in DEBUG builds (`./scripts/reload.sh`).
 2. Keep these actions available in `Menu("Debug Windows")`:
 - `Sidebar Debug…`
 - `Background Debug…`
@@ -23,10 +22,9 @@ Keep this workflow focused on existing debug windows and menu entries. Do not ad
 ```bash
 skills/cmux-debug-windows/scripts/debug_windows_snapshot.sh --copy
 ```
-5. After code edits, run build + tagged reload:
+5. After code edits, rebuild + relaunch:
 ```bash
-xcodebuild -project GhosttyTabs.xcodeproj -scheme cmux -configuration Debug -destination 'platform=macOS' build
-./scripts/reload.sh --tag <tag>
+./scripts/reload.sh --launch
 ```
 
 ## Key Files

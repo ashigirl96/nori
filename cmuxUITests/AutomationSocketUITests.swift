@@ -6,7 +6,6 @@ final class AutomationSocketUITests: XCTestCase {
     private let defaultsDomain = "com.cmuxterm.app.debug"
     private let modeKey = "socketControlMode"
     private let legacyKey = "socketControlEnabled"
-    private let launchTag = "ui-tests-automation-socket"
 
     override func setUp() {
         super.setUp()
@@ -50,9 +49,6 @@ final class AutomationSocketUITests: XCTestCase {
         app.launchArguments += ["-\(modeKey)", mode]
         app.launchEnvironment["CMUX_SOCKET_PATH"] = socketPath
         app.launchEnvironment["CMUX_UI_TEST_SOCKET_SANITY"] = "1"
-        // Debug launches require a tag outside reload.sh; provide one in UITests so CI
-        // does not fail with "Application ... does not have a process ID".
-        app.launchEnvironment["CMUX_TAG"] = launchTag
         return app
     }
 

@@ -36,7 +36,6 @@ import errno
 import json
 import base64
 import glob
-import re
 from typing import Optional, List, Tuple, Union
 
 
@@ -55,20 +54,6 @@ _LAST_SOCKET_PATH_FILES = [
 _DEFAULT_DEBUG_BUNDLE_ID = "com.cmuxterm.app.debug"
 
 
-def _sanitize_tag_slug(raw: str) -> str:
-    cleaned = re.sub(r"[^a-z0-9]+", "-", (raw or "").strip().lower())
-    cleaned = re.sub(r"-+", "-", cleaned).strip("-")
-    return cleaned or "agent"
-
-
-def _sanitize_bundle_suffix(raw: str) -> str:
-    # Must match scripts/reload.sh sanitize_bundle() so tagged tests can
-    # reliably target the correct app via AppleScript.
-    cleaned = re.sub(r"[^a-z0-9]+", ".", (raw or "").strip().lower())
-    cleaned = re.sub(r"\.+", ".", cleaned).strip(".")
-    return cleaned or "agent"
-
-
 def _quote_option_value(value: str) -> str:
     # Must match TerminalController.parseOptions() quoting rules.
     escaped = (value or "").replace("\\", "\\\\").replace('"', '\\"')
@@ -76,16 +61,7 @@ def _quote_option_value(value: str) -> str:
 
 
 def _default_bundle_id() -> str:
-    override = os.environ.get("CMUX_BUNDLE_ID")
-    if override:
-        return override
-
-    tag = os.environ.get("CMUX_TAG")
-    if tag:
-        suffix = _sanitize_bundle_suffix(tag)
-        return f"{_DEFAULT_DEBUG_BUNDLE_ID}.{suffix}"
-
-    return _DEFAULT_DEBUG_BUNDLE_ID
+    return os.environ.get("CMUX_BUNDLE_ID") or _DEFAULT_DEBUG_BUNDLE_ID
 
 
 def _read_last_socket_path() -> Optional[str]:
@@ -119,24 +95,6 @@ def _can_connect(path: str, timeout: float = 0.15, retries: int = 4) -> bool:
 
 
 def _default_socket_path() -> str:
-    tag = os.environ.get("CMUX_TAG")
-    if tag:
-        slug = _sanitize_tag_slug(tag)
-        tagged_candidates = [
-            f"/tmp/cmux-debug-{slug}.sock",
-            f"/tmp/cmux-{slug}.sock",
-        ]
-        for path in tagged_candidates:
-            if os.path.exists(path) and _can_connect(path):
-                return path
-        # If nothing is connectable yet (e.g. the app is still starting),
-        # fall back to the first existing candidate.
-        for path in tagged_candidates:
-            if os.path.exists(path):
-                return path
-        # Prefer the debug naming convention when we have to guess.
-        return tagged_candidates[0]
-
     override = os.environ.get("CMUX_SOCKET_PATH")
     if override:
         if os.path.exists(override) and _can_connect(override):

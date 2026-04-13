@@ -335,7 +335,6 @@ final class DisplayResolutionRegressionUITests: XCTestCase {
             "CMUX_UI_TEST_DIAGNOSTICS_PATH": diagnosticsPath,
             "CMUX_UI_TEST_DISPLAY_RENDER_STATS": "1",
             "CMUX_UI_TEST_TARGET_DISPLAY_ID": targetDisplayID,
-            "CMUX_TAG": launchTag,
         ]
     }
 

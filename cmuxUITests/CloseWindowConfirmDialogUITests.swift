@@ -1,8 +1,6 @@
 import XCTest
 
 final class CloseWindowConfirmDialogUITests: XCTestCase {
-    private let launchTag = "ui-tests-close-window-confirm"
-
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
@@ -10,7 +8,6 @@ final class CloseWindowConfirmDialogUITests: XCTestCase {
 
     func testCmdCtrlWShowsCloseWindowConfirmationText() {
         let app = XCUIApplication()
-        app.launchEnvironment["CMUX_TAG"] = launchTag
         app.launch()
         XCTAssertTrue(
             ensureForegroundAfterLaunch(app, timeout: 12.0),
@@ -35,7 +32,6 @@ final class CloseWindowConfirmDialogUITests: XCTestCase {
 
     func testReturnConfirmsCloseWindowDialog() {
         let app = XCUIApplication()
-        app.launchEnvironment["CMUX_TAG"] = launchTag
         app.launch()
         XCTAssertTrue(
             ensureForegroundAfterLaunch(app, timeout: 12.0),

@@ -17,12 +17,21 @@ Initializes submodules and builds `GhosttyKit.xcframework`.
 ## Build
 
 ```bash
-./scripts/reload.sh --tag build           # build Debug app (does not launch)
-./scripts/reload.sh --tag build --launch  # build + launch
-./scripts/reloadp.sh                      # launch Release build
+./scripts/reload.sh           # build Debug app (does not launch)
+./scripts/reload.sh --launch  # build + launch
 ```
 
 `reload.sh` prints an `App path:` line — cmd-click to open.
+
+## Install over `/Applications/cmux.app`
+
+```bash
+./scripts/install.sh          # build Release + copy to /Applications/cmux.app
+./scripts/install.sh --launch # build + install + open
+```
+
+Produces `cmux.app` (bundle ID `com.cmuxterm.app`) and replaces any existing
+`/Applications/cmux.app`. Any running production instance is quit first.
 
 See `CLAUDE.md` for the full build/debug workflow and policies.
 

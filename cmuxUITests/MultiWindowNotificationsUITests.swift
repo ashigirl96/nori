@@ -5,14 +5,12 @@ import CoreGraphics
 final class MultiWindowNotificationsUITests: XCTestCase {
     private var dataPath = ""
     private var socketPath = ""
-    private var launchTag = ""
 
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
         dataPath = "/tmp/cmux-ui-test-multi-window-notifs-\(UUID().uuidString).json"
         socketPath = "/tmp/cmux-ui-test-socket-\(UUID().uuidString).sock"
-        launchTag = "ui-tests-multi-window-notifs-\(UUID().uuidString.prefix(8))"
         try? FileManager.default.removeItem(atPath: dataPath)
         try? FileManager.default.removeItem(atPath: socketPath)
     }
@@ -27,7 +25,6 @@ final class MultiWindowNotificationsUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["CMUX_UI_TEST_MULTI_WINDOW_NOTIF_SETUP"] = "1"
         app.launchEnvironment["CMUX_UI_TEST_MULTI_WINDOW_NOTIF_PATH"] = dataPath
-        app.launchEnvironment["CMUX_TAG"] = launchTag
         app.launch()
         XCTAssertTrue(
             ensureForegroundAfterLaunch(app, timeout: 12.0),
@@ -114,7 +111,6 @@ final class MultiWindowNotificationsUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["CMUX_UI_TEST_MULTI_WINDOW_NOTIF_SETUP"] = "1"
         app.launchEnvironment["CMUX_UI_TEST_MULTI_WINDOW_NOTIF_PATH"] = dataPath
-        app.launchEnvironment["CMUX_TAG"] = launchTag
         app.launch()
         XCTAssertTrue(
             ensureForegroundAfterLaunch(app, timeout: 12.0),
@@ -151,7 +147,6 @@ final class MultiWindowNotificationsUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["CMUX_UI_TEST_MULTI_WINDOW_NOTIF_SETUP"] = "1"
         app.launchEnvironment["CMUX_UI_TEST_MULTI_WINDOW_NOTIF_PATH"] = dataPath
-        app.launchEnvironment["CMUX_TAG"] = launchTag
         app.launch()
         XCTAssertTrue(
             ensureForegroundAfterLaunch(app, timeout: 12.0),
@@ -179,7 +174,6 @@ final class MultiWindowNotificationsUITests: XCTestCase {
         app.launchEnvironment["CMUX_SOCKET_MODE"] = "allowAll"
         app.launchEnvironment["CMUX_SOCKET_ENABLE"] = "1"
         app.launchEnvironment["CMUX_UI_TEST_SOCKET_SANITY"] = "1"
-        app.launchEnvironment["CMUX_TAG"] = launchTag
         app.launch()
         XCTAssertTrue(
             ensureForegroundAfterLaunch(app, timeout: 12.0),
@@ -232,7 +226,6 @@ final class MultiWindowNotificationsUITests: XCTestCase {
         app.launchEnvironment["CMUX_UI_TEST_SOCKET_SANITY"] = "1"
         app.launchEnvironment["CMUX_UI_TEST_NOTIFY_SOURCE_TERMINAL_READY"] = "1"
         app.launchEnvironment["CMUX_UI_TEST_ENABLE_DUPLICATE_LAUNCH_OBSERVER"] = "1"
-        app.launchEnvironment["CMUX_TAG"] = launchTag
         app.launch()
         XCTAssertTrue(
             ensureForegroundAfterLaunch(app, timeout: 12.0),
@@ -766,12 +759,6 @@ final class MultiWindowNotificationsUITests: XCTestCase {
             appendCLIPathCandidates(fromProductsDirectory: productsDir, strategy: strategy, to: &candidates)
         }
 
-        candidates.append("/tmp/cmux-\(launchTag)/Build/Products/Debug/cmux DEV.app/Contents/Resources/bin/cmux")
-        candidates.append("/tmp/cmux-\(launchTag)/Build/Products/Debug/cmux.app/Contents/Resources/bin/cmux")
-        if strategy == .any {
-            candidates.append("/tmp/cmux-\(launchTag)/Build/Products/Debug/cmux")
-        }
-
         var resolvedPaths: [String] = []
         for path in uniquePaths(candidates) {
             guard fileManager.isExecutableFile(atPath: path) else { continue }
@@ -935,10 +922,6 @@ final class MultiWindowNotificationsUITests: XCTestCase {
 
     private func expectedSocketCandidates(includeGlobalFallback: Bool) -> [String] {
         var candidates = [socketPath]
-        let taggedDebugSocket = "/tmp/cmux-debug-\(launchTag).sock"
-        if !taggedDebugSocket.isEmpty {
-            candidates.append(taggedDebugSocket)
-        }
         if includeGlobalFallback {
             candidates.append(contentsOf: discoverTmpSocketCandidates(limit: 12))
             candidates.append("/tmp/cmux-debug.sock")
