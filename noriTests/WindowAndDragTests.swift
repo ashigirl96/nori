@@ -448,8 +448,8 @@ final class InternalTabDragBundleDeclarationTests: XCTestCase {
             "Expected app bundle to export bonsplit tab-transfer type, got \(exported)"
         )
         XCTAssertTrue(
-            exported.contains("com.nori.sidebar-tab-reorder"),
-            "Expected app bundle to export sidebar tab-reorder type, got \(exported)"
+            exported.contains("com.nori.sidebar-workspace-reorder"),
+            "Expected app bundle to export sidebar workspace-reorder type, got \(exported)"
         )
     }
 }

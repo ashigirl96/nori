@@ -11959,8 +11959,8 @@ class TerminalController {
         case "tabtransfer", "tab-transfer", "com.splittabbar.tabtransfer":
             return DragOverlayRoutingPolicy.bonsplitTabTransferType
         case "sidebarreorder", "sidebar-reorder", "sidebar_tab_reorder",
-            "com.nori.sidebar-tab-reorder":
-            return DragOverlayRoutingPolicy.sidebarTabReorderType
+            "com.nori.sidebar-workspace-reorder":
+            return DragOverlayRoutingPolicy.sidebarWorkspaceReorderType
         default:
             // Allow explicit UTI strings for ad-hoc debug probes.
             guard token.contains(".") else { return nil }
