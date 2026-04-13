@@ -576,27 +576,14 @@ enum SocketPasswordResolver {
         return normalized(value)
     }
 
-    static func keychainServices(
-        socketPath: String,
-        environment: [String: String] = ProcessInfo.processInfo.environment
-    ) -> [String] {
-        guard let scope = keychainScope(socketPath: socketPath, environment: environment) else {
+    static func keychainServices(socketPath: String) -> [String] {
+        guard let scope = keychainScope(socketPath: socketPath) else {
             return [service]
         }
         return ["\(service).\(scope)", service]
     }
 
-    private static func keychainScope(
-        socketPath: String,
-        environment: [String: String] = ProcessInfo.processInfo.environment
-    ) -> String? {
-        if let tag = normalized(environment["CMUX_TAG"]) {
-            let scoped = sanitizeScope(tag)
-            if !scoped.isEmpty {
-                return scoped
-            }
-        }
-
+    private static func keychainScope(socketPath: String) -> String? {
         let candidate = URL(fileURLWithPath: socketPath).lastPathComponent
         let prefixes = ["cmux-debug-", "cmux-"]
         for prefix in prefixes {
@@ -695,7 +682,8 @@ private enum CLISocketPathResolver {
             return requestedPath
         }
 
-        let candidates = dedupe(candidatePaths(requestedPath: requestedPath, environment: environment))
+        _ = environment
+        let candidates = dedupe(candidatePaths(requestedPath: requestedPath))
 
         // Prefer sockets that are currently accepting connections.
         for path in candidates where canConnect(to: path) {
@@ -710,15 +698,8 @@ private enum CLISocketPathResolver {
         return requestedPath
     }
 
-    private static func candidatePaths(requestedPath: String, environment: [String: String]) -> [String] {
+    private static func candidatePaths(requestedPath: String) -> [String] {
         var candidates: [String] = []
-
-        if let tag = normalized(environment["CMUX_TAG"]) {
-            let slug = sanitizeTagSlug(tag)
-            candidates.append("/tmp/cmux-debug-\(slug).sock")
-            candidates.append("/tmp/cmux-\(slug).sock")
-        }
-
         candidates.append(requestedPath)
         candidates.append(defaultSocketPath)
         candidates.append(legacyDefaultSocketPath)
@@ -801,15 +782,6 @@ private enum CLISocketPathResolver {
             }
         }
         return result == 0
-    }
-
-    private static func sanitizeTagSlug(_ raw: String) -> String {
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let slug = trimmed
-            .replacingOccurrences(of: "[^a-z0-9]+", with: "-", options: .regularExpression)
-            .replacingOccurrences(of: "-+", with: "-", options: .regularExpression)
-            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-        return slug.isEmpty ? "agent" : slug
     }
 
     private static func normalized(_ value: String?) -> String? {

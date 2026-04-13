@@ -121,24 +121,6 @@ final class NotificationDockBadgeTests: XCTestCase {
         XCTAssertNil(TerminalNotificationStore.dockBadgeLabel(unreadCount: 5, isEnabled: false))
     }
 
-    func testDockBadgeLabelShowsRunTagEvenWithoutUnread() {
-        XCTAssertEqual(
-            TerminalNotificationStore.dockBadgeLabel(unreadCount: 0, isEnabled: true, runTag: "verify-tag"),
-            "verify-tag"
-        )
-    }
-
-    func testDockBadgeLabelCombinesRunTagAndUnreadCount() {
-        XCTAssertEqual(
-            TerminalNotificationStore.dockBadgeLabel(unreadCount: 7, isEnabled: true, runTag: "verify"),
-            "verify:7"
-        )
-        XCTAssertEqual(
-            TerminalNotificationStore.dockBadgeLabel(unreadCount: 120, isEnabled: true, runTag: "verify"),
-            "verify:99+"
-        )
-    }
-
     func testNotificationBadgePreferenceDefaultsToEnabled() {
         let suiteName = "NotificationDockBadgeTests.\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suiteName) else {

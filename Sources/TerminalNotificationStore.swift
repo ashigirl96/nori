@@ -578,25 +578,6 @@ enum NotificationPaneFlashSettings {
     }
 }
 
-enum TaggedRunBadgeSettings {
-    static let environmentKey = "CMUX_TAG"
-    private static let maxTagLength = 10
-
-    static func normalizedTag(from env: [String: String] = ProcessInfo.processInfo.environment) -> String? {
-        normalizedTag(env[environmentKey])
-    }
-
-    static func normalizedTag(_ rawTag: String?) -> String? {
-        guard var tag = rawTag?.trimmingCharacters(in: .whitespacesAndNewlines), !tag.isEmpty else {
-            return nil
-        }
-        if tag.count > maxTagLength {
-            tag = String(tag.prefix(maxTagLength))
-        }
-        return tag
-    }
-}
-
 enum AppFocusState {
     static var overrideIsFocused: Bool?
 
@@ -755,23 +736,12 @@ final class TerminalNotificationStore: ObservableObject {
         }
     }
 
-    static func dockBadgeLabel(unreadCount: Int, isEnabled: Bool, runTag: String? = nil) -> String? {
-        let unreadLabel: String? = {
-            guard isEnabled, unreadCount > 0 else { return nil }
-            if unreadCount > 99 {
-                return "99+"
-            }
-            return String(unreadCount)
-        }()
-
-        if let tag = TaggedRunBadgeSettings.normalizedTag(runTag) {
-            if let unreadLabel {
-                return "\(tag):\(unreadLabel)"
-            }
-            return tag
+    static func dockBadgeLabel(unreadCount: Int, isEnabled: Bool) -> String? {
+        guard isEnabled, unreadCount > 0 else { return nil }
+        if unreadCount > 99 {
+            return "99+"
         }
-
-        return unreadLabel
+        return String(unreadCount)
     }
 
     var unreadCount: Int {
@@ -1415,8 +1385,7 @@ final class TerminalNotificationStore: ObservableObject {
     private func refreshDockBadge() {
         let label = Self.dockBadgeLabel(
             unreadCount: unreadCount,
-            isEnabled: NotificationBadgeSettings.isDockBadgeEnabled(),
-            runTag: TaggedRunBadgeSettings.normalizedTag()
+            isEnabled: NotificationBadgeSettings.isDockBadgeEnabled()
         )
         NSApp?.dockTile.badgeLabel = label
     }

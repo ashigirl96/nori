@@ -294,8 +294,6 @@ struct SocketControlSettings {
     static let legacyEnabledKey = "socketControlEnabled"
     static let allowSocketPathOverrideKey = "CMUX_ALLOW_SOCKET_OVERRIDE"
     static let socketPasswordEnvKey = "CMUX_SOCKET_PASSWORD"
-    static let launchTagEnvKey = "CMUX_TAG"
-    static let baseDebugBundleIdentifier = "com.cmuxterm.app.debug"
     private static let socketDirectoryName = "cmux"
     private static let stableSocketFileName = "cmux.sock"
     private static let lastSocketPathFileName = "last-socket-path"
@@ -364,45 +362,6 @@ struct SocketControlSettings {
 #endif
     }
 
-    static func launchTag(
-        environment: [String: String] = ProcessInfo.processInfo.environment
-    ) -> String? {
-        guard let raw = environment[launchTagEnvKey] else { return nil }
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
-    }
-
-    static func shouldBlockUntaggedDebugLaunch(
-        environment: [String: String] = ProcessInfo.processInfo.environment,
-        bundleIdentifier: String? = Bundle.main.bundleIdentifier,
-        isDebugBuild: Bool = SocketControlSettings.isDebugBuild
-    ) -> Bool {
-        guard isDebugBuild else { return false }
-        if isRunningUnderXCTest(environment: environment) {
-            return false
-        }
-        // XCUITest launches the app as a separate process without XCTest env vars,
-        // so isRunningUnderXCTest() misses it. Check for any CMUX_UI_TEST_ env var.
-        if environment.keys.contains(where: { $0.hasPrefix("CMUX_UI_TEST_") }) {
-            return false
-        }
-
-        guard let bundleIdentifier = bundleIdentifier?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !bundleIdentifier.isEmpty else {
-            return false
-        }
-
-        if bundleIdentifier.hasPrefix("\(baseDebugBundleIdentifier).") {
-            return false
-        }
-
-        guard bundleIdentifier == baseDebugBundleIdentifier else {
-            return false
-        }
-
-        return launchTag(environment: environment) == nil
-    }
-
     static func isRunningUnderXCTest(environment: [String: String]) -> Bool {
         let indicators = [
             "XCTestConfigurationFilePath",
@@ -437,18 +396,6 @@ struct SocketControlSettings {
             probeStableDefaultPathEntry: probeStableDefaultPathEntry
         )
 
-        if let taggedDebugPath = taggedDebugSocketPath(
-            bundleIdentifier: bundleIdentifier,
-            environment: environment
-        ) {
-            if isTruthy(environment[allowSocketPathOverrideKey]),
-               let override = environment["CMUX_SOCKET_PATH"],
-               !override.isEmpty {
-                return override
-            }
-            return taggedDebugPath
-        }
-
         guard let override = environment["CMUX_SOCKET_PATH"], !override.isEmpty else {
             return fallback
         }
@@ -470,9 +417,6 @@ struct SocketControlSettings {
         currentUserID: uid_t = getuid(),
         probeStableDefaultPathEntry: (String) -> StableDefaultSocketPathEntry = inspectStableDefaultSocketPathEntry
     ) -> String {
-        if let taggedDebugPath = taggedDebugSocketPath(bundleIdentifier: bundleIdentifier, environment: [:]) {
-            return taggedDebugPath
-        }
         if bundleIdentifier == "com.cmuxterm.app.nightly" {
             return "/tmp/cmux-nightly.sock"
         }
@@ -534,43 +478,6 @@ struct SocketControlSettings {
         guard let bundleIdentifier else { return false }
         return bundleIdentifier == "com.cmuxterm.app.debug"
             || bundleIdentifier.hasPrefix("com.cmuxterm.app.debug.")
-    }
-
-    /// Tagged DEV builds have bundle IDs like `com.cmuxterm.app.debug.<tag>`.
-    static func isTaggedDevBuild(bundleIdentifier: String? = Bundle.main.bundleIdentifier) -> Bool {
-        guard let bundleIdentifier else { return false }
-        return bundleIdentifier.hasPrefix("\(baseDebugBundleIdentifier).")
-    }
-
-    static func taggedDebugSocketPath(
-        bundleIdentifier: String?,
-        environment: [String: String]
-    ) -> String? {
-        let bundleId = bundleIdentifier?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if bundleId.hasPrefix("\(baseDebugBundleIdentifier).") {
-            let suffix = String(bundleId.dropFirst(baseDebugBundleIdentifier.count + 1))
-            let slug = suffix
-                .replacingOccurrences(of: ".", with: "-")
-                .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-            if !slug.isEmpty {
-                return "/tmp/cmux-debug-\(slug).sock"
-            }
-        }
-
-        let tag = launchTag(environment: environment)?
-            .lowercased()
-            .replacingOccurrences(of: ".", with: "-")
-            .replacingOccurrences(of: "_", with: "-")
-            .components(separatedBy: CharacterSet.alphanumerics.inverted)
-            .filter { !$0.isEmpty }
-            .joined(separator: "-")
-
-        guard bundleId == baseDebugBundleIdentifier,
-              let tag,
-              !tag.isEmpty else {
-            return nil
-        }
-        return "/tmp/cmux-debug-\(tag).sock"
     }
 
     static func isStagingBundleIdentifier(_ bundleIdentifier: String?) -> Bool {
