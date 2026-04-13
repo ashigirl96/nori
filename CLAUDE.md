@@ -16,6 +16,8 @@ After making code changes, always run the reload script with a tag to build the 
 ./scripts/reload.sh --tag fix-zsh-autosuggestions
 ```
 
+**Default tag**: when the user does not specify a tag (e.g. asks to "build" or "reload"), use `--tag build`. Only pick a different tag if the user explicitly names one or the work is clearly a distinct feature branch.
+
 By default, `reload.sh` builds but does **not** launch the app. The script prints the `.app` path so the user can cmd-click to open it. Pass `--launch` to kill any existing instance and open the app automatically:
 
 ```bash
