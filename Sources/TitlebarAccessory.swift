@@ -1199,7 +1199,7 @@ private struct NotificationPopoverRow: View {
 }
 
 @MainActor
-final class UpdateTitlebarAccessoryController {
+final class TitlebarAccessoryController {
     private var didStart = false
     private let attachedWindows = NSHashTable<NSWindow>.weakObjects()
     private var observers: [NSObjectProtocol] = []
@@ -1354,7 +1354,6 @@ final class UpdateTitlebarAccessoryController {
         }
 
         attachedWindows.add(window)
-
     }
 
     private func removeAccessoryIfPresent(from window: NSWindow) {
@@ -1382,7 +1381,6 @@ final class UpdateTitlebarAccessoryController {
             window.contentView?.superview?.layoutSubtreeIfNeeded()
             window.invalidateShadow()
         }
-
     }
 
     private func isSettingsWindow(_ window: NSWindow) -> Bool {

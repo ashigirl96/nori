@@ -3742,74 +3742,6 @@
         }
       }
     },
-    "command.applyUpdateIfAvailable.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Global"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "グローバル"
-          }
-        }
-      }
-    },
-    "command.applyUpdateIfAvailable.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apply Update (If Available)"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アップデートを適用（利用可能な場合）"
-          }
-        }
-      }
-    },
-    "command.attemptUpdate.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Global"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "グローバル"
-          }
-        }
-      }
-    },
-    "command.attemptUpdate.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Attempt Update"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アップデートを試行"
-          }
-        }
-      }
-    },
     "command.browserBack.title": {
       "extractionState": "manual",
       "localizations": {
@@ -4112,40 +4044,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "実際のサイズ"
-          }
-        }
-      }
-    },
-    "command.checkForUpdates.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Global"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "グローバル"
-          }
-        }
-      }
-    },
-    "command.checkForUpdates.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check for Updates"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アップデートを確認"
           }
         }
       }
@@ -7635,23 +7533,6 @@
         }
       }
     },
-    "menu.app.checkForUpdates": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check for Updates…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アップデートを確認…"
-          }
-        }
-      }
-    },
     "menu.app.ghosttySettings": {
       "extractionState": "manual",
       "localizations": {
@@ -7716,23 +7597,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "settings.jsonを開く"
-          }
-        }
-      }
-    },
-    "menu.checkForUpdates": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check for Updates…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アップデートを確認…"
           }
         }
       }
@@ -8481,23 +8345,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "フォーカスログをコピー"
-          }
-        }
-      }
-    },
-    "menu.updateLogs.copyUpdateLogs": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copy Update Logs"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アップデートログをコピー"
           }
         }
       }

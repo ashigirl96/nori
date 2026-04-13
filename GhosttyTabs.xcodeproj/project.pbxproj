@@ -61,7 +61,7 @@
 			A50012F5 /* KeyboardLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50012F4 /* KeyboardLayout.swift */; };
 			A5001521 /* PostHogAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001520 /* PostHogAnalytics.swift */; };
 		A500120C /* WindowAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001222 /* WindowAccessor.swift */; };
-		A5001208 /* UpdateTitlebarAccessory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001218 /* UpdateTitlebarAccessory.swift */; };
+		A5001208 /* TitlebarAccessory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001218 /* TitlebarAccessory.swift */; };
 		A5001209 /* WindowToolbarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001219 /* WindowToolbarController.swift */; };
 		A5001240 /* WindowDecorationsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001241 /* WindowDecorationsController.swift */; };
 		A5001610 /* SessionPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001611 /* SessionPersistence.swift */; };
@@ -248,7 +248,7 @@
 		A50012F2 /* KeyboardShortcutSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutSettings.swift; sourceTree = "<group>"; };
 		A5F10010A1B2C3D4E5F60719 /* KeyboardShortcutSettingsFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutSettingsFileStore.swift; sourceTree = "<group>"; };
 		A50012F4 /* KeyboardLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardLayout.swift; sourceTree = "<group>"; };
-		A5001218 /* UpdateTitlebarAccessory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Update/UpdateTitlebarAccessory.swift; sourceTree = "<group>"; };
+		A5001218 /* TitlebarAccessory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitlebarAccessory.swift; sourceTree = "<group>"; };
 		A5001219 /* WindowToolbarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowToolbarController.swift; sourceTree = "<group>"; };
 		A5001222 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
 		A5001241 /* WindowDecorationsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowDecorationsController.swift; sourceTree = "<group>"; };
@@ -478,7 +478,7 @@
 				A5001419 /* MarkdownPanelView.swift */,
 				A5001510 /* CmuxWebView.swift */,
 				A5001415 /* PanelContentView.swift */,
-				A5001218 /* UpdateTitlebarAccessory.swift */,
+				A5001218 /* TitlebarAccessory.swift */,
 				A5001219 /* WindowToolbarController.swift */,
 				A5001241 /* WindowDecorationsController.swift */,
 				A5001222 /* WindowAccessor.swift */,
@@ -776,7 +776,7 @@
 				A5001421 /* MarkdownPanelView.swift in Sources */,
 				A5001500 /* CmuxWebView.swift in Sources */,
 				A5001405 /* PanelContentView.swift in Sources */,
-				A5001208 /* UpdateTitlebarAccessory.swift in Sources */,
+				A5001208 /* TitlebarAccessory.swift in Sources */,
 				A5001209 /* WindowToolbarController.swift in Sources */,
 				A5001240 /* WindowDecorationsController.swift in Sources */,
 				A500120C /* WindowAccessor.swift in Sources */,

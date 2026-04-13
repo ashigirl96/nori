@@ -2306,7 +2306,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private var browserAddressBarFocusObserver: NSObjectProtocol?
     private var browserAddressBarBlurObserver: NSObjectProtocol?
     private var browserWebViewFirstResponderObserver: NSObjectProtocol?
-    private let titlebarAccessoryController = UpdateTitlebarAccessoryController()
+    private let titlebarAccessoryController = TitlebarAccessoryController()
     private let windowDecorationsController = WindowDecorationsController()
     private var menuBarExtraController: MenuBarExtraController?
     private static let serviceErrorNoPath = NSString(string: String(localized: "error.clipboardFolderPath", defaultValue: "Could not load any folder path from the clipboard."))
@@ -2641,7 +2641,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         SystemWideHotkeyController.shared.start()
         NSApp.servicesProvider = self
 #if DEBUG
-
         // In UI tests, `WindowGroup` occasionally fails to materialize a window quickly on the VM.
         // If there are no windows shortly after launch, force-create one so XCUITest can proceed.
         if isRunningUnderXCTest {
