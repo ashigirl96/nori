@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-cmux Python Client
+nori Python Client
 
-A client library for programmatically controlling cmux via Unix socket.
+A client library for programmatically controlling nori via Unix socket.
 
 Usage:
-    from cmux import cmux
+    from nori import nori
 
-    client = cmux()
+    client = nori()
     client.connect()
 
     # Send text to terminal
@@ -39,19 +39,19 @@ import glob
 from typing import Optional, List, Tuple, Union
 
 
-class cmuxError(Exception):
-    """Exception raised for cmux errors"""
+class noriError(Exception):
+    """Exception raised for nori errors"""
     pass
 
 
-_APP_SUPPORT_DIR = os.path.expanduser("~/Library/Application Support/cmux")
-_STABLE_SOCKET_PATH = os.path.join(_APP_SUPPORT_DIR, "cmux.sock")
-_LEGACY_STABLE_SOCKET_PATH = "/tmp/cmux.sock"
+_APP_SUPPORT_DIR = os.path.expanduser("~/Library/Application Support/nori")
+_STABLE_SOCKET_PATH = os.path.join(_APP_SUPPORT_DIR, "nori.sock")
+_LEGACY_STABLE_SOCKET_PATH = "/tmp/nori.sock"
 _LAST_SOCKET_PATH_FILES = [
     os.path.join(_APP_SUPPORT_DIR, "last-socket-path"),
-    "/tmp/cmux-last-socket-path",
+    "/tmp/nori-last-socket-path",
 ]
-_DEFAULT_DEBUG_BUNDLE_ID = "com.cmuxterm.app.debug"
+_DEFAULT_DEBUG_BUNDLE_ID = "com.nori.app.debug"
 
 
 def _quote_option_value(value: str) -> str:
@@ -61,7 +61,7 @@ def _quote_option_value(value: str) -> str:
 
 
 def _default_bundle_id() -> str:
-    return os.environ.get("CMUX_BUNDLE_ID") or _DEFAULT_DEBUG_BUNDLE_ID
+    return os.environ.get("NORI_BUNDLE_ID") or _DEFAULT_DEBUG_BUNDLE_ID
 
 
 def _read_last_socket_path() -> Optional[str]:
@@ -95,7 +95,7 @@ def _can_connect(path: str, timeout: float = 0.15, retries: int = 4) -> bool:
 
 
 def _default_socket_path() -> str:
-    override = os.environ.get("CMUX_SOCKET_PATH")
+    override = os.environ.get("NORI_SOCKET_PATH")
     if override:
         if os.path.exists(override) and _can_connect(override):
             return override
@@ -109,14 +109,14 @@ def _default_socket_path() -> str:
             return last_socket
 
     # Prefer the non-tagged sockets when present.
-    candidates = ["/tmp/cmux-debug.sock", _STABLE_SOCKET_PATH, _LEGACY_STABLE_SOCKET_PATH]
+    candidates = ["/tmp/nori-debug.sock", _STABLE_SOCKET_PATH, _LEGACY_STABLE_SOCKET_PATH]
     for path in candidates:
         if os.path.exists(path) and _can_connect(path):
             return path
 
     # Otherwise, fall back to the newest discovered socket if there is one.
-    tagged = glob.glob("/tmp/cmux-debug-*.sock")
-    tagged.extend(glob.glob(os.path.join(_APP_SUPPORT_DIR, "cmux*.sock")))
+    tagged = glob.glob("/tmp/nori-debug-*.sock")
+    tagged.extend(glob.glob(os.path.join(_APP_SUPPORT_DIR, "nori*.sock")))
     tagged = [p for p in tagged if os.path.exists(p)]
     if tagged:
         tagged.sort(key=lambda p: os.path.getmtime(p), reverse=True)
@@ -127,8 +127,8 @@ def _default_socket_path() -> str:
     return candidates[0]
 
 
-class cmux:
-    """Client for controlling cmux via Unix socket"""
+class nori:
+    """Client for controlling nori via Unix socket"""
 
     DEFAULT_SOCKET_PATH = _default_socket_path()
     DEFAULT_BUNDLE_ID = _default_bundle_id()
@@ -148,16 +148,16 @@ class cmux:
         self._recv_buffer: str = ""
 
     def connect(self) -> None:
-        """Connect to the cmux socket"""
+        """Connect to the nori socket"""
         if self._socket is not None:
             return
 
         start = time.time()
         while not os.path.exists(self.socket_path):
             if time.time() - start >= 2.0:
-                raise cmuxError(
+                raise noriError(
                     f"Socket not found at {self.socket_path}. "
-                    "Is cmux running?"
+                    "Is nori running?"
                 )
             time.sleep(0.1)
 
@@ -175,7 +175,7 @@ class cmux:
                 if e.errno in (errno.ECONNREFUSED, errno.ENOENT) and time.time() - start < 2.0:
                     time.sleep(0.1)
                     continue
-                raise cmuxError(f"Failed to connect: {e}")
+                raise noriError(f"Failed to connect: {e}")
 
     def close(self) -> None:
         """Close the connection"""
@@ -194,7 +194,7 @@ class cmux:
     def _send_command(self, command: str) -> str:
         """Send a command and receive response"""
         if self._socket is None:
-            raise cmuxError("Not connected")
+            raise noriError("Not connected")
 
         try:
             self._socket.sendall((command + "\n").encode())
@@ -213,7 +213,7 @@ class cmux:
                     if saw_newline:
                         break
                     if time.time() - start >= 5.0:
-                        raise cmuxError("Command timed out")
+                        raise noriError("Command timed out")
                     continue
                 if not chunk:
                     break
@@ -224,9 +224,9 @@ class cmux:
                 data = data[:-1]
             return data
         except socket.timeout:
-            raise cmuxError("Command timed out")
+            raise noriError("Command timed out")
         except socket.error as e:
-            raise cmuxError(f"Socket error: {e}")
+            raise noriError(f"Socket error: {e}")
 
     def ping(self) -> bool:
         """Check if the server is responding"""
@@ -264,7 +264,7 @@ class cmux:
             response = self._send_command("new_workspace")
         if response.startswith("OK "):
             return response[3:]
-        raise cmuxError(response)
+        raise noriError(response)
 
     def new_split(self, direction: str) -> str:
         """Create a split in the given direction (left/right/up/down). Returns new panel ID when available."""
@@ -274,7 +274,7 @@ class cmux:
         if response.startswith("OK"):
             return ""
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def close_tab(self, tab_id: str) -> None:
         """Close a tab by ID"""
@@ -282,7 +282,7 @@ class cmux:
         if response.startswith("ERROR: Unknown command"):
             response = self._send_command(f"close_workspace {tab_id}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def select_tab(self, tab: Union[str, int]) -> None:
         """Select a tab by ID or index"""
@@ -290,7 +290,7 @@ class cmux:
         if response.startswith("ERROR: Unknown command"):
             response = self._send_command(f"select_workspace {tab}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def list_surfaces(self, tab: Union[str, int, None] = None) -> List[Tuple[int, str, bool]]:
         """
@@ -318,7 +318,7 @@ class cmux:
         """Focus a surface by ID or index in the current tab."""
         response = self._send_command(f"focus_surface {surface}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def current_tab(self) -> str:
         """Get the current tab's ID"""
@@ -326,14 +326,14 @@ class cmux:
         if response.startswith("ERROR: Unknown command"):
             response = self._send_command("current_workspace")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response
 
     def current_workspace(self) -> str:
         """Get the current workspace's ID."""
         response = self._send_command("current_workspace")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response
 
     def send(self, text: str) -> None:
@@ -350,14 +350,14 @@ class cmux:
         escaped = text.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
         response = self._send_command(f"send {escaped}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def send_surface(self, surface: Union[str, int], text: str) -> None:
         """Send text to a specific surface by ID or index in the current tab."""
         escaped = text.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
         response = self._send_command(f"send_surface {surface} {escaped}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def send_key(self, key: str) -> None:
         """
@@ -370,13 +370,13 @@ class cmux:
         """
         response = self._send_command(f"send_key {key}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def send_key_surface(self, surface: Union[str, int], key: str) -> None:
         """Send a special key to a specific surface by ID or index in the current tab."""
         response = self._send_command(f"send_key_surface {surface} {key}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def send_line(self, text: str) -> None:
         """Send text followed by Enter"""
@@ -402,7 +402,7 @@ class cmux:
             payload = title
         response = self._send_command(f"notify {payload}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def notify_surface(self, surface: Union[str, int], title: str, subtitle: str = "", body: str = "") -> None:
         """Create a notification for a specific surface by ID or index."""
@@ -412,7 +412,7 @@ class cmux:
             payload = title
         response = self._send_command(f"notify_surface {surface} {payload}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def list_notifications(self) -> list[dict]:
         """
@@ -448,7 +448,7 @@ class cmux:
         """Clear all notifications."""
         response = self._send_command("clear_notifications")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def set_app_focus(self, active: Union[bool, None]) -> None:
         """Override app focus state. Use None to clear override."""
@@ -458,13 +458,13 @@ class cmux:
             value = "active" if active else "inactive"
         response = self._send_command(f"set_app_focus {value}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def simulate_app_active(self) -> None:
         """Trigger the app active handler."""
         response = self._send_command("simulate_app_active")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def set_status(
         self,
@@ -495,7 +495,7 @@ class cmux:
         cmd += f" -- {_quote_option_value(value)}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def clear_status(self, key: str, tab: str = None) -> None:
         """Remove a sidebar status entry."""
@@ -504,7 +504,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def report_meta(
         self,
@@ -534,7 +534,7 @@ class cmux:
         cmd += f" -- {_quote_option_value(value)}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def clear_meta(self, key: str, tab: str = None) -> None:
         """Remove a sidebar metadata entry."""
@@ -543,7 +543,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def list_meta(self, tab: str = None) -> str:
         """List sidebar metadata entries."""
@@ -552,7 +552,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response
 
     def report_meta_block(self, key: str, markdown: str, priority: int = None, tab: str = None) -> None:
@@ -565,7 +565,7 @@ class cmux:
         cmd += f" -- {_quote_option_value(markdown)}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def clear_meta_block(self, key: str, tab: str = None) -> None:
         """Remove a sidebar markdown metadata block."""
@@ -574,7 +574,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def list_meta_blocks(self, tab: str = None) -> str:
         """List sidebar markdown metadata blocks."""
@@ -583,7 +583,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response
 
     def log(self, message: str, level: str = None, source: str = None, tab: str = None) -> None:
@@ -601,7 +601,7 @@ class cmux:
         cmd += f" -- {_quote_option_value(message)}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def set_progress(self, value: float, label: str = None, tab: str = None) -> None:
         """Set sidebar progress bar (0.0-1.0)."""
@@ -612,7 +612,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def clear_progress(self, tab: str = None) -> None:
         """Clear sidebar progress bar."""
@@ -621,7 +621,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def report_git_branch(self, branch: str, status: str = None, tab: str = None) -> None:
         """Report git branch for sidebar display."""
@@ -632,7 +632,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def report_pr(
         self,
@@ -655,7 +655,7 @@ class cmux:
             cmd += f" --panel={panel}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def report_review(
         self,
@@ -678,7 +678,7 @@ class cmux:
             cmd += f" --panel={panel}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def clear_pr(self, tab: str = None, panel: str = None) -> None:
         """Clear pull-request metadata for sidebar display."""
@@ -689,7 +689,7 @@ class cmux:
             cmd += f" --panel={panel}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def report_ports(self, *ports: int, tab: str = None) -> None:
         """Report listening ports for sidebar display."""
@@ -699,7 +699,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def clear_ports(self, tab: str = None) -> None:
         """Clear listening ports for sidebar display."""
@@ -708,7 +708,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def set_agent_pid(self, key: str, pid: int, tab: str = None) -> None:
         """Register an agent PID for workspace-scoped ownership tracking."""
@@ -717,7 +717,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def clear_agent_pid(self, key: str, tab: str = None) -> None:
         """Clear a previously registered agent PID."""
@@ -726,7 +726,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def report_tty(self, tty_name: str, tab: str = None, panel: str = None) -> None:
         """Register a TTY for batched port scanning."""
@@ -737,7 +737,7 @@ class cmux:
             cmd += f" --panel={panel}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def ports_kick(self, tab: str = None, panel: str = None) -> None:
         """Request a batched port scan for the given panel."""
@@ -748,7 +748,7 @@ class cmux:
             cmd += f" --panel={panel}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def sidebar_state(self, tab: str = None) -> str:
         """Dump all sidebar metadata for a tab."""
@@ -764,7 +764,7 @@ class cmux:
             cmd += f" --tab={tab}"
         response = self._send_command(cmd)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def focus_notification(self, tab: Union[str, int], surface: Union[str, int, None] = None) -> None:
         """Focus tab/surface using the notification flow."""
@@ -774,20 +774,20 @@ class cmux:
             command = f"focus_notification {tab} {surface}"
         response = self._send_command(command)
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def flash_count(self, surface: Union[str, int]) -> int:
         """Get flash count for a surface by ID or index."""
         response = self._send_command(f"flash_count {surface}")
         if response.startswith("OK "):
             return int(response.split(" ", 1)[1])
-        raise cmuxError(response)
+        raise noriError(response)
 
     def reset_flash_counts(self) -> None:
         """Reset flash counters."""
         response = self._send_command("reset_flash_counts")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def read_screen(self) -> str:
         """Read the visible terminal text from the focused surface."""
@@ -822,7 +822,7 @@ class cmux:
             return self.new_tab()
         if response.startswith("OK "):
             return response[3:]
-        raise cmuxError(response)
+        raise noriError(response)
 
     def close_workspace(self, workspace_id: str) -> None:
         """Close a workspace by ID."""
@@ -831,7 +831,7 @@ class cmux:
             self.close_tab(workspace_id)
             return
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def select_workspace(self, workspace: Union[str, int]) -> None:
         """Select a workspace by ID or index."""
@@ -840,7 +840,7 @@ class cmux:
             self.select_tab(workspace)
             return
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     # Pane commands
     def list_panes(self) -> List[Tuple[int, str, int, bool]]:
@@ -869,7 +869,7 @@ class cmux:
         """Focus a pane by ID or index in the current workspace."""
         response = self._send_command(f"focus_pane {pane}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def list_pane_surfaces(self, pane: Union[str, int, None] = None) -> List[Tuple[int, str, str, bool]]:
         """
@@ -885,7 +885,7 @@ class cmux:
         if response in ("No surfaces", "No tabs in pane"):
             return []
         if response.startswith("ERROR:"):
-            raise cmuxError(response)
+            raise noriError(response)
 
         surfaces = []
         for line in response.split("\n"):
@@ -914,19 +914,19 @@ class cmux:
         """Focus a surface by its panel ID."""
         response = self._send_command(f"focus_surface_by_panel {surface_id}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def focus_webview(self, panel_id: str) -> None:
         """Move keyboard focus into a browser panel's WKWebView."""
         response = self._send_command(f"focus_webview {panel_id}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def is_webview_focused(self, panel_id: str) -> bool:
         """Return True if the browser panel's WKWebView is first responder."""
         response = self._send_command(f"is_webview_focused {panel_id}")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response.strip().lower() == "true"
 
     def wait_for_webview_focus(self, panel_id: str, timeout_s: float = 2.0) -> None:
@@ -936,19 +936,19 @@ class cmux:
             if self.is_webview_focused(panel_id):
                 return
             time.sleep(0.05)
-        raise cmuxError(f"Timed out waiting for webview focus: {panel_id}")
+        raise noriError(f"Timed out waiting for webview focus: {panel_id}")
 
     def set_shortcut(self, name: str, combo: str) -> None:
         """Set a keyboard shortcut via the debug socket."""
         response = self._send_command(f"set_shortcut {name} {combo}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def simulate_shortcut(self, combo: str) -> None:
         """Simulate a keyDown shortcut via the debug socket."""
         response = self._send_command(f"simulate_shortcut {combo}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def simulate_type(self, text: str) -> None:
         """Insert text into the current first responder (debug builds only)."""
@@ -961,76 +961,76 @@ class cmux:
         )
         response = self._send_command(f"simulate_type {escaped}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def simulate_file_drop(self, surface: Union[str, int], paths: Union[str, List[str]]) -> None:
         """Simulate dropping file path(s) onto a terminal surface (debug builds only)."""
         payload = paths if isinstance(paths, str) else "|".join(paths)
         response = self._send_command(f"simulate_file_drop {surface} {payload}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def seed_drag_pasteboard_fileurl(self) -> None:
         """Seed NSDrag pasteboard with public.file-url in the app process (debug builds only)."""
         response = self._send_command("seed_drag_pasteboard_fileurl")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def seed_drag_pasteboard_tabtransfer(self) -> None:
         """Seed NSDrag pasteboard with tab transfer type in the app process (debug builds only)."""
         response = self._send_command("seed_drag_pasteboard_tabtransfer")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def seed_drag_pasteboard_sidebar_reorder(self) -> None:
         """Seed NSDrag pasteboard with sidebar reorder type in the app process (debug builds only)."""
         response = self._send_command("seed_drag_pasteboard_sidebar_reorder")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def seed_drag_pasteboard_types(self, types: List[str]) -> None:
         """Seed NSDrag pasteboard with comma/space-separated types in app process."""
         if not types:
-            raise cmuxError("seed_drag_pasteboard_types requires at least one type")
+            raise noriError("seed_drag_pasteboard_types requires at least one type")
         payload = ",".join(t.strip() for t in types if t and t.strip())
         if not payload:
-            raise cmuxError("seed_drag_pasteboard_types requires at least one non-empty type")
+            raise noriError("seed_drag_pasteboard_types requires at least one non-empty type")
         response = self._send_command(f"seed_drag_pasteboard_types {payload}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def clear_drag_pasteboard(self) -> None:
         """Clear NSDrag pasteboard in the app process (debug builds only)."""
         response = self._send_command("clear_drag_pasteboard")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def overlay_hit_gate(self, event_type: str) -> bool:
         """Return whether FileDropOverlayView would capture hit-testing for event_type."""
         response = self._send_command(f"overlay_hit_gate {event_type}")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response.strip().lower() == "true"
 
     def overlay_drop_gate(self, source: str = "external") -> bool:
         """Return whether FileDropOverlayView would capture drag-destination routing."""
         response = self._send_command(f"overlay_drop_gate {source}")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response.strip().lower() == "true"
 
     def portal_hit_gate(self, event_type: str) -> bool:
         """Return whether terminal portal hit-testing should pass through to SwiftUI drag targets."""
         response = self._send_command(f"portal_hit_gate {event_type}")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response.strip().lower() == "true"
 
     def sidebar_overlay_gate(self, state: str = "active") -> bool:
         """Return whether sidebar outside-drop overlay would capture for drag state."""
         response = self._send_command(f"sidebar_overlay_gate {state}")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response.strip().lower() == "true"
 
     def drop_hit_test(self, x: float, y: float) -> Optional[str]:
@@ -1040,7 +1040,7 @@ class cmux:
         """
         response = self._send_command(f"drop_hit_test {x} {y}")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         val = response.strip()
         return None if val == "none" else val
 
@@ -1048,27 +1048,27 @@ class cmux:
         """Return hit-view chain at normalised (0-1) coordinates."""
         response = self._send_command(f"drag_hit_chain {x} {y}")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response.strip()
 
     def activate_app(self) -> None:
         """Bring app + main window to front (debug builds only)."""
         response = self._send_command("activate_app")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def is_terminal_focused(self, panel: Union[str, int]) -> bool:
         """Return True if the terminal panel's Ghostty view is first responder."""
         response = self._send_command(f"is_terminal_focused {panel}")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         return response.strip().lower() == "true"
 
     def identify(self) -> dict:
         """Best-effort legacy identify helper."""
         response = self._send_command("identify")
         if response.startswith("ERROR"):
-            raise cmuxError(response)
+            raise noriError(response)
         try:
             return json.loads(response)
         except Exception:
@@ -1078,12 +1078,12 @@ class cmux:
         """Return bonsplit layout snapshot + selected panel bounds."""
         response = self._send_command("layout_debug")
         if not response.startswith("OK "):
-            raise cmuxError(response)
+            raise noriError(response)
         payload = response[3:].strip()
         try:
             return json.loads(payload)
         except json.JSONDecodeError as e:
-            raise cmuxError(f"layout_debug JSON decode failed: {e}: {payload[:200]}")
+            raise noriError(f"layout_debug JSON decode failed: {e}: {payload[:200]}")
 
     def read_terminal_text(self, panel: Union[str, int, None] = None) -> str:
         """
@@ -1095,7 +1095,7 @@ class cmux:
             cmd += f" {panel}"
         response = self._send_command(cmd)
         if not response.startswith("OK "):
-            raise cmuxError(response)
+            raise noriError(response)
         b64 = response[3:].strip()
         raw = base64.b64decode(b64) if b64 else b""
         return raw.decode("utf-8", errors="replace")
@@ -1107,18 +1107,18 @@ class cmux:
             cmd += f" {panel}"
         response = self._send_command(cmd)
         if not response.startswith("OK "):
-            raise cmuxError(response)
+            raise noriError(response)
         payload = response[3:].strip()
         try:
             return json.loads(payload)
         except json.JSONDecodeError as e:
-            raise cmuxError(f"render_stats JSON decode failed: {e}: {payload[:200]}")
+            raise noriError(f"render_stats JSON decode failed: {e}: {payload[:200]}")
 
     def panel_snapshot_reset(self, panel: Union[str, int]) -> None:
         """Reset the stored snapshot for a panel (debug builds only)."""
         response = self._send_command(f"panel_snapshot_reset {panel}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def panel_snapshot(self, panel: Union[str, int], label: str = "") -> dict:
         """
@@ -1130,11 +1130,11 @@ class cmux:
             cmd += f" {label}"
         response = self._send_command(cmd)
         if not response.startswith("OK "):
-            raise cmuxError(response)
+            raise noriError(response)
         payload = response[3:].strip()
         parts = payload.split(" ", 4)
         if len(parts) != 5:
-            raise cmuxError(f"panel_snapshot parse failed: {response}")
+            raise noriError(f"panel_snapshot parse failed: {response}")
         panel_id, changed, width, height, path = parts
         return {
             "panel_id": panel_id,
@@ -1149,26 +1149,26 @@ class cmux:
         response = self._send_command("bonsplit_underflow_count")
         if response.startswith("OK "):
             return int(response.split(" ", 1)[1])
-        raise cmuxError(response)
+        raise noriError(response)
 
     def reset_bonsplit_underflow_count(self) -> None:
         """Reset bonsplit arranged-subview underflow counter."""
         response = self._send_command("reset_bonsplit_underflow_count")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def empty_panel_count(self) -> int:
         """Return the number of EmptyPanelView appearances."""
         response = self._send_command("empty_panel_count")
         if response.startswith("OK "):
             return int(response.split(" ", 1)[1])
-        raise cmuxError(response)
+        raise noriError(response)
 
     def reset_empty_panel_count(self) -> None:
         """Reset the EmptyPanelView appearance counter."""
         response = self._send_command("reset_empty_panel_count")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def new_surface(self, pane: Union[str, int, None] = None,
                     panel_type: str = "terminal", url: str = None) -> str:
@@ -1191,7 +1191,7 @@ class cmux:
         response = self._send_command(cmd)
         if response.startswith("OK "):
             return response[3:]
-        raise cmuxError(response)
+        raise noriError(response)
 
     def new_pane(self, direction: str = "right", panel_type: str = "terminal",
                  url: str = None) -> str:
@@ -1209,7 +1209,7 @@ class cmux:
         response = self._send_command(cmd)
         if response.startswith("OK "):
             return response[3:]
-        raise cmuxError(response)
+        raise noriError(response)
 
     def close_surface(self, surface: Union[str, int, None] = None) -> None:
         """
@@ -1221,7 +1221,7 @@ class cmux:
         else:
             response = self._send_command(f"close_surface {surface}")
         if not response.startswith("OK"):
-            raise cmuxError(response)
+            raise noriError(response)
 
     def surface_health(self, workspace: Union[str, int, None] = None) -> List[dict]:
         """
@@ -1277,11 +1277,11 @@ class cmux:
 
 
 def main():
-    """CLI interface for cmux"""
+    """CLI interface for nori"""
     import sys
     import argparse
 
-    parser = argparse.ArgumentParser(description="cmux CLI")
+    parser = argparse.ArgumentParser(description="nori CLI")
     parser.add_argument("command", nargs="?", help="Command to send")
     parser.add_argument("args", nargs="*", help="Command arguments")
     parser.add_argument("-s", "--socket", default=None,
@@ -1290,10 +1290,10 @@ def main():
     args = parser.parse_args()
 
     try:
-        with cmux(args.socket) as client:
+        with nori(args.socket) as client:
             if not args.command:
                 # Interactive mode
-                print("cmux CLI (type 'help' for commands, 'quit' to exit)")
+                print("nori CLI (type 'help' for commands, 'quit' to exit)")
                 while True:
                     try:
                         line = input("> ").strip()
@@ -1314,7 +1314,7 @@ def main():
                     command += " " + " ".join(args.args)
                 response = client._send_command(command)
                 print(response)
-    except cmuxError as e:
+    except noriError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 

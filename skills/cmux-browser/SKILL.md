@@ -1,11 +1,11 @@
 ---
-name: cmux-browser
-description: End-user browser automation with cmux. Use when you need to open sites, interact with pages, wait for state changes, and extract data from cmux browser surfaces.
+name: nori-browser
+description: End-user browser automation with nori. Use when you need to open sites, interact with pages, wait for state changes, and extract data from nori browser surfaces.
 ---
 
-# Browser Automation with cmux
+# Browser Automation with nori
 
-Use this skill for browser tasks inside cmux webviews.
+Use this skill for browser tasks inside nori webviews.
 
 ## Core Workflow
 
@@ -17,25 +17,25 @@ Use this skill for browser tasks inside cmux webviews.
 6. Re-snapshot after DOM/navigation changes.
 
 ```bash
-cmux --json browser open https://example.com
+nori --json browser open https://example.com
 # use returned surface ref, for example: surface:7
 
-cmux browser surface:7 get url
-cmux browser surface:7 wait --load-state complete --timeout-ms 15000
-cmux browser surface:7 snapshot --interactive
-cmux browser surface:7 fill e1 "hello"
-cmux --json browser surface:7 click e2 --snapshot-after
-cmux browser surface:7 snapshot --interactive
+nori browser surface:7 get url
+nori browser surface:7 wait --load-state complete --timeout-ms 15000
+nori browser surface:7 snapshot --interactive
+nori browser surface:7 fill e1 "hello"
+nori --json browser surface:7 click e2 --snapshot-after
+nori browser surface:7 snapshot --interactive
 ```
 
 ## Surface Targeting
 
 ```bash
 # identify current context
-cmux identify --json
+nori identify --json
 
 # open routed to a specific topology target
-cmux browser open https://example.com --workspace workspace:2 --window window:1 --json
+nori browser open https://example.com --workspace workspace:2 --window window:1 --json
 ```
 
 Notes:
@@ -45,14 +45,14 @@ Notes:
 
 ## Wait Support
 
-cmux supports wait patterns similar to agent-browser:
+nori supports wait patterns similar to agent-browser:
 
 ```bash
-cmux browser <surface> wait --selector "#ready" --timeout-ms 10000
-cmux browser <surface> wait --text "Success" --timeout-ms 10000
-cmux browser <surface> wait --url-contains "/dashboard" --timeout-ms 10000
-cmux browser <surface> wait --load-state complete --timeout-ms 15000
-cmux browser <surface> wait --function "document.readyState === 'complete'" --timeout-ms 10000
+nori browser <surface> wait --selector "#ready" --timeout-ms 10000
+nori browser <surface> wait --text "Success" --timeout-ms 10000
+nori browser <surface> wait --url-contains "/dashboard" --timeout-ms 10000
+nori browser <surface> wait --load-state complete --timeout-ms 15000
+nori browser <surface> wait --function "document.readyState === 'complete'" --timeout-ms 10000
 ```
 
 ## Common Flows
@@ -60,33 +60,33 @@ cmux browser <surface> wait --function "document.readyState === 'complete'" --ti
 ### Form Submit
 
 ```bash
-cmux --json browser open https://example.com/signup
-cmux browser surface:7 get url
-cmux browser surface:7 wait --load-state complete --timeout-ms 15000
-cmux browser surface:7 snapshot --interactive
-cmux browser surface:7 fill e1 "Jane Doe"
-cmux browser surface:7 fill e2 "jane@example.com"
-cmux --json browser surface:7 click e3 --snapshot-after
-cmux browser surface:7 wait --url-contains "/welcome" --timeout-ms 15000
-cmux browser surface:7 snapshot --interactive
+nori --json browser open https://example.com/signup
+nori browser surface:7 get url
+nori browser surface:7 wait --load-state complete --timeout-ms 15000
+nori browser surface:7 snapshot --interactive
+nori browser surface:7 fill e1 "Jane Doe"
+nori browser surface:7 fill e2 "jane@example.com"
+nori --json browser surface:7 click e3 --snapshot-after
+nori browser surface:7 wait --url-contains "/welcome" --timeout-ms 15000
+nori browser surface:7 snapshot --interactive
 ```
 
 ### Clear an Input
 
 ```bash
-cmux browser surface:7 fill e11 "" --snapshot-after --json
-cmux browser surface:7 get value e11 --json
+nori browser surface:7 fill e11 "" --snapshot-after --json
+nori browser surface:7 get value e11 --json
 ```
 
 ### Stable Agent Loop (Recommended)
 
 ```bash
 # navigate -> verify -> wait -> snapshot -> action -> snapshot
-cmux browser surface:7 get url
-cmux browser surface:7 wait --load-state complete --timeout-ms 15000
-cmux browser surface:7 snapshot --interactive
-cmux --json browser surface:7 click e5 --snapshot-after
-cmux browser surface:7 snapshot --interactive
+nori browser surface:7 get url
+nori browser surface:7 wait --load-state complete --timeout-ms 15000
+nori browser surface:7 snapshot --interactive
+nori --json browser surface:7 click e5 --snapshot-after
+nori browser surface:7 snapshot --interactive
 ```
 
 If `get url` is empty or `about:blank`, navigate first instead of waiting on load state.
@@ -131,9 +131,9 @@ Some complex pages can reject or break the JavaScript used for rich snapshots an
 Recovery steps:
 
 ```bash
-cmux browser surface:7 get url
-cmux browser surface:7 get text body
-cmux browser surface:7 get html body
+nori browser surface:7 get url
+nori browser surface:7 get text body
+nori browser surface:7 get html body
 ```
 
 - Use `get url` first so you know whether the page actually navigated.

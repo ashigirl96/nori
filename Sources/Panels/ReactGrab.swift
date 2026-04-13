@@ -143,7 +143,7 @@ enum ReactGrabScriptLoader {
 
 // MARK: - WKScriptMessageHandler
 
-private let reactGrabMessageHandlerName = "cmuxReactGrab"
+private let reactGrabMessageHandlerName = "noriReactGrab"
 
 enum ReactGrabBridgeMessage {
     case stateChange(isActive: Bool)
@@ -343,8 +343,8 @@ extension BrowserPanel {
                 return !!syncToken(\(sessionTokenLiteral));
             };
             var installBridge = function(api) {
-                if (!api || window.__CMUX_REACT_GRAB_BRIDGE_INSTALLED__) return;
-                window.__CMUX_REACT_GRAB_BRIDGE_INSTALLED__ = true;
+                if (!api || window.__NORI_REACT_GRAB_BRIDGE_INSTALLED__) return;
+                window.__NORI_REACT_GRAB_BRIDGE_INSTALLED__ = true;
                 var activeToken = null;
                 var syncSessionToken = function(token) {
                     activeToken = (typeof token === 'string' && token.length > 0) ? token : null;
@@ -363,7 +363,7 @@ extension BrowserPanel {
                 refreshSessionToken();
                 var lastActive;
                 api.registerPlugin({
-                    name: 'cmux-bridge',
+                    name: 'nori-bridge',
                     hooks: {
                         onStateChange: function(state) {
                             if (state.isActive === lastActive) return;

@@ -5,9 +5,9 @@ import SwiftUI
 
 /// Stores customizable keyboard shortcuts (definitions + persistence).
 enum KeyboardShortcutSettings {
-    static let didChangeNotification = Notification.Name("cmux.keyboardShortcutSettingsDidChange")
+    static let didChangeNotification = Notification.Name("nori.keyboardShortcutSettingsDidChange")
     static let actionUserInfoKey = "action"
-    static let settingsFileDisplayPath = "~/.config/cmux/settings.json"
+    static let settingsFileDisplayPath = "~/.config/nori/settings.json"
     static var settingsFileStore: KeyboardShortcutSettingsFileStore = .shared {
         didSet {
             notifySettingsFileDidChange()
@@ -96,7 +96,7 @@ enum KeyboardShortcutSettings {
             case .newWindow: return String(localized: "shortcut.newWindow.label", defaultValue: "New Window")
             case .closeWindow: return String(localized: "shortcut.closeWindow.label", defaultValue: "Close Window")
             case .toggleFullScreen: return String(localized: "command.toggleFullScreen.title", defaultValue: "Toggle Full Screen")
-            case .quit: return String(localized: "menu.quitCmux", defaultValue: "Quit cmux")
+            case .quit: return String(localized: "menu.quitNori", defaultValue: "Quit nori")
             case .toggleSidebar: return String(localized: "shortcut.toggleSidebar.label", defaultValue: "Toggle Sidebar")
             case .newTab: return String(localized: "shortcut.newWorkspace.label", defaultValue: "New Workspace")
             case .openFolder: return String(localized: "shortcut.openFolder.label", defaultValue: "Open Folder")
@@ -780,11 +780,11 @@ final class SystemWideHotkeyController {
     }
 
     private func toggleApplicationVisibility() {
-        // Only treat the hotkey as a "hide" toggle when cmux itself is the
+        // Only treat the hotkey as a "hide" toggle when nori itself is the
         // frontmost app and has at least one visible window. If the user
-        // pressed the hotkey from another app, cmux is not frontmost (even if
+        // pressed the hotkey from another app, nori is not frontmost (even if
         // some of its windows are still on screen) and the expected behavior
-        // is to bring cmux forward, not hide it.
+        // is to bring nori forward, not hide it.
         let isFrontmost = NSApp.isActive && !NSApp.isHidden
         let hasVisibleWindow = NSApp.windows.contains { $0.isVisible && !$0.isMiniaturized }
         if isFrontmost && hasVisibleWindow {
@@ -1530,7 +1530,7 @@ struct StoredShortcut: Codable, Equatable {
 }
 
 private enum KeyboardShortcutRecorderActivity {
-    static let didChangeNotification = Notification.Name("cmux.keyboardShortcutRecorderActivityDidChange")
+    static let didChangeNotification = Notification.Name("nori.keyboardShortcutRecorderActivityDidChange")
     private static var activeRecorderCount = 0
 
     static var isAnyRecorderActive: Bool {

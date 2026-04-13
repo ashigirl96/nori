@@ -1,4 +1,4 @@
-# cmux agent notes
+# nori agent notes
 
 ## Initial setup
 
@@ -17,7 +17,7 @@ After making code changes, run the reload script to build the Debug app:
 ./scripts/reload.sh --launch  # build, quit any running instance, then open
 ```
 
-The build is pinned to `~/Library/Developer/Xcode/DerivedData/GhosttyTabs`. Output is `cmux DEV.app` (Debug configuration, bundle ID `com.cmuxterm.app.debug`, socket `/tmp/cmux-debug.sock`). Bundle ID and socket are isolated from any production `/Applications/cmux.app`, so the dev build can coexist with it.
+The build is pinned to `~/Library/Developer/Xcode/DerivedData/GhosttyTabs`. Output is `nori DEV.app` (Debug configuration, bundle ID `com.nori.app.debug`, socket `/tmp/nori-debug.sock`). Bundle ID and socket are isolated from any production `/Applications/nori.app`, so the dev build can coexist with it.
 
 `reload.sh` prints an `App path:` line with the absolute path to the built `.app`. Use that path to build a cmd-clickable `file://` URL. Steps:
 
@@ -28,14 +28,14 @@ The build is pinned to `~/Library/Developer/Xcode/DerivedData/GhosttyTabs`. Outp
 **Claude Code** outputs:
 ```markdown
 =======================================================
-[cmux DEV.app](file:///Users/someone/Library/Developer/Xcode/DerivedData/GhosttyTabs/Build/Products/Debug/cmux%20DEV.app)
+[nori DEV.app](file:///Users/someone/Library/Developer/Xcode/DerivedData/GhosttyTabs/Build/Products/Debug/nori%20DEV.app)
 =======================================================
 ```
 
 **Codex** outputs:
 ```
 =======================================================
-[cmux DEV.app: file:///Users/someone/Library/Developer/Xcode/DerivedData/GhosttyTabs/Build/Products/Debug/cmux%20DEV.app](file:///Users/someone/Library/Developer/Xcode/DerivedData/GhosttyTabs/Build/Products/Debug/cmux%20DEV.app)
+[nori DEV.app: file:///Users/someone/Library/Developer/Xcode/DerivedData/GhosttyTabs/Build/Products/Debug/nori%20DEV.app](file:///Users/someone/Library/Developer/Xcode/DerivedData/GhosttyTabs/Build/Products/Debug/nori%20DEV.app)
 =======================================================
 ```
 
@@ -47,33 +47,33 @@ When rebuilding GhosttyKit.xcframework, always use Release optimizations:
 cd ghostty && zig build -Demit-xcframework=true -Dxcframework-target=universal -Doptimize=ReleaseFast
 ```
 
-`reload.sh` automatically rebuilds `cmuxd` (ReleaseFast) and copies it into the bundle.
+`reload.sh` automatically rebuilds `norid` (ReleaseFast) and copies it into the bundle.
 
-## Install over `/Applications/cmux.app`
+## Install over `/Applications/nori.app`
 
 When you want to replace the production install with a local Release build of
 this fork:
 
 ```bash
-./scripts/install.sh           # build Release + copy to /Applications/cmux.app
+./scripts/install.sh           # build Release + copy to /Applications/nori.app
 ./scripts/install.sh --launch  # build, install, then open
 ```
 
-This builds `cmux.app` under the Release configuration (bundle ID
-`com.cmuxterm.app`, `PRODUCT_NAME=cmux`), quits any running production
-instance, removes the existing `/Applications/cmux.app`, and copies the new
-bundle in place. Debug `cmux DEV.app` builds from `reload.sh` are unaffected
-because they use a distinct bundle ID (`com.cmuxterm.app.debug`).
+This builds `nori.app` under the Release configuration (bundle ID
+`com.nori.app`, `PRODUCT_NAME=nori`), quits any running production
+instance, removes the existing `/Applications/nori.app`, and copies the new
+bundle in place. Debug `nori DEV.app` builds from `reload.sh` are unaffected
+because they use a distinct bundle ID (`com.nori.app.debug`).
 
 Use `reload.sh` for iterative dev (Debug, fast feedback). Use `install.sh`
 when you actually want to ship the fork as your daily driver.
 
 ## Debug event log
 
-All debug events (keys, mouse, focus, splits, tabs) go to `/tmp/cmux-debug.log` in DEBUG builds:
+All debug events (keys, mouse, focus, splits, tabs) go to `/tmp/nori-debug.log` in DEBUG builds:
 
 ```bash
-tail -f /tmp/cmux-debug.log
+tail -f /tmp/nori-debug.log
 ```
 
 - Implementation: `vendor/bonsplit/Sources/Bonsplit/Public/DebugEventLog.swift`
@@ -99,12 +99,12 @@ This makes it visible in the GitHub PR UI (Commits tab, check statuses) that the
 The app has a **Debug** menu in the macOS menu bar (only in DEBUG builds). Use it for visual iteration:
 
 - **Debug > Debug Windows** contains panels for tuning layout, colors, and behavior. Entries are alphabetical with no dividers.
-- To add a debug toggle or visual option: create an `NSWindowController` subclass with a `shared` singleton, add it to the "Debug Windows" menu in `Sources/cmuxApp.swift`, and add a SwiftUI view with `@AppStorage` bindings for live changes.
+- To add a debug toggle or visual option: create an `NSWindowController` subclass with a `shared` singleton, add it to the "Debug Windows" menu in `Sources/noriApp.swift`, and add a SwiftUI view with `@AppStorage` bindings for live changes.
 - When the user says "debug menu" or "debug window", they mean this menu, not `defaults write`.
 
 ## Pitfalls
 
-- **Custom UTTypes** for drag-and-drop must be declared in `Resources/Info.plist` under `UTExportedTypeDeclarations` (e.g. `com.splittabbar.tabtransfer`, `com.cmux.sidebar-tab-reorder`).
+- **Custom UTTypes** for drag-and-drop must be declared in `Resources/Info.plist` under `UTExportedTypeDeclarations` (e.g. `com.splittabbar.tabtransfer`, `com.nori.sidebar-tab-reorder`).
 - Do not add an app-level display link or manual `ghostty_surface_draw` loop; rely on Ghostty wakeups/renderer to avoid typing lag.
 - **Typing-latency-sensitive paths** (read carefully before touching these areas):
   - `WindowTerminalHostView.hitTest()` in `TerminalWindowPortal.swift`: called on every event including keyboard. All divider/sidebar/drag routing is gated to pointer events only. Do not add work outside the `isPointerEvent` guard.
@@ -113,7 +113,7 @@ The app has a **Debug** menu in the macOS menu bar (only in DEBUG builds). Use i
 - **Terminal find layering contract:** `SurfaceSearchOverlay` must be mounted from `GhosttySurfaceScrollView` in `Sources/GhosttyTerminalView.swift` (AppKit portal layer), not from SwiftUI panel containers such as `Sources/Panels/TerminalPanelView.swift`. Portal-hosted terminal views can sit above SwiftUI during split/workspace churn.
 - **Submodule safety:** When modifying a submodule (ghostty, vendor/bonsplit, etc.), always push the submodule commit to its remote `main` branch BEFORE committing the updated pointer in the parent repo. Never commit on a detached HEAD or temporary branch — the commit will be orphaned and lost. Verify with: `cd <submodule> && git merge-base --is-ancestor HEAD origin/main`.
 - **All user-facing strings must be localized.** Use `String(localized: "key.name", defaultValue: "English text")` for every string shown in the UI (labels, buttons, menus, dialogs, tooltips, error messages). Keys go in `Resources/Localizable.xcstrings` with translations for all supported languages (currently English and Japanese). Never use bare string literals in SwiftUI `Text()`, `Button()`, alert titles, etc.
-- **Shortcut policy:** Every new cmux-owned keyboard shortcut must be added to `KeyboardShortcutSettings`, visible/editable in Settings, supported in `~/.config/cmux/settings.json`, and documented in the keyboard shortcut and configuration docs.
+- **Shortcut policy:** Every new nori-owned keyboard shortcut must be added to `KeyboardShortcutSettings`, visible/editable in Settings, supported in `~/.config/nori/settings.json`, and documented in the keyboard shortcut and configuration docs.
 
 ## Test quality policy
 
@@ -144,9 +144,9 @@ The app has a **Debug** menu in the macOS menu bar (only in DEBUG builds). Use i
 
 **Never run tests locally.** All tests (E2E, UI, python socket tests) run via GitHub Actions or on the VM.
 
-- **E2E / UI tests:** trigger via `gh workflow run test-e2e.yml` (see cmuxterm-hq CLAUDE.md for details)
-- **Unit tests:** `xcodebuild -scheme cmux-unit` is safe (no app launch), but prefer CI
-- **Python socket tests (tests_v2/):** these connect to a running cmux instance's socket. If you must test locally, point them at the dev build's socket (`/tmp/cmux-debug.sock`) with `CMUX_SOCKET=/tmp/cmux-debug.sock`.
+- **E2E / UI tests:** trigger via `gh workflow run test-e2e.yml` (see noriterm-hq CLAUDE.md for details)
+- **Unit tests:** `xcodebuild -scheme nori-unit` is safe (no app launch), but prefer CI
+- **Python socket tests (tests_v2/):** these connect to a running nori instance's socket. If you must test locally, point them at the dev build's socket (`/tmp/nori-debug.sock`) with `NORI_SOCKET=/tmp/nori-debug.sock`.
 
 ## Ghostty submodule workflow
 

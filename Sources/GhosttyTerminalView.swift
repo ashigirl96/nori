@@ -19,7 +19,7 @@ private func ghostty_surface_clear_selection_compat(_ surface: ghostty_surface_t
 private func ghostty_surface_select_cursor_cell_compat(_ surface: ghostty_surface_t) -> Bool
 
 #if os(macOS)
-func cmuxShouldApplyWindowGlass(
+func noriShouldApplyWindowGlass(
     sidebarBlendMode: String,
     bgGlassEnabled: Bool,
     glassEffectAvailable _: Bool
@@ -29,29 +29,29 @@ func cmuxShouldApplyWindowGlass(
     sidebarBlendMode == "behindWindow" && bgGlassEnabled
 }
 
-func cmuxShouldUseTransparentBackgroundWindow() -> Bool {
+func noriShouldUseTransparentBackgroundWindow() -> Bool {
     let defaults = UserDefaults.standard
     let sidebarBlendMode = defaults.string(forKey: "sidebarBlendMode") ?? "withinWindow"
     let bgGlassEnabled = defaults.object(forKey: "bgGlassEnabled") as? Bool ?? false
-    return cmuxShouldApplyWindowGlass(
+    return noriShouldApplyWindowGlass(
         sidebarBlendMode: sidebarBlendMode,
         bgGlassEnabled: bgGlassEnabled,
         glassEffectAvailable: WindowGlassEffect.isAvailable
     )
 }
 
-func cmuxShouldUseClearWindowBackground(for opacity: Double) -> Bool {
-    cmuxShouldUseTransparentBackgroundWindow() || opacity < 0.999
+func noriShouldUseClearWindowBackground(for opacity: Double) -> Bool {
+    noriShouldUseTransparentBackgroundWindow() || opacity < 0.999
 }
 
-private func cmuxTransparentWindowBaseColor() -> NSColor {
+private func noriTransparentWindowBaseColor() -> NSColor {
     // A tiny non-zero alpha matches Ghostty's window compositing behavior on macOS and
     // avoids visual artifacts that can happen with a fully clear window background.
     NSColor.white.withAlphaComponent(0.001)
 }
 #endif
 
-private func cmuxRuntimeReadClipboardCallback(
+private func noriRuntimeReadClipboardCallback(
     _ userdata: UnsafeMutableRawPointer?,
     _ location: ghostty_clipboard_e,
     _ state: UnsafeMutableRawPointer?
@@ -60,17 +60,17 @@ private func cmuxRuntimeReadClipboardCallback(
 }
 
 #if DEBUG
-private func cmuxChildExitProbePath() -> String? {
+private func noriChildExitProbePath() -> String? {
     let env = ProcessInfo.processInfo.environment
-    guard env["CMUX_UI_TEST_CHILD_EXIT_KEYBOARD_SETUP"] == "1",
-          let path = env["CMUX_UI_TEST_CHILD_EXIT_KEYBOARD_PATH"],
+    guard env["NORI_UI_TEST_CHILD_EXIT_KEYBOARD_SETUP"] == "1",
+          let path = env["NORI_UI_TEST_CHILD_EXIT_KEYBOARD_PATH"],
           !path.isEmpty else {
         return nil
     }
     return path
 }
 
-private func cmuxLoadChildExitProbe(at path: String) -> [String: String] {
+private func noriLoadChildExitProbe(at path: String) -> [String: String] {
     guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
           let object = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
         return [:]
@@ -78,9 +78,9 @@ private func cmuxLoadChildExitProbe(at path: String) -> [String: String] {
     return object
 }
 
-private func cmuxWriteChildExitProbe(_ updates: [String: String], increments: [String: Int] = [:]) {
-    guard let path = cmuxChildExitProbePath() else { return }
-    var payload = cmuxLoadChildExitProbe(at: path)
+private func noriWriteChildExitProbe(_ updates: [String: String], increments: [String: Int] = [:]) {
+    guard let path = noriChildExitProbePath() else { return }
+    var payload = noriLoadChildExitProbe(at: path)
     for (key, by) in increments {
         let current = Int(payload[key] ?? "") ?? 0
         payload[key] = String(current + by)
@@ -92,7 +92,7 @@ private func cmuxWriteChildExitProbe(_ updates: [String: String], increments: [S
     try? out.write(to: URL(fileURLWithPath: path), options: .atomic)
 }
 
-private func cmuxScalarHex(_ value: String?) -> String {
+private func noriScalarHex(_ value: String?) -> String {
     guard let value else { return "" }
     return value.unicodeScalars
         .map { String(format: "%04X", $0.value) }
@@ -482,24 +482,24 @@ enum GhosttyPasteboardHelper {
 }
 
 #if DEBUG
-func cmuxPasteboardStringContentsForTesting(_ pasteboard: NSPasteboard) -> String? {
+func noriPasteboardStringContentsForTesting(_ pasteboard: NSPasteboard) -> String? {
     GhosttyPasteboardHelper.stringContents(from: pasteboard)
 }
 
-func cmuxPasteboardImageFileURLForTesting(_ pasteboard: NSPasteboard) -> URL? {
+func noriPasteboardImageFileURLForTesting(_ pasteboard: NSPasteboard) -> URL? {
     GhosttyPasteboardHelper.saveImageFileURLIfNeeded(from: pasteboard)
 }
 
-func cmuxPasteboardImagePathForTesting(_ pasteboard: NSPasteboard) -> String? {
+func noriPasteboardImagePathForTesting(_ pasteboard: NSPasteboard) -> String? {
     GhosttyPasteboardHelper.saveClipboardImageIfNeeded(from: pasteboard)
 }
 
-func cmuxResolveQuicklookPathForTesting(
+func noriResolveQuicklookPathForTesting(
     _ rawText: String,
     cwd: String,
     existingPaths: Set<String>
 ) -> String? {
-    cmuxResolveQuicklookPath(
+    noriResolveQuicklookPath(
         rawText,
         cwd: cwd,
         fileExists: { path in
@@ -508,12 +508,12 @@ func cmuxResolveQuicklookPathForTesting(
     )
 }
 
-func cmuxTrimTerminalPathTrailingPunctuationForTesting(_ token: String) -> String {
-    cmuxTrimTerminalPathTrailingPunctuation(token)
+func noriTrimTerminalPathTrailingPunctuationForTesting(_ token: String) -> String {
+    noriTrimTerminalPathTrailingPunctuation(token)
 }
 #endif
 
-private func cmuxResolveQuicklookPath(
+private func noriResolveQuicklookPath(
     _ rawText: String,
     cwd: String?,
     fileExists: (String) -> Bool = { FileManager.default.fileExists(atPath: $0) }
@@ -522,7 +522,7 @@ private func cmuxResolveQuicklookPath(
     guard !trimmed.isEmpty else { return nil }
 
     var seenPaths: Set<String> = []
-    for token in cmuxQuicklookPathCandidates(from: trimmed) {
+    for token in noriQuicklookPathCandidates(from: trimmed) {
         let normalizedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedToken.isEmpty else { continue }
 
@@ -545,7 +545,7 @@ private func cmuxResolveQuicklookPath(
     return nil
 }
 
-private func cmuxQuicklookPathCandidates(from rawText: String) -> [String] {
+private func noriQuicklookPathCandidates(from rawText: String) -> [String] {
     var candidates: [String] = []
 
     func append(_ candidate: String?) {
@@ -559,7 +559,7 @@ private func cmuxQuicklookPathCandidates(from rawText: String) -> [String] {
         }
 
         appendUnique(trimmed)
-        let punctuationTrimmed = cmuxTrimTerminalPathTrailingPunctuation(trimmed)
+        let punctuationTrimmed = noriTrimTerminalPathTrailingPunctuation(trimmed)
         if punctuationTrimmed != trimmed {
             appendUnique(punctuationTrimmed)
         }
@@ -567,14 +567,14 @@ private func cmuxQuicklookPathCandidates(from rawText: String) -> [String] {
 
     append(rawText)
 
-    let unescaped = cmuxUnescapeShellToken(rawText)
+    let unescaped = noriUnescapeShellToken(rawText)
     if unescaped != rawText {
         append(unescaped)
     }
 
-    if let unquoted = cmuxUnquoteShellToken(rawText) {
+    if let unquoted = noriUnquoteShellToken(rawText) {
         append(unquoted)
-        let unescapedUnquoted = cmuxUnescapeShellToken(unquoted)
+        let unescapedUnquoted = noriUnescapeShellToken(unquoted)
         if unescapedUnquoted != unquoted {
             append(unescapedUnquoted)
         }
@@ -583,15 +583,15 @@ private func cmuxQuicklookPathCandidates(from rawText: String) -> [String] {
     return candidates
 }
 
-private let cmuxTerminalPathSentencePunctuation: Set<Character> = [
+private let noriTerminalPathSentencePunctuation: Set<Character> = [
     ".", ",", ";", ":", "!", "?"
 ]
 
-private let cmuxTerminalPathTrailingQuotes: Set<Character> = [
+private let noriTerminalPathTrailingQuotes: Set<Character> = [
     "\"", "'", "”", "’", "»"
 ]
 
-private let cmuxTerminalPathClosingPairs: [Character: Character] = [
+private let noriTerminalPathClosingPairs: [Character: Character] = [
     ")": "(",
     "]": "[",
     "}": "{",
@@ -600,21 +600,21 @@ private let cmuxTerminalPathClosingPairs: [Character: Character] = [
 
 /// Mirror smart-link terminals by trimming only the trailing punctuation run
 /// that is clearly outside the path itself.
-private func cmuxTrimTerminalPathTrailingPunctuation(_ token: String) -> String {
+private func noriTrimTerminalPathTrailingPunctuation(_ token: String) -> String {
     let characters = Array(token)
     guard !characters.isEmpty else { return token }
 
     var end = characters.count
     while end > 0 {
         let trailing = characters[end - 1]
-        if cmuxTerminalPathSentencePunctuation.contains(trailing) ||
-            cmuxTerminalPathTrailingQuotes.contains(trailing) {
+        if noriTerminalPathSentencePunctuation.contains(trailing) ||
+            noriTerminalPathTrailingQuotes.contains(trailing) {
             end -= 1
             continue
         }
 
-        if let opener = cmuxTerminalPathClosingPairs[trailing],
-           !cmuxHasUnmatchedOpeningPathDelimiter(
+        if let opener = noriTerminalPathClosingPairs[trailing],
+           !noriHasUnmatchedOpeningPathDelimiter(
                in: characters[..<(end - 1)],
                opener: opener,
                closer: trailing
@@ -630,7 +630,7 @@ private func cmuxTrimTerminalPathTrailingPunctuation(_ token: String) -> String 
     return String(characters[..<end])
 }
 
-private func cmuxHasUnmatchedOpeningPathDelimiter(
+private func noriHasUnmatchedOpeningPathDelimiter(
     in characters: ArraySlice<Character>,
     opener: Character,
     closer: Character
@@ -646,7 +646,7 @@ private func cmuxHasUnmatchedOpeningPathDelimiter(
     return balance > 0
 }
 
-private func cmuxUnquoteShellToken(_ token: String) -> String? {
+private func noriUnquoteShellToken(_ token: String) -> String? {
     guard token.count >= 2,
           let first = token.first,
           let last = token.last,
@@ -657,7 +657,7 @@ private func cmuxUnquoteShellToken(_ token: String) -> String? {
     return String(token.dropFirst().dropLast())
 }
 
-private func cmuxUnescapeShellToken(_ token: String) -> String {
+private func noriUnescapeShellToken(_ token: String) -> String {
     var output = String.UnicodeScalarView()
     output.reserveCapacity(token.unicodeScalars.count)
     var escaping = false
@@ -684,7 +684,7 @@ private func cmuxUnescapeShellToken(_ token: String) -> String {
     return String(output)
 }
 
-private func cmuxVisibleTerminalLines(from text: String, rows: Int) -> [String] {
+private func noriVisibleTerminalLines(from text: String, rows: Int) -> [String] {
     let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
     if lines.count > rows {
         return Array(lines.suffix(rows))
@@ -692,7 +692,7 @@ private func cmuxVisibleTerminalLines(from text: String, rows: Int) -> [String] 
     return lines
 }
 
-private func cmuxShellEscapedTokenContainingColumn(
+private func noriShellEscapedTokenContainingColumn(
     in line: String,
     column: Int
 ) -> String? {
@@ -736,7 +736,7 @@ private func cmuxShellEscapedTokenContainingColumn(
     return nil
 }
 
-private func cmuxIsHardPathDelimiter(
+private func noriIsHardPathDelimiter(
     in characters: [Character],
     at index: Int
 ) -> Bool {
@@ -751,21 +751,21 @@ private func cmuxIsHardPathDelimiter(
     return previousIsWhitespace || nextIsWhitespace
 }
 
-private func cmuxRawPathSegmentContainingColumn(
+private func noriRawPathSegmentContainingColumn(
     in line: String,
     column: Int
 ) -> String? {
     let characters = Array(line)
     guard !characters.isEmpty, column >= 0, column < characters.count else { return nil }
-    guard !cmuxIsHardPathDelimiter(in: characters, at: column) else { return nil }
+    guard !noriIsHardPathDelimiter(in: characters, at: column) else { return nil }
 
     var start = column
-    while start > 0, !cmuxIsHardPathDelimiter(in: characters, at: start - 1) {
+    while start > 0, !noriIsHardPathDelimiter(in: characters, at: start - 1) {
         start -= 1
     }
 
     var end = column
-    while (end + 1) < characters.count, !cmuxIsHardPathDelimiter(in: characters, at: end + 1) {
+    while (end + 1) < characters.count, !noriIsHardPathDelimiter(in: characters, at: end + 1) {
         end += 1
     }
 
@@ -773,7 +773,7 @@ private func cmuxRawPathSegmentContainingColumn(
     return candidate.isEmpty ? nil : candidate
 }
 
-private func cmuxPathCandidatesContainingColumn(
+private func noriPathCandidatesContainingColumn(
     in line: String,
     column: Int
 ) -> [String] {
@@ -786,20 +786,20 @@ private func cmuxPathCandidatesContainingColumn(
         candidates.append(trimmed)
     }
 
-    append(cmuxRawPathSegmentContainingColumn(in: line, column: column))
-    append(cmuxShellEscapedTokenContainingColumn(in: line, column: column))
+    append(noriRawPathSegmentContainingColumn(in: line, column: column))
+    append(noriShellEscapedTokenContainingColumn(in: line, column: column))
 
     return candidates
 }
 
-private func cmuxResolveVisibleLinePath(
+private func noriResolveVisibleLinePath(
     _ line: String,
     column: Int,
     cwd: String,
     fileExists: (String) -> Bool = { FileManager.default.fileExists(atPath: $0) }
 ) -> (rawToken: String, path: String)? {
-    for rawToken in cmuxPathCandidatesContainingColumn(in: line, column: column) {
-        if let resolvedPath = cmuxResolveQuicklookPath(rawToken, cwd: cwd, fileExists: fileExists) {
+    for rawToken in noriPathCandidatesContainingColumn(in: line, column: column) {
+        if let resolvedPath = noriResolveQuicklookPath(rawToken, cwd: cwd, fileExists: fileExists) {
             return (rawToken, resolvedPath)
         }
     }
@@ -1295,7 +1295,7 @@ class GhosttyApp {
     }
 
     static let shared = GhosttyApp()
-    private static let releaseBundleIdentifier = "com.cmuxterm.app"
+    private static let releaseBundleIdentifier = "com.nori.app"
     private static let backgroundLogTimestampFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -1316,12 +1316,12 @@ class GhosttyApp {
     private static func resolveBackgroundLogURL(
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) -> URL {
-        if let explicitPath = environment["CMUX_DEBUG_BG_LOG"],
+        if let explicitPath = environment["NORI_DEBUG_BG_LOG"],
            !explicitPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return URL(fileURLWithPath: explicitPath)
         }
 
-        if let debugLogPath = environment["CMUX_DEBUG_LOG"],
+        if let debugLogPath = environment["NORI_DEBUG_LOG"],
            !debugLogPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let baseURL = URL(fileURLWithPath: debugLogPath)
             let extensionSeparatorIndex = baseURL.lastPathComponent.lastIndex(of: ".")
@@ -1330,7 +1330,7 @@ class GhosttyApp {
             return baseURL.deletingLastPathComponent().appendingPathComponent(bgName)
         }
 
-        return URL(fileURLWithPath: "/tmp/cmux-bg.log")
+        return URL(fileURLWithPath: "/tmp/nori-bg.log")
     }
 
     fileprivate static func runtimeReadClipboardCallback(
@@ -1397,7 +1397,7 @@ class GhosttyApp {
                         guard let workspace = MainActor.assumeIsolated({
                             callbackContext.terminalSurface?.owningWorkspace()
                         }) else {
-                            finish(.failure(NSError(domain: "cmux.remote.paste", code: 3)))
+                            finish(.failure(NSError(domain: "nori.remote.paste", code: 3)))
                             GhosttyPasteboardHelper.cleanupTransferredTemporaryImageFiles(fileURLs)
                             return
                         }
@@ -1448,16 +1448,16 @@ class GhosttyApp {
     }
 
     let backgroundLogEnabled = {
-        if ProcessInfo.processInfo.environment["CMUX_DEBUG_BG"] == "1" {
+        if ProcessInfo.processInfo.environment["NORI_DEBUG_BG"] == "1" {
             return true
         }
-        if ProcessInfo.processInfo.environment["CMUX_DEBUG_LOG"] != nil {
+        if ProcessInfo.processInfo.environment["NORI_DEBUG_LOG"] != nil {
             return true
         }
         if ProcessInfo.processInfo.environment["GHOSTTYTABS_DEBUG_BG"] == "1" {
             return true
         }
-        if UserDefaults.standard.bool(forKey: "cmuxDebugBG") {
+        if UserDefaults.standard.bool(forKey: "noriDebugBG") {
             return true
         }
         return UserDefaults.standard.bool(forKey: "GhosttyTabsDebugBG")
@@ -1561,7 +1561,7 @@ class GhosttyApp {
     }
 
     #if DEBUG
-    private static let initLogPath = "/tmp/cmux-ghostty-init.log"
+    private static let initLogPath = "/tmp/nori-ghostty-init.log"
 
     private static func initLog(_ message: String) {
         let timestamp = ISO8601DateFormatter().string(from: Date())
@@ -1628,7 +1628,7 @@ class GhosttyApp {
         // though the C ABI returns `bool`. Store the C-compatible shim explicitly so the
         // project compiles against both importer variants.
         runtimeConfig.read_clipboard_cb = unsafeBitCast(
-            cmuxRuntimeReadClipboardCallback as @convention(c) (
+            noriRuntimeReadClipboardCallback as @convention(c) (
                 UnsafeMutableRawPointer?,
                 ghostty_clipboard_e,
                 UnsafeMutableRawPointer?
@@ -1675,7 +1675,7 @@ class GhosttyApp {
             let callbackTabId = callbackContext.tabId
 
 #if DEBUG
-            cmuxWriteChildExitProbe(
+            noriWriteChildExitProbe(
                 [
                     "probeCloseSurfaceNeedsConfirm": needsConfirmClose ? "1" : "0",
                     "probeCloseSurfaceTabId": callbackTabId?.uuidString ?? "",
@@ -1719,7 +1719,7 @@ class GhosttyApp {
             #endif
 
             // If the user config is invalid, prefer a minimal fallback configuration so
-            // cmux still launches with working terminals.
+            // nori still launches with working terminals.
             ghostty_config_free(primaryConfig)
 
             guard let fallbackConfig = ghostty_config_new() else {
@@ -1730,13 +1730,13 @@ class GhosttyApp {
             loadInlineGhosttyConfig(
                 "macos-background-from-layer = true",
                 into: fallbackConfig,
-                prefix: "cmux-layer-bg",
+                prefix: "nori-layer-bg",
                 logLabel: "layer background (fallback)"
             )
             loadInlineGhosttyConfig(
                 "shell-integration = none",
                 into: fallbackConfig,
-                prefix: "cmux-shell-integration-override",
+                prefix: "nori-shell-integration-override",
                 logLabel: "shell integration override (fallback)"
             )
             usesHostLayerBackground = true
@@ -1826,7 +1826,7 @@ class GhosttyApp {
         ghostty_config_load_default_files(config)
         loadLegacyGhosttyConfigIfNeeded(config)
         ghostty_config_load_recursive_files(config)
-        loadCmuxAppSupportGhosttyConfigIfNeeded(config)
+        loadNoriAppSupportGhosttyConfigIfNeeded(config)
         loadCJKFontFallbackIfNeeded(config)
         let useHostLayerBackground = !hasConfiguredBackgroundImage(config)
         usesHostLayerBackground = useHostLayerBackground
@@ -1837,11 +1837,11 @@ class GhosttyApp {
             loadInlineGhosttyConfig(
                 "macos-background-from-layer = false",
                 into: config,
-                prefix: "cmux-layer-bg-image-override",
+                prefix: "nori-layer-bg-image-override",
                 logLabel: "layer background image override"
             )
         } else {
-            // cmux provides the terminal background via backgroundView (CALayer)
+            // nori provides the terminal background via backgroundView (CALayer)
             // instead of the GPU full-screen bg pass, so the layer can provide
             // instant coverage during sidebar toggle and other layout transitions.
             //
@@ -1851,7 +1851,7 @@ class GhosttyApp {
             loadInlineGhosttyConfig(
                 "macos-background-from-layer = true",
                 into: config,
-                prefix: "cmux-layer-bg",
+                prefix: "nori-layer-bg",
                 logLabel: "layer background"
             )
         }
@@ -1866,12 +1866,12 @@ class GhosttyApp {
             }
         }
 
-        // Prevent Ghostty from overriding ZDOTDIR — cmux handles shell
+        // Prevent Ghostty from overriding ZDOTDIR — nori handles shell
         // integration itself via the .zshenv bootstrap (#2594).
         loadInlineGhosttyConfig(
             "shell-integration = none",
             into: config,
-            prefix: "cmux-shell-integration-override",
+            prefix: "nori-shell-integration-override",
             logLabel: "shell integration override"
         )
 
@@ -1889,7 +1889,7 @@ class GhosttyApp {
     /// user-managed fallback chains or configured fonts that already cover
     /// the affected CJK ranges.
     ///
-    /// See: https://github.com/manaflow-ai/cmux/pull/1017
+    /// See: https://github.com/manaflow-ai/nori/pull/1017
     private func loadCJKFontFallbackIfNeeded(_ config: ghostty_config_t) {
         guard let mappings = Self.autoInjectedCJKFontMappings() else { return }
 
@@ -1899,7 +1899,7 @@ class GhosttyApp {
         loadInlineGhosttyConfig(
             lines,
             into: config,
-            prefix: "cmux-cjk-font-fallback",
+            prefix: "nori-cjk-font-fallback",
             logLabel: "CJK font fallback"
         )
     }
@@ -1920,7 +1920,7 @@ class GhosttyApp {
     ]
 
     /// Representative scalars used to detect whether the configured primary
-    /// font already covers the ranges cmux would otherwise auto-map.
+    /// font already covers the ranges nori would otherwise auto-map.
     private static let cjkCoverageSampleCharactersByRange: [String: [UniChar]] = [
         "U+3000-U+303F": [0x3001, 0x300C],
         "U+4E00-U+9FFF": [0x4E00, 0x65E5, 0x6C34],
@@ -2010,7 +2010,7 @@ class GhosttyApp {
         return mappings.isEmpty ? nil : mappings
     }
 
-    /// Returns only the CJK mappings cmux should auto-inject after respecting
+    /// Returns only the CJK mappings nori should auto-inject after respecting
     /// explicit user overrides and the glyph coverage of the configured
     /// primary font family.
     static func autoInjectedCJKFontMappings(
@@ -2044,7 +2044,7 @@ class GhosttyApp {
 
     /// Checks whether the user's Ghostty config files already contain
     /// a `font-codepoint-map` entry covering CJK ranges. Also checks
-    /// application-support config paths that cmux may load at runtime.
+    /// application-support config paths that nori may load at runtime.
     static func userConfigContainsCJKCodepointMap(
         configPaths: [String] = loadedCJKScanPaths()
     ) -> Bool {
@@ -2146,7 +2146,7 @@ class GhosttyApp {
         return summary
     }
 
-    /// Returns the top-level config paths that cmux will actually load before
+    /// Returns the top-level config paths that nori will actually load before
     /// recursive `config-file` processing.
     static func loadedCJKScanPaths(
         currentBundleIdentifier: String? = Bundle.main.bundleIdentifier,
@@ -2164,7 +2164,7 @@ class GhosttyApp {
               !bundleId.isEmpty,
               let appSupportDirectory else { return paths }
 
-        let appSupportConfigURLs = cmuxAppSupportConfigURLs(
+        let appSupportConfigURLs = noriAppSupportConfigURLs(
             currentBundleIdentifier: bundleId,
             appSupportDirectory: appSupportDirectory
         )
@@ -2193,7 +2193,7 @@ class GhosttyApp {
         return size.intValue
     }
 
-    /// Scans a single config file for font settings relevant to cmux's
+    /// Scans a single config file for font settings relevant to nori's
     /// injected CJK fallback and updates the pending recursive config-file
     /// queue using Ghostty's repeatable path semantics.
     private static func scanFontConfigFile(
@@ -2291,7 +2291,7 @@ class GhosttyApp {
         return true
     }
 
-    static func cmuxAppSupportConfigURLs(
+    static func noriAppSupportConfigURLs(
         currentBundleIdentifier: String?,
         appSupportDirectory: URL,
         fileManager: FileManager = .default
@@ -2364,13 +2364,13 @@ class GhosttyApp {
         return true
     }
 
-    private func loadCmuxAppSupportGhosttyConfigIfNeeded(_ config: ghostty_config_t) {
+    private func loadNoriAppSupportGhosttyConfigIfNeeded(_ config: ghostty_config_t) {
         #if os(macOS)
         let fm = FileManager.default
         guard let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
         guard let currentBundleIdentifier = Bundle.main.bundleIdentifier,
               !currentBundleIdentifier.isEmpty else { return }
-        let urls = Self.cmuxAppSupportConfigURLs(
+        let urls = Self.noriAppSupportConfigURLs(
             currentBundleIdentifier: currentBundleIdentifier,
             appSupportDirectory: appSupport,
             fileManager: fm
@@ -2385,7 +2385,7 @@ class GhosttyApp {
 
 #if DEBUG
         dlog(
-            "loaded cmux app support ghostty config from: \(urls.map(\.path).joined(separator: ", "))"
+            "loaded nori app support ghostty config from: \(urls.map(\.path).joined(separator: ", "))"
         )
 #endif
         #endif
@@ -2909,7 +2909,7 @@ class GhosttyApp {
         if action.tag == GHOSTTY_ACTION_SHOW_CHILD_EXITED {
             // The child (shell) exited. Ghostty will fall back to printing
             // "Process exited. Press any key..." into the terminal unless the host
-            // handles this action. For cmux, the correct behavior is to close
+            // handles this action. For nori, the correct behavior is to close
             // the panel immediately (no prompt).
 #if DEBUG
             dlog(
@@ -2918,7 +2918,7 @@ class GhosttyApp {
             )
 #endif
 #if DEBUG
-            cmuxWriteChildExitProbe(
+            noriWriteChildExitProbe(
                 [
                     "probeShowChildExitedTabId": callbackTabId?.uuidString ?? "",
                     "probeShowChildExitedSurfaceId": callbackSurfaceId?.uuidString ?? "",
@@ -3214,7 +3214,7 @@ class GhosttyApp {
                 return false
             }
             // cmd+shift+click forces the system default browser, bypassing
-            // the cmux built-in browser regardless of settings/whitelist.
+            // the nori built-in browser regardless of settings/whitelist.
             // The modifier is stashed by mouseUp just before the synchronous
             // ghostty_surface_mouse_button call that lands us here.
             if let mods = callbackContext?.pendingClickModifiers,
@@ -3232,9 +3232,9 @@ class GhosttyApp {
                     NSWorkspace.shared.open(urlToOpen)
                 }
             }
-            if !BrowserLinkOpenSettings.openTerminalLinksInCmuxBrowser() {
+            if !BrowserLinkOpenSettings.openTerminalLinksInNoriBrowser() {
                 #if DEBUG
-                dlog("link.openURL cmuxBrowser=disabled, opening externally url=\(target.url)")
+                dlog("link.openURL noriBrowser=disabled, opening externally url=\(target.url)")
                 #endif
                 return performOnMain {
                     NSWorkspace.shared.open(target.url)
@@ -3333,8 +3333,8 @@ class GhosttyApp {
 
     private func applyBackgroundToKeyWindow() {
         guard let window = activeMainWindow() else { return }
-        if cmuxShouldUseClearWindowBackground(for: defaultBackgroundOpacity) {
-            window.backgroundColor = cmuxTransparentWindowBaseColor()
+        if noriShouldUseClearWindowBackground(for: defaultBackgroundOpacity) {
+            window.backgroundColor = noriTransparentWindowBaseColor()
             window.isOpaque = false
             applyWindowBlurIfNeeded(window)
             if backgroundLogEnabled {
@@ -3363,12 +3363,12 @@ class GhosttyApp {
     private func activeMainWindow() -> NSWindow? {
         let keyWindow = NSApp.keyWindow
         if let raw = keyWindow?.identifier?.rawValue,
-           raw == "cmux.main" || raw.hasPrefix("cmux.main.") {
+           raw == "nori.main" || raw.hasPrefix("nori.main.") {
             return keyWindow
         }
         return NSApp.windows.first(where: { window in
             guard let raw = window.identifier?.rawValue else { return false }
-            return raw == "cmux.main" || raw.hasPrefix("cmux.main.")
+            return raw == "nori.main" || raw.hasPrefix("nori.main.")
         })
     }
 
@@ -3383,7 +3383,7 @@ class GhosttyApp {
         backgroundLogSequence &+= 1
         let sequence = backgroundLogSequence
         let line =
-            "\(timestamp) seq=\(sequence) t+\(String(format: "%.3f", uptimeMs))ms thread=\(threadLabel) frame60=\(frame60) frame120=\(frame120) cmux bg: \(message)\n"
+            "\(timestamp) seq=\(sequence) t+\(String(format: "%.3f", uptimeMs))ms thread=\(threadLabel) frame60=\(frame60) frame120=\(frame120) nori bg: \(message)\n"
         if let data = line.data(using: .utf8) {
             if FileManager.default.fileExists(atPath: backgroundLogURL.path) == false {
                 FileManager.default.createFile(atPath: backgroundLogURL.path, contents: nil)
@@ -3522,19 +3522,19 @@ final class TerminalSurface: Identifiable, ObservableObject {
     var isViewInWindow: Bool { hostedView.window != nil }
     let id: UUID
     private(set) var tabId: UUID
-    /// Port ordinal for CMUX_PORT range assignment
+    /// Port ordinal for NORI_PORT range assignment
     var portOrdinal: Int = 0
     /// Snapshotted once per app session so all workspaces use consistent values
     private static let sessionPortBase: Int = {
-        let val = UserDefaults.standard.integer(forKey: "cmuxPortBase")
+        let val = UserDefaults.standard.integer(forKey: "noriPortBase")
         return val > 0 ? val : 9100
     }()
     private static let sessionPortRangeSize: Int = {
-        let val = UserDefaults.standard.integer(forKey: "cmuxPortRange")
+        let val = UserDefaults.standard.integer(forKey: "noriPortRange")
         return val > 0 ? val : 10
     }()
     private let surfaceContext: ghostty_surface_context_e
-    private let configTemplate: CmuxSurfaceConfigTemplate?
+    private let configTemplate: NoriSurfaceConfigTemplate?
     private let workingDirectory: String?
     private let initialCommand: String?
     private let initialEnvironmentOverrides: [String: String]
@@ -3626,7 +3626,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
     init(
         tabId: UUID,
         context: ghostty_surface_context_e,
-        configTemplate: CmuxSurfaceConfigTemplate?,
+        configTemplate: NoriSurfaceConfigTemplate?,
         workingDirectory: String? = nil,
         initialCommand: String? = nil,
         initialEnvironmentOverrides: [String: String] = [:],
@@ -3745,7 +3745,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
     }
 
     func debugSurfaceContextLabel() -> String {
-        cmuxSurfaceContextName(surfaceContext)
+        noriSurfaceContextName(surfaceContext)
     }
 
     func debugInitialCommand() -> String? {
@@ -3781,7 +3781,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
         let registry = TerminalSurfaceRegistry.shared
         let registeredOwnerId = registry.runtimeSurfaceOwnerId(surface)
         guard registeredOwnerId == id,
-              cmuxSurfacePointerAppearsLive(surface) else {
+              noriSurfacePointerAppearsLive(surface) else {
             let callbackContext = surfaceCallbackContext
             surfaceCallbackContext = nil
             registry.unregisterRuntimeSurface(surface, ownerId: id)
@@ -4019,8 +4019,8 @@ final class TerminalSurface: Identifiable, ObservableObject {
     }
 
 #if DEBUG
-    private static let surfaceLogPath = "/tmp/cmux-ghostty-surface.log"
-    private static let sizeLogPath = "/tmp/cmux-ghostty-size.log"
+    private static let surfaceLogPath = "/tmp/nori-ghostty-surface.log"
+    private static let sizeLogPath = "/tmp/nori-ghostty-size.log"
 
     func debugCurrentPixelSize() -> (width: UInt32, height: UInt32) {
         (lastPixelWidth, lastPixelHeight)
@@ -4044,7 +4044,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
 
     private static func sizeLog(_ message: String) {
         let env = ProcessInfo.processInfo.environment
-        guard env["CMUX_UI_TEST_SPLIT_CLOSE_RIGHT_VISUAL"] == "1" else { return }
+        guard env["NORI_UI_TEST_SPLIT_CLOSE_RIGHT_VISUAL"] == "1" else { return }
         let timestamp = ISO8601DateFormatter().string(from: Date())
         let line = "[\(timestamp)] \(message)\n"
         if let handle = FileHandle(forWritingAtPath: sizeLogPath) {
@@ -4195,7 +4195,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
 
         let scaleFactors = scaleFactors(for: view)
 
-        let baseConfig = configTemplate ?? CmuxSurfaceConfigTemplate()
+        let baseConfig = configTemplate ?? NoriSurfaceConfigTemplate()
         var surfaceConfig = ghostty_surface_config_new()
         surfaceConfig.font_size = baseConfig.fontSize
         surfaceConfig.wait_after_command = baseConfig.waitAfterCommand
@@ -4212,7 +4212,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
 #if DEBUG
         let templateFontText = String(format: "%.2f", surfaceConfig.font_size)
         dlog(
-            "zoom.create surface=\(id.uuidString.prefix(5)) context=\(cmuxSurfaceContextName(surfaceContext)) " +
+            "zoom.create surface=\(id.uuidString.prefix(5)) context=\(noriSurfaceContextName(surfaceContext)) " +
             "templateFont=\(templateFontText)"
         )
 #endif
@@ -4237,43 +4237,43 @@ final class TerminalSurface: Identifiable, ObservableObject {
             protectedStartupEnvironmentKeys.insert(key)
         }
 
-        setManagedEnvironmentValue("CMUX_SURFACE_ID", id.uuidString)
-        setManagedEnvironmentValue("CMUX_WORKSPACE_ID", tabId.uuidString)
+        setManagedEnvironmentValue("NORI_SURFACE_ID", id.uuidString)
+        setManagedEnvironmentValue("NORI_WORKSPACE_ID", tabId.uuidString)
         // Backward-compatible shell integration keys used by existing scripts/tests.
-        setManagedEnvironmentValue("CMUX_PANEL_ID", id.uuidString)
-        setManagedEnvironmentValue("CMUX_TAB_ID", tabId.uuidString)
+        setManagedEnvironmentValue("NORI_PANEL_ID", id.uuidString)
+        setManagedEnvironmentValue("NORI_TAB_ID", tabId.uuidString)
         let socketPath = SocketControlSettings.socketPath()
-        setManagedEnvironmentValue("CMUX_SOCKET_PATH", socketPath)
+        setManagedEnvironmentValue("NORI_SOCKET_PATH", socketPath)
         // Backward-compatible alias expected by older scripts and third-party integrations.
-        setManagedEnvironmentValue("CMUX_SOCKET", socketPath)
-        if let bundledCLIURL = Bundle.main.resourceURL?.appendingPathComponent("bin/cmux"),
+        setManagedEnvironmentValue("NORI_SOCKET", socketPath)
+        if let bundledCLIURL = Bundle.main.resourceURL?.appendingPathComponent("bin/nori"),
            FileManager.default.isExecutableFile(atPath: bundledCLIURL.path) {
-            setManagedEnvironmentValue("CMUX_BUNDLED_CLI_PATH", bundledCLIURL.path)
+            setManagedEnvironmentValue("NORI_BUNDLED_CLI_PATH", bundledCLIURL.path)
         }
         if let bundleId = Bundle.main.bundleIdentifier, !bundleId.isEmpty {
-            setManagedEnvironmentValue("CMUX_BUNDLE_ID", bundleId)
+            setManagedEnvironmentValue("NORI_BUNDLE_ID", bundleId)
         }
 
         // Port range for this workspace (base/range snapshotted once per app session)
         do {
             let startPort = Self.sessionPortBase + portOrdinal * Self.sessionPortRangeSize
-            setManagedEnvironmentValue("CMUX_PORT", String(startPort))
-            setManagedEnvironmentValue("CMUX_PORT_END", String(startPort + Self.sessionPortRangeSize - 1))
-            setManagedEnvironmentValue("CMUX_PORT_RANGE", String(Self.sessionPortRangeSize))
+            setManagedEnvironmentValue("NORI_PORT", String(startPort))
+            setManagedEnvironmentValue("NORI_PORT_END", String(startPort + Self.sessionPortRangeSize - 1))
+            setManagedEnvironmentValue("NORI_PORT_RANGE", String(Self.sessionPortRangeSize))
         }
 
         let claudeHooksEnabled = ClaudeCodeIntegrationSettings.hooksEnabled()
         if !claudeHooksEnabled {
-            setManagedEnvironmentValue("CMUX_CLAUDE_HOOKS_DISABLED", "1")
+            setManagedEnvironmentValue("NORI_CLAUDE_HOOKS_DISABLED", "1")
         }
         if let customClaudePath = ClaudeCodeIntegrationSettings.customClaudePath() {
-            setManagedEnvironmentValue("CMUX_CUSTOM_CLAUDE_PATH", customClaudePath)
+            setManagedEnvironmentValue("NORI_CUSTOM_CLAUDE_PATH", customClaudePath)
         }
         if !CursorIntegrationSettings.hooksEnabled() {
-            setManagedEnvironmentValue("CMUX_CURSOR_HOOKS_DISABLED", "1")
+            setManagedEnvironmentValue("NORI_CURSOR_HOOKS_DISABLED", "1")
         }
         if !GeminiIntegrationSettings.hooksEnabled() {
-            setManagedEnvironmentValue("CMUX_GEMINI_HOOKS_DISABLED", "1")
+            setManagedEnvironmentValue("NORI_GEMINI_HOOKS_DISABLED", "1")
         }
 
         if let cliBinPath = Bundle.main.resourceURL?.appendingPathComponent("bin").path {
@@ -4291,8 +4291,8 @@ final class TerminalSurface: Identifiable, ObservableObject {
         let shellIntegrationEnabled = UserDefaults.standard.object(forKey: "sidebarShellIntegration") as? Bool ?? true
         if shellIntegrationEnabled,
            let integrationDir = Bundle.main.resourceURL?.appendingPathComponent("shell-integration").path {
-            setManagedEnvironmentValue("CMUX_SHELL_INTEGRATION", "1")
-            setManagedEnvironmentValue("CMUX_SHELL_INTEGRATION_DIR", integrationDir)
+            setManagedEnvironmentValue("NORI_SHELL_INTEGRATION", "1")
+            setManagedEnvironmentValue("NORI_SHELL_INTEGRATION_DIR", integrationDir)
 
             let shell = (env["SHELL"]?.isEmpty == false ? env["SHELL"] : nil)
                 ?? getenv("SHELL").map { String(cString: $0) }
@@ -4301,7 +4301,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
             let shellName = URL(fileURLWithPath: shell).lastPathComponent
             if shellName == "zsh" {
                 if GhosttyApp.shared.userGhosttyShellIntegrationMode != "none" {
-                    setManagedEnvironmentValue("CMUX_LOAD_GHOSTTY_ZSH_INTEGRATION", "1")
+                    setManagedEnvironmentValue("NORI_LOAD_GHOSTTY_ZSH_INTEGRATION", "1")
                 }
                 let candidateZdotdir = (env["ZDOTDIR"]?.isEmpty == false ? env["ZDOTDIR"] : nil)
                     ?? getenv("ZDOTDIR").map { String(cString: $0) }
@@ -4318,31 +4318,31 @@ final class TerminalSurface: Identifiable, ObservableObject {
                         isGhosttyInjected = (candidateZdotdir == ghosttyZdotdir)
                     }
                     if !isGhosttyInjected {
-                        setManagedEnvironmentValue("CMUX_ZSH_ZDOTDIR", candidateZdotdir)
+                        setManagedEnvironmentValue("NORI_ZSH_ZDOTDIR", candidateZdotdir)
                     }
                 }
 
                 setManagedEnvironmentValue("ZDOTDIR", integrationDir)
             } else if shellName == "bash" {
                 if GhosttyApp.shared.userGhosttyShellIntegrationMode != "none" {
-                    setManagedEnvironmentValue("CMUX_LOAD_GHOSTTY_BASH_INTEGRATION", "1")
+                    setManagedEnvironmentValue("NORI_LOAD_GHOSTTY_BASH_INTEGRATION", "1")
                 }
                 // macOS ships /bin/bash 3.2, where Ghostty's automatic bash
                 // integration is unsupported and HOME-based wrapper startup is
-                // not reliable. Bootstrap cmux bash integration on the first
+                // not reliable. Bootstrap nori bash integration on the first
                 // interactive prompt instead.
                 setManagedEnvironmentValue("PROMPT_COMMAND", """
                 unset PROMPT_COMMAND; \
-                if [[ "${CMUX_LOAD_GHOSTTY_BASH_INTEGRATION:-0}" == "1" && -n "${GHOSTTY_RESOURCES_DIR:-}" ]]; then \
-                _cmux_ghostty_bash="$GHOSTTY_RESOURCES_DIR/shell-integration/bash/ghostty.bash"; \
-                [[ -r "$_cmux_ghostty_bash" ]] && source "$_cmux_ghostty_bash"; \
+                if [[ "${NORI_LOAD_GHOSTTY_BASH_INTEGRATION:-0}" == "1" && -n "${GHOSTTY_RESOURCES_DIR:-}" ]]; then \
+                _nori_ghostty_bash="$GHOSTTY_RESOURCES_DIR/shell-integration/bash/ghostty.bash"; \
+                [[ -r "$_nori_ghostty_bash" ]] && source "$_nori_ghostty_bash"; \
                 fi; \
-                if [[ "${CMUX_SHELL_INTEGRATION:-1}" != "0" && -n "${CMUX_SHELL_INTEGRATION_DIR:-}" ]]; then \
-                _cmux_bash_integration="$CMUX_SHELL_INTEGRATION_DIR/cmux-bash-integration.bash"; \
-                [[ -r "$_cmux_bash_integration" ]] && source "$_cmux_bash_integration"; \
+                if [[ "${NORI_SHELL_INTEGRATION:-1}" != "0" && -n "${NORI_SHELL_INTEGRATION_DIR:-}" ]]; then \
+                _nori_bash_integration="$NORI_SHELL_INTEGRATION_DIR/nori-bash-integration.bash"; \
+                [[ -r "$_nori_bash_integration" ]] && source "$_nori_bash_integration"; \
                 fi; \
-                unset _cmux_ghostty_bash _cmux_bash_integration; \
-                if declare -F _cmux_prompt_command >/dev/null 2>&1; then _cmux_prompt_command; fi
+                unset _nori_ghostty_bash _nori_bash_integration; \
+                if declare -F _nori_prompt_command >/dev/null 2>&1; then _nori_prompt_command; fi
                 """)
             }
         }
@@ -4470,7 +4470,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
         // (new surface, split, new workspace) preserve zoom from the source terminal.
         if let inheritedFontPoints = configTemplate?.fontSize,
            inheritedFontPoints > 0 {
-            let currentFontPoints = cmuxCurrentSurfaceFontSizePoints(createdSurface)
+            let currentFontPoints = noriCurrentSurfaceFontSizePoints(createdSurface)
             let shouldReapply = {
                 guard let currentFontPoints else { return true }
                 return abs(currentFontPoints - inheritedFontPoints) > 0.05
@@ -4504,11 +4504,11 @@ final class TerminalSurface: Identifiable, ObservableObject {
         )
 
 #if DEBUG
-        let runtimeFontText = cmuxCurrentSurfaceFontSizePoints(createdSurface).map {
+        let runtimeFontText = noriCurrentSurfaceFontSizePoints(createdSurface).map {
             String(format: "%.2f", $0)
         } ?? "nil"
         dlog(
-            "zoom.create.done surface=\(id.uuidString.prefix(5)) context=\(cmuxSurfaceContextName(surfaceContext)) " +
+            "zoom.create.done surface=\(id.uuidString.prefix(5)) context=\(noriSurfaceContextName(surfaceContext)) " +
             "runtimeFont=\(runtimeFontText)"
         )
 #endif
@@ -5117,10 +5117,10 @@ extension TerminalSurface {
 
 class GhosttyNSView: NSView, NSUserInterfaceValidations {
     private static let focusDebugEnabled: Bool = {
-        if ProcessInfo.processInfo.environment["CMUX_FOCUS_DEBUG"] == "1" {
+        if ProcessInfo.processInfo.environment["NORI_FOCUS_DEBUG"] == "1" {
             return true
         }
-        return UserDefaults.standard.bool(forKey: "cmuxFocusDebug")
+        return UserDefaults.standard.bool(forKey: "noriFocusDebug")
     }()
     internal enum DropPlan: Equatable {
         case insertText(String)
@@ -5140,7 +5140,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         NSPasteboard.PasteboardType(UTType.heif.identifier)
     ]
     private static let tabTransferPasteboardType = NSPasteboard.PasteboardType("com.splittabbar.tabtransfer")
-    private static let sidebarTabReorderPasteboardType = NSPasteboard.PasteboardType("com.cmux.sidebar-tab-reorder")
+    private static let sidebarTabReorderPasteboardType = NSPasteboard.PasteboardType("com.nori.sidebar-tab-reorder")
 
     private enum WordPathResolutionSource: String {
         case quicklook
@@ -5254,10 +5254,10 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
     }
 #if DEBUG
     private static let keyLatencyProbeEnabled: Bool = {
-        if ProcessInfo.processInfo.environment["CMUX_KEY_LATENCY_PROBE"] == "1" {
+        if ProcessInfo.processInfo.environment["NORI_KEY_LATENCY_PROBE"] == "1" {
             return true
         }
-        return UserDefaults.standard.bool(forKey: "cmuxKeyLatencyProbe")
+        return UserDefaults.standard.bool(forKey: "noriKeyLatencyProbe")
     }()
     static var debugGhosttySurfaceKeyEventObserver: ((ghostty_input_key_s) -> Void)?
 #endif
@@ -5406,8 +5406,8 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         }
         applySurfaceBackground()
         let color = effectiveBackgroundColor()
-        if cmuxShouldUseClearWindowBackground(for: color.alphaComponent) {
-            window.backgroundColor = cmuxTransparentWindowBaseColor()
+        if noriShouldUseClearWindowBackground(for: color.alphaComponent) {
+            window.backgroundColor = noriTransparentWindowBaseColor()
             window.isOpaque = false
             GhosttyApp.shared.applyWindowBlurIfNeeded(window)
         } else {
@@ -5415,7 +5415,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             window.isOpaque = color.alphaComponent >= 1.0
         }
         if GhosttyApp.shared.backgroundLogEnabled {
-            let signature = "\(cmuxShouldUseClearWindowBackground(for: color.alphaComponent) ? "transparent" : color.hexString()):\(String(format: "%.3f", color.alphaComponent))"
+            let signature = "\(noriShouldUseClearWindowBackground(for: color.alphaComponent) ? "transparent" : color.hexString()):\(String(format: "%.3f", color.alphaComponent))"
             if signature != lastLoggedWindowBackgroundSignature {
                 lastLoggedWindowBackgroundSignature = signature
                 let hasOverride = backgroundColor != nil
@@ -5423,7 +5423,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 let defaultHex = GhosttyApp.shared.defaultBackgroundColor.hexString()
                 let source = hasOverride ? "surfaceOverride" : "defaultBackground"
                 GhosttyApp.shared.logBackground(
-                    "window background applied tab=\(tabId?.uuidString ?? "unknown") surface=\(terminalSurface?.id.uuidString ?? "unknown") source=\(source) override=\(overrideHex) default=\(defaultHex) transparent=\(cmuxShouldUseClearWindowBackground(for: color.alphaComponent)) color=\(color.hexString()) opacity=\(String(format: "%.3f", color.alphaComponent))"
+                    "window background applied tab=\(tabId?.uuidString ?? "unknown") surface=\(terminalSurface?.id.uuidString ?? "unknown") source=\(source) override=\(overrideHex) default=\(defaultHex) transparent=\(noriShouldUseClearWindowBackground(for: color.alphaComponent)) color=\(color.hexString()) opacity=\(String(format: "%.3f", color.alphaComponent))"
                 )
             }
         }
@@ -6331,7 +6331,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 #if DEBUG
     private func recordKeyLatency(path: String, event: NSEvent) {
         guard Self.keyLatencyProbeEnabled else { return }
-        CmuxTypingTiming.logEventDelay(path: path, event: event)
+        NoriTypingTiming.logEventDelay(path: path, event: event)
     }
 #endif
 
@@ -6351,9 +6351,9 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
 #if DEBUG
-        let typingTimingStart = CmuxTypingTiming.start()
+        let typingTimingStart = NoriTypingTiming.start()
         defer {
-            CmuxTypingTiming.logDuration(
+            NoriTypingTiming.logDuration(
                 path: "terminal.performKeyEquivalent",
                 startedAt: typingTimingStart,
                 event: event
@@ -6394,10 +6394,10 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 #endif
 
 #if DEBUG
-        cmuxWriteChildExitProbe(
+        noriWriteChildExitProbe(
             [
-                "probePerformCharsHex": cmuxScalarHex(event.characters),
-                "probePerformCharsIgnoringHex": cmuxScalarHex(event.charactersIgnoringModifiers),
+                "probePerformCharsHex": noriScalarHex(event.characters),
+                "probePerformCharsIgnoringHex": noriScalarHex(event.charactersIgnoringModifiers),
                 "probePerformKeyCode": String(event.keyCode),
                 "probePerformModsRaw": String(event.modifierFlags.rawValue),
                 "probePerformSurfaceId": terminalSurface?.id.uuidString ?? "",
@@ -6505,7 +6505,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 
     override func keyDown(with event: NSEvent) {
 #if DEBUG
-        let typingTimingStart = CmuxTypingTiming.start()
+        let typingTimingStart = NoriTypingTiming.start()
         let phaseTotalStart = ProcessInfo.processInfo.systemUptime
         var ensureSurfaceMs: Double = 0
         var dismissNotificationMs: Double = 0
@@ -6516,7 +6516,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         var refreshMs: Double = 0
         defer {
             let totalMs = (ProcessInfo.processInfo.systemUptime - phaseTotalStart) * 1000.0
-            CmuxTypingTiming.logBreakdown(
+            NoriTypingTiming.logBreakdown(
                 path: "terminal.keyDown.phase",
                 totalMs: totalMs,
                 event: event,
@@ -6532,7 +6532,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 ],
                 extra: "marked=\(hasMarkedText() ? 1 : 0)"
             )
-            CmuxTypingTiming.logDuration(path: "terminal.keyDown", startedAt: typingTimingStart, event: event)
+            NoriTypingTiming.logDuration(path: "terminal.keyDown", startedAt: typingTimingStart, event: event)
         }
         let ensureSurfaceStart = ProcessInfo.processInfo.systemUptime
 #endif
@@ -6583,10 +6583,10 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 #endif
 
 #if DEBUG
-        cmuxWriteChildExitProbe(
+        noriWriteChildExitProbe(
             [
-                "probeKeyDownCharsHex": cmuxScalarHex(event.characters),
-                "probeKeyDownCharsIgnoringHex": cmuxScalarHex(event.charactersIgnoringModifiers),
+                "probeKeyDownCharsHex": noriScalarHex(event.characters),
+                "probeKeyDownCharsIgnoringHex": noriScalarHex(event.charactersIgnoringModifiers),
                 "probeKeyDownKeyCode": String(event.keyCode),
                 "probeKeyDownModsRaw": String(event.modifierFlags.rawValue),
                 "probeKeyDownSurfaceId": terminalSurface?.id.uuidString ?? "",
@@ -6630,7 +6630,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 #endif
             } else {
                 #if DEBUG
-                let sendTimingStart = CmuxTypingTiming.start()
+                let sendTimingStart = NoriTypingTiming.start()
                 let ghosttySendStart = ProcessInfo.processInfo.systemUptime
                 #endif
                 handled = text.withCString { ptr in
@@ -6639,7 +6639,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 }
                 #if DEBUG
                 ghosttySendMs = (ProcessInfo.processInfo.systemUptime - ghosttySendStart) * 1000.0
-                CmuxTypingTiming.logDuration(
+                NoriTypingTiming.logDuration(
                     path: "terminal.keyDown.ctrlGhosttySend",
                     startedAt: sendTimingStart,
                     event: event,
@@ -6650,8 +6650,8 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 #if DEBUG
             dlog(
                 "key.ctrl path=ghostty surface=\(terminalSurface?.id.uuidString.prefix(5) ?? "nil") " +
-                "handled=\(handled ? 1 : 0) keyCode=\(event.keyCode) chars=\(cmuxScalarHex(event.characters)) " +
-                "ign=\(cmuxScalarHex(event.charactersIgnoringModifiers)) mods=\(event.modifierFlags.rawValue)"
+                "handled=\(handled ? 1 : 0) keyCode=\(event.keyCode) chars=\(noriScalarHex(event.characters)) " +
+                "ign=\(noriScalarHex(event.charactersIgnoringModifiers)) mods=\(event.modifierFlags.rawValue)"
             )
 #endif
             // If Ghostty handled the key (action/encoding), we're done.
@@ -6723,13 +6723,13 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 
         // Let the input system handle the event (for IME, dead keys, etc.)
 #if DEBUG
-        let interpretTimingStart = CmuxTypingTiming.start()
+        let interpretTimingStart = NoriTypingTiming.start()
         let interpretPhaseStart = ProcessInfo.processInfo.systemUptime
 #endif
         interpretKeyEvents([translationEvent])
 #if DEBUG
         interpretMs = (ProcessInfo.processInfo.systemUptime - interpretPhaseStart) * 1000.0
-        CmuxTypingTiming.logDuration(
+        NoriTypingTiming.logDuration(
             path: "terminal.keyDown.interpretKeyEvents",
             startedAt: interpretTimingStart,
             event: event
@@ -6788,7 +6788,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 if shouldSendText(text) {
                     shouldRefreshAfterTextInput = true
 #if DEBUG
-                    let sendTimingStart = CmuxTypingTiming.start()
+                    let sendTimingStart = NoriTypingTiming.start()
                     let ghosttySendStart = ProcessInfo.processInfo.systemUptime
 #endif
                     text.withCString { ptr in
@@ -6807,7 +6807,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                     }
 #if DEBUG
                     ghosttySendMs += (ProcessInfo.processInfo.systemUptime - ghosttySendStart) * 1000.0
-                    CmuxTypingTiming.logDuration(
+                    NoriTypingTiming.logDuration(
                         path: "terminal.keyDown.accumulatedGhosttySend.total",
                         startedAt: sendTimingStart,
                         event: event,
@@ -6867,7 +6867,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                    !suppressComposingFallbackText {
                     shouldRefreshAfterTextInput = true
 #if DEBUG
-                    let sendTimingStart = CmuxTypingTiming.start()
+                    let sendTimingStart = NoriTypingTiming.start()
                     let ghosttySendStart = ProcessInfo.processInfo.systemUptime
 #endif
                     text.withCString { ptr in
@@ -6886,7 +6886,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                     }
 #if DEBUG
                     ghosttySendMs += (ProcessInfo.processInfo.systemUptime - ghosttySendStart) * 1000.0
-                    CmuxTypingTiming.logDuration(
+                    NoriTypingTiming.logDuration(
                         path: "terminal.keyDown.ghosttySend.total",
                         startedAt: sendTimingStart,
                         event: event,
@@ -6957,7 +6957,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         event: NSEvent? = nil,
         extra: String? = nil
     ) -> Bool {
-        let timingStart = CmuxTypingTiming.start()
+        let timingStart = NoriTypingTiming.start()
         let handled = sendGhosttyKey(surface, keyEvent)
         let baseExtra = "handled=\(handled ? 1 : 0)"
         let mergedExtra: String
@@ -6966,7 +6966,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         } else {
             mergedExtra = baseExtra
         }
-        CmuxTypingTiming.logDuration(path: path, startedAt: timingStart, event: event, extra: mergedExtra)
+        NoriTypingTiming.logDuration(path: path, startedAt: timingStart, event: event, extra: mergedExtra)
         return handled
     }
 #endif
@@ -7069,8 +7069,8 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         var effectiveFlags = suppressCommandPathHover ? flags.subtracting(.command) : flags
 #if DEBUG
         if suppressCommandPathHover, flags.contains(.command) {
-            _ = CmuxUITestCapture.mutateJSONObjectIfConfigured(
-                envKey: "CMUX_UI_TEST_CMD_HOVER_DIAGNOSTICS_PATH"
+            _ = NoriUITestCapture.mutateJSONObjectIfConfigured(
+                envKey: "NORI_UI_TEST_CMD_HOVER_DIAGNOSTICS_PATH"
             ) { payload in
                 payload["suppressed_command_hover_count"] = (payload["suppressed_command_hover_count"] as? Int ?? 0) + 1
             }
@@ -7310,7 +7310,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         var payload = data
         payload["surface_id"] = terminalSurface?.id.uuidString ?? "nil"
         payload["word_path_hover_active"] = wordPathHoverActive
-        CmuxRuntimeDebugCapture.logIfConfigured(
+        NoriRuntimeDebugCapture.logIfConfigured(
             hypothesisID: hypothesisID,
             source: "GhosttyNSView.\(name)",
             name: name,
@@ -7434,11 +7434,11 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 let wordData = Data(bytes: ptr, count: Int(text.text_len))
                 if let decodedWord = String(bytes: wordData, encoding: .utf8) {
 #if DEBUG
-                    let resolvedQuicklookWord = cmuxTerminalCmdClickQuicklookOverride(decodedWord)
+                    let resolvedQuicklookWord = noriTerminalCmdClickQuicklookOverride(decodedWord)
 #else
                     let resolvedQuicklookWord = decodedWord
 #endif
-                    if let resolvedPath = cmuxResolveQuicklookPath(resolvedQuicklookWord, cwd: cwd) {
+                    if let resolvedPath = noriResolveQuicklookPath(resolvedQuicklookWord, cwd: cwd) {
                         quicklookResolution = makeWordPathResolution(
                             path: resolvedPath,
                             source: .quicklook,
@@ -7451,7 +7451,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             var viewportResolution: WordPathResolution?
             if text.offset_len > 0 {
 #if DEBUG
-                let viewportOffsetStart = cmuxTerminalCmdClickViewportOffsetDelta(Int(text.offset_start))
+                let viewportOffsetStart = noriTerminalCmdClickViewportOffsetDelta(Int(text.offset_start))
 #else
                 let viewportOffsetStart = Int(text.offset_start)
 #endif
@@ -7486,9 +7486,9 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
     }
 
     #if DEBUG
-    private func cmuxTerminalCmdClickQuicklookOverride(_ decodedWord: String) -> String {
+    private func noriTerminalCmdClickQuicklookOverride(_ decodedWord: String) -> String {
         let env = ProcessInfo.processInfo.environment
-        guard let override = env["CMUX_UI_TEST_TERMINAL_CMD_CLICK_QUICKLOOK_OVERRIDE"]?
+        guard let override = env["NORI_UI_TEST_TERMINAL_CMD_CLICK_QUICKLOOK_OVERRIDE"]?
             .trimmingCharacters(in: .whitespacesAndNewlines),
               !override.isEmpty else {
             return decodedWord
@@ -7496,9 +7496,9 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         return override
     }
 
-    private func cmuxTerminalCmdClickViewportOffsetDelta(_ viewportOffsetStart: Int) -> Int {
+    private func noriTerminalCmdClickViewportOffsetDelta(_ viewportOffsetStart: Int) -> Int {
         let env = ProcessInfo.processInfo.environment
-        guard let delta = env["CMUX_UI_TEST_TERMINAL_CMD_CLICK_VIEWPORT_OFFSET_DELTA"]?
+        guard let delta = env["NORI_UI_TEST_TERMINAL_CMD_CLICK_VIEWPORT_OFFSET_DELTA"]?
             .trimmingCharacters(in: .whitespacesAndNewlines),
               let parsedDelta = Int(delta) else {
             return viewportOffsetStart
@@ -7637,14 +7637,14 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             terminalPanel: panel,
             lineLimit: max(200, rows * 4)
         ) ?? ""
-        let visibleLines = cmuxVisibleTerminalLines(from: visibleText, rows: rows)
+        let visibleLines = noriVisibleTerminalLines(from: visibleText, rows: rows)
         let rowOffset = max(0, rows - visibleLines.count)
         let rowFromTop = max(0, min(rows - 1, viewportOffsetStart / cols))
         let visibleRow = rowFromTop - rowOffset
         guard visibleRow >= 0, visibleRow < visibleLines.count else { return nil }
 
         let column = max(0, min(cols - 1, viewportOffsetStart % cols))
-        guard let resolution = cmuxResolveVisibleLinePath(
+        guard let resolution = noriResolveVisibleLinePath(
             visibleLines[visibleRow],
             column: column,
             cwd: cwd
@@ -7681,7 +7681,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             terminalPanel: panel,
             lineLimit: max(200, rows * 4)
         ) ?? ""
-        let visibleLines = cmuxVisibleTerminalLines(from: visibleText, rows: rows)
+        let visibleLines = noriVisibleTerminalLines(from: visibleText, rows: rows)
         let rowOffset = max(0, rows - visibleLines.count)
         let xInset = max(0, (bounds.width - (CGFloat(cols) * resolvedCellWidth)) / 2)
         let yInset = max(0, (bounds.height - (CGFloat(rows) * resolvedCellHeight)) / 2)
@@ -7692,7 +7692,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         guard visibleRow >= 0, visibleRow < visibleLines.count else { return nil }
 
         let column = max(0, min(cols - 1, Int((point.x - xInset) / resolvedCellWidth)))
-        guard let resolution = cmuxResolveVisibleLinePath(
+        guard let resolution = noriResolveVisibleLinePath(
             visibleLines[visibleRow],
             column: column,
             cwd: cwd
@@ -8378,7 +8378,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 }
             },
             uploadDetectedSSH: { _, _, _, finish in
-                finish(.failure(NSError(domain: "cmux.remote.drop", code: 4)))
+                finish(.failure(NSError(domain: "nori.remote.drop", code: 4)))
             },
             insertText: sendText,
             onFailure: { _ in onFailure() }
@@ -8414,7 +8414,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 guard let workspace = MainActor.assumeIsolated({
                     self?.terminalSurface?.owningWorkspace()
                 }) else {
-                    finish(.failure(NSError(domain: "cmux.remote.drop", code: 3)))
+                    finish(.failure(NSError(domain: "nori.remote.drop", code: 3)))
                     GhosttyPasteboardHelper.cleanupTransferredTemporaryImageFiles(fileURLs)
                     return
                 }
@@ -8517,7 +8517,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
     fileprivate func debugSimulateFileDrop(paths: [String]) -> Bool {
         guard !paths.isEmpty else { return false }
         let urls = paths.map { URL(fileURLWithPath: $0) as NSURL }
-        let pbName = NSPasteboard.Name("cmux.debug.drop.\(UUID().uuidString)")
+        let pbName = NSPasteboard.Name("nori.debug.drop.\(UUID().uuidString)")
         let pasteboard = NSPasteboard(name: pbName)
         pasteboard.clearContents()
         pasteboard.writeObjects(urls)
@@ -8762,7 +8762,7 @@ final class GhosttySurfaceScrollView: NSView {
     private var lastDragGeometryLogSignature: String?
     private var dragLayoutLogSequence: UInt64 = 0
     private static let tabTransferPasteboardType = NSPasteboard.PasteboardType("com.splittabbar.tabtransfer")
-    private static let sidebarTabReorderPasteboardType = NSPasteboard.PasteboardType("com.cmux.sidebar-tab-reorder")
+    private static let sidebarTabReorderPasteboardType = NSPasteboard.PasteboardType("com.nori.sidebar-tab-reorder")
     private static var flashCounts: [UUID: Int] = [:]
     private static var drawCounts: [UUID: Int] = [:]
     private static var lastDrawTimes: [UUID: CFTimeInterval] = [:]
@@ -8980,8 +8980,8 @@ final class GhosttySurfaceScrollView: NSView {
         inactiveOverlayView.isHidden = true
         addSubview(inactiveOverlayView)
         dropZoneOverlayView.wantsLayer = true
-        dropZoneOverlayView.layer?.backgroundColor = cmuxAccentNSColor().withAlphaComponent(0.25).cgColor
-        dropZoneOverlayView.layer?.borderColor = cmuxAccentNSColor().cgColor
+        dropZoneOverlayView.layer?.backgroundColor = noriAccentNSColor().withAlphaComponent(0.25).cgColor
+        dropZoneOverlayView.layer?.borderColor = noriAccentNSColor().cgColor
         dropZoneOverlayView.layer?.borderWidth = 2
         dropZoneOverlayView.layer?.cornerRadius = 8
         dropZoneOverlayView.isHidden = true
@@ -10208,7 +10208,7 @@ final class GhosttySurfaceScrollView: NSView {
                     return CAMediaTimingFunction(name: .easeOut)
                 }
             }
-            self.flashLayer.add(animation, forKey: "cmux.flash")
+            self.flashLayer.add(animation, forKey: "nori.flash")
         }
     }
 
@@ -11511,12 +11511,12 @@ extension GhosttyNSView: NSTextInputClient {
     fileprivate func sendTextToSurface(_ chars: String, preserveLiteralEscape: Bool) {
         guard let surface = surface else { return }
 #if DEBUG
-        let typingTimingStart = CmuxTypingTiming.start()
+        let typingTimingStart = NoriTypingTiming.start()
 #endif
 #if DEBUG
-        cmuxWriteChildExitProbe(
+        noriWriteChildExitProbe(
             [
-                "probeInsertTextCharsHex": cmuxScalarHex(chars),
+                "probeInsertTextCharsHex": noriScalarHex(chars),
                 "probeInsertTextSurfaceId": terminalSurface?.id.uuidString ?? "",
             ],
             increments: ["probeInsertTextCount": 1]
@@ -11585,7 +11585,7 @@ extension GhosttyNSView: NSTextInputClient {
         }
         flushBufferedText()
 #if DEBUG
-        CmuxTypingTiming.logDuration(
+        NoriTypingTiming.logDuration(
             path: "terminal.sendTextToSurface",
             startedAt: typingTimingStart,
             extra: "textBytes=\(chars.utf8.count)"
@@ -11717,9 +11717,9 @@ extension GhosttyNSView: NSTextInputClient {
 
     func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
 #if DEBUG
-        let typingTimingStart = CmuxTypingTiming.start()
+        let typingTimingStart = NoriTypingTiming.start()
         defer {
-            CmuxTypingTiming.logDuration(
+            NoriTypingTiming.logDuration(
                 path: "terminal.setMarkedText",
                 startedAt: typingTimingStart,
                 extra: "markedLength=\(markedText.length)"
@@ -11747,9 +11747,9 @@ extension GhosttyNSView: NSTextInputClient {
     func unmarkText() {
 #if DEBUG
         let hadMarkedText = markedText.length > 0
-        let typingTimingStart = CmuxTypingTiming.start()
+        let typingTimingStart = NoriTypingTiming.start()
         defer {
-            CmuxTypingTiming.logDuration(
+            NoriTypingTiming.logDuration(
                 path: "terminal.unmarkText",
                 startedAt: typingTimingStart,
                 extra: "hadMarkedText=\(hadMarkedText ? 1 : 0)"
@@ -11768,9 +11768,9 @@ extension GhosttyNSView: NSTextInputClient {
     /// preedit overlay (e.g. for Korean, Japanese, Chinese input).
     private func syncPreedit(clearIfNeeded: Bool = true) {
 #if DEBUG
-        let typingTimingStart = CmuxTypingTiming.start()
+        let typingTimingStart = NoriTypingTiming.start()
         defer {
-            CmuxTypingTiming.logDuration(
+            NoriTypingTiming.logDuration(
                 path: "terminal.syncPreedit",
                 startedAt: typingTimingStart,
                 extra: "markedLength=\(markedText.length) clearIfNeeded=\(clearIfNeeded ? 1 : 0)"
@@ -11887,9 +11887,9 @@ extension GhosttyNSView: NSTextInputClient {
 
     func insertText(_ string: Any, replacementRange: NSRange) {
 #if DEBUG
-        let typingTimingStart = CmuxTypingTiming.start()
+        let typingTimingStart = NoriTypingTiming.start()
         defer {
-            CmuxTypingTiming.logDuration(
+            NoriTypingTiming.logDuration(
                 path: "terminal.insertText",
                 startedAt: typingTimingStart,
                 event: NSApp.currentEvent,

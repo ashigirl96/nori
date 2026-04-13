@@ -1,15 +1,15 @@
 ---
-name: cmux-debug-windows
-description: Manage cmux debug windows and related debug menu wiring for Sidebar Debug, Background Debug, and Menu Bar Extra Debug. Use this when the user asks to open/tune these debug controls, add or adjust Debug menu entries, or capture/copy a combined debug config snapshot.
+name: nori-debug-windows
+description: Manage nori debug windows and related debug menu wiring for Sidebar Debug, Background Debug, and Menu Bar Extra Debug. Use this when the user asks to open/tune these debug controls, add or adjust Debug menu entries, or capture/copy a combined debug config snapshot.
 ---
 
-# cmux Debug Windows
+# nori Debug Windows
 
 Keep this workflow focused on existing debug windows and menu entries. Do not add a new utility/debug control window unless the user asks explicitly.
 
 ## Workflow
 
-1. Verify debug menu wiring in `Sources/cmuxApp.swift` under `CommandMenu("Debug")`.
+1. Verify debug menu wiring in `Sources/noriApp.swift` under `CommandMenu("Debug")`.
    - Menu path in app: `Debug` → `Debug Windows` → window entry.
    - The `Debug` menu only exists in DEBUG builds (`./scripts/reload.sh`).
 2. Keep these actions available in `Menu("Debug Windows")`:
@@ -20,7 +20,7 @@ Keep this workflow focused on existing debug windows and menu entries. Do not ad
 3. Reuse existing per-window copy buttons (`Copy Config`) in each debug window before adding new UI.
 4. For one combined payload, run:
 ```bash
-skills/cmux-debug-windows/scripts/debug_windows_snapshot.sh --copy
+skills/nori-debug-windows/scripts/debug_windows_snapshot.sh --copy
 ```
 5. After code edits, rebuild + relaunch:
 ```bash
@@ -29,7 +29,7 @@ skills/cmux-debug-windows/scripts/debug_windows_snapshot.sh --copy
 
 ## Key Files
 
-- `Sources/cmuxApp.swift`: Debug menu entries and debug window controllers/views.
+- `Sources/noriApp.swift`: Debug menu entries and debug window controllers/views.
 - `Sources/AppDelegate.swift`: Menu bar extra debug settings payload and defaults keys.
 
 ## Script
@@ -43,7 +43,7 @@ Purpose:
 
 Examples:
 ```bash
-skills/cmux-debug-windows/scripts/debug_windows_snapshot.sh
-skills/cmux-debug-windows/scripts/debug_windows_snapshot.sh --copy
-skills/cmux-debug-windows/scripts/debug_windows_snapshot.sh --domain <bundle-id> --copy
+skills/nori-debug-windows/scripts/debug_windows_snapshot.sh
+skills/nori-debug-windows/scripts/debug_windows_snapshot.sh --copy
+skills/nori-debug-windows/scripts/debug_windows_snapshot.sh --domain <bundle-id> --copy
 ```

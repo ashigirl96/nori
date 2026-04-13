@@ -8,13 +8,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux"
+            "value": "nori"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux"
+            "value": "nori"
           }
         }
       }
@@ -25,13 +25,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usage: cmux claude-teams [claude-args...]\n\nLaunch Claude Code with agent teams enabled.\n\nThis command:\n  - defaults Claude teammate mode to auto\n  - sets a tmux-like environment so Claude auto mode uses cmux splits\n  - sets CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1\n  - prepends a private tmux shim to PATH\n  - forwards all remaining arguments to claude\n\nThe tmux shim translates supported tmux window/pane commands into cmux\nworkspace and split operations in the current cmux session.\n\nExamples:\n  cmux claude-teams\n  cmux claude-teams --continue\n  cmux claude-teams --model sonnet"
+            "value": "Usage: nori claude-teams [claude-args...]\n\nLaunch Claude Code with agent teams enabled.\n\nThis command:\n  - defaults Claude teammate mode to auto\n  - sets a tmux-like environment so Claude auto mode uses nori splits\n  - sets CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1\n  - prepends a private tmux shim to PATH\n  - forwards all remaining arguments to claude\n\nThe tmux shim translates supported tmux window/pane commands into nori\nworkspace and split operations in the current nori session.\n\nExamples:\n  nori claude-teams\n  nori claude-teams --continue\n  nori claude-teams --model sonnet"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "使い方: cmux claude-teams [claude-args...]\n\nエージェントチームを有効にした状態で Claude Code を起動します。\n\nこのコマンドは次を行います:\n  - Claude の teammate mode を auto に設定\n  - Claude の auto mode が cmux の split を使うよう tmux 風の環境を設定\n  - CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 を設定\n  - 専用の tmux shim を PATH の先頭に追加\n  - 残りの引数をそのまま claude に渡す\n\ntmux shim は、対応している tmux の window/pane コマンドを、現在の cmux セッション内の workspace と split 操作に変換します。\n\n例:\n  cmux claude-teams\n  cmux claude-teams --continue\n  cmux claude-teams --model sonnet"
+            "value": "使い方: nori claude-teams [claude-args...]\n\nエージェントチームを有効にした状態で Claude Code を起動します。\n\nこのコマンドは次を行います:\n  - Claude の teammate mode を auto に設定\n  - Claude の auto mode が nori の split を使うよう tmux 風の環境を設定\n  - CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 を設定\n  - 専用の tmux shim を PATH の先頭に追加\n  - 残りの引数をそのまま claude に渡す\n\ntmux shim は、対応している tmux の window/pane コマンドを、現在の nori セッション内の workspace と split 操作に変換します。\n\n例:\n  nori claude-teams\n  nori claude-teams --continue\n  nori claude-teams --model sonnet"
           }
         }
       }
@@ -42,13 +42,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usage: cmux omo [opencode-args...]\n\nLaunch OpenCode with oh-my-openagent in a cmux-aware environment.\n\noh-my-openagent orchestrates multiple AI models as specialized agents in\nparallel. This command sets up a tmux shim so agent panes become native\ncmux splits with sidebar metadata and notifications.\n\nThis command:\n  - sets a tmux-like environment so oh-my-openagent uses cmux splits\n  - prepends a private tmux shim to PATH\n  - forwards all remaining arguments to opencode\n\nThe tmux shim translates tmux window/pane commands into cmux workspace\nand split operations in the current cmux session.\n\nExamples:\n  cmux omo\n  cmux omo --continue\n  cmux omo --model claude-sonnet-4-6"
+            "value": "Usage: nori omo [opencode-args...]\n\nLaunch OpenCode with oh-my-openagent in a nori-aware environment.\n\noh-my-openagent orchestrates multiple AI models as specialized agents in\nparallel. This command sets up a tmux shim so agent panes become native\nnori splits with sidebar metadata and notifications.\n\nThis command:\n  - sets a tmux-like environment so oh-my-openagent uses nori splits\n  - prepends a private tmux shim to PATH\n  - forwards all remaining arguments to opencode\n\nThe tmux shim translates tmux window/pane commands into nori workspace\nand split operations in the current nori session.\n\nExamples:\n  nori omo\n  nori omo --continue\n  nori omo --model claude-sonnet-4-6"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "使い方: cmux omo [opencode-args...]\n\ncmux 対応の環境で OpenCode と oh-my-openagent を起動します。\n\noh-my-openagent は複数の AI モデルを専門エージェントとして並列に\nオーケストレーションします。このコマンドは tmux shim を設定し、\nエージェントのペインをネイティブの cmux split に変換します。\n\nこのコマンドは次を行います:\n  - oh-my-openagent が cmux の split を使うよう tmux 風の環境を設定\n  - 専用の tmux shim を PATH の先頭に追加\n  - 残りの引数をそのまま opencode に渡す\n\ntmux shim は、tmux の window/pane コマンドを、現在の cmux セッション内の\nworkspace と split 操作に変換します。\n\n例:\n  cmux omo\n  cmux omo --continue\n  cmux omo --model claude-sonnet-4-6"
+            "value": "使い方: nori omo [opencode-args...]\n\nnori 対応の環境で OpenCode と oh-my-openagent を起動します。\n\noh-my-openagent は複数の AI モデルを専門エージェントとして並列に\nオーケストレーションします。このコマンドは tmux shim を設定し、\nエージェントのペインをネイティブの nori split に変換します。\n\nこのコマンドは次を行います:\n  - oh-my-openagent が nori の split を使うよう tmux 風の環境を設定\n  - 専用の tmux shim を PATH の先頭に追加\n  - 残りの引数をそのまま opencode に渡す\n\ntmux shim は、tmux の window/pane コマンドを、現在の nori セッション内の\nworkspace と split 操作に変換します。\n\n例:\n  nori omo\n  nori omo --continue\n  nori omo --model claude-sonnet-4-6"
           }
         }
       }
@@ -569,13 +569,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Welcome to cmux!"
+            "value": "Welcome to nori!"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxへようこそ！"
+            "value": "noriへようこそ！"
           }
         }
       }
@@ -1844,13 +1844,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Created cmux profiles: %@"
+            "value": "Created nori profiles: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "作成した cmux プロファイル: %@"
+            "value": "作成した nori プロファイル: %@"
           }
         }
       }
@@ -2059,7 +2059,7 @@
         }
       }
     },
-    "browser.import.destination.cmux": {
+    "browser.import.destination.nori": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -2116,13 +2116,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Imported data goes into the selected cmux profile."
+            "value": "Imported data goes into the selected nori profile."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "インポートしたデータは、選択した cmux プロファイルに保存されます。"
+            "value": "インポートしたデータは、選択した nori プロファイルに保存されます。"
           }
         }
       }
@@ -2133,13 +2133,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "All selected source profiles go into one cmux profile."
+            "value": "All selected source profiles go into one nori profile."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "選択した元プロファイルは、1つの cmux プロファイルにまとめて取り込まれます。"
+            "value": "選択した元プロファイルは、1つの nori プロファイルにまとめて取り込まれます。"
           }
         }
       }
@@ -2150,13 +2150,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Missing cmux profiles are created on import."
+            "value": "Missing nori profiles are created on import."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "不足している cmux プロファイルは、インポート時に作成されます。"
+            "value": "不足している nori プロファイルは、インポート時に作成されます。"
           }
         }
       }
@@ -2303,13 +2303,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux could not create the destination profile \"%@\"."
+            "value": "nori could not create the destination profile \"%@\"."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux は保存先プロファイル「%@」を作成できませんでした。"
+            "value": "nori は保存先プロファイル「%@」を作成できませんでした。"
           }
         }
       }
@@ -2320,13 +2320,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The selected cmux browser profile no longer exists. Pick a destination profile again."
+            "value": "The selected nori browser profile no longer exists. Pick a destination profile again."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "選択した cmux ブラウザープロファイルが見つかりません。保存先プロファイルを選び直してください。"
+            "value": "選択した nori ブラウザープロファイルが見つかりません。保存先プロファイルを選び直してください。"
           }
         }
       }
@@ -2388,7 +2388,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux could not find browser profiles to import from on this Mac."
+            "value": "nori could not find browser profiles to import from on this Mac."
           }
         },
         "ja": {
@@ -3068,13 +3068,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Always allow this host in cmux"
+            "value": "Always allow this host in nori"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このホストを cmux で常に許可"
+            "value": "このホストを nori で常に許可"
           }
         }
       }
@@ -3289,13 +3289,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ uses plain HTTP, so traffic can be read or modified on the network.\n\nOpen this URL in your default browser, or proceed in cmux."
+            "value": "%@ uses plain HTTP, so traffic can be read or modified on the network.\n\nOpen this URL in your default browser, or proceed in nori."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ は HTTP 接続を使用しているため、通信内容がネットワーク上で読み取られたり改ざんされる可能性があります。\n\nデフォルトブラウザで開くか、cmux で続行してください。"
+            "value": "%@ は HTTP 接続を使用しているため、通信内容がネットワーク上で読み取られたり改ざんされる可能性があります。\n\nデフォルトブラウザで開くか、nori で続行してください。"
           }
         }
       }
@@ -3470,19 +3470,19 @@
         }
       }
     },
-    "browser.proceedInCmux": {
+    "browser.proceedInNori": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Proceed in cmux"
+            "value": "Proceed in nori"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux で続行"
+            "value": "nori で続行"
           }
         }
       }
@@ -3629,13 +3629,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't Install cmux CLI"
+            "value": "Couldn't Install nori CLI"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux CLI をインストールできませんでした"
+            "value": "nori CLI をインストールできませんでした"
           }
         }
       }
@@ -3646,13 +3646,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux CLI Installed"
+            "value": "nori CLI Installed"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux CLI がインストールされました"
+            "value": "nori CLI がインストールされました"
           }
         }
       }
@@ -3680,13 +3680,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No cmux CLI symlink was found at %@."
+            "value": "No nori CLI symlink was found at %@."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@にcmux CLIのシンボリックリンクが見つかりませんでした。"
+            "value": "%@にnori CLIのシンボリックリンクが見つかりませんでした。"
           }
         }
       }
@@ -3714,13 +3714,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't Uninstall cmux CLI"
+            "value": "Couldn't Uninstall nori CLI"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux CLI をアンインストールできませんでした"
+            "value": "nori CLI をアンインストールできませんでした"
           }
         }
       }
@@ -3731,13 +3731,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux CLI Uninstalled"
+            "value": "nori CLI Uninstalled"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux CLI がアンインストールされました"
+            "value": "nori CLI がアンインストールされました"
           }
         }
       }
@@ -4184,7 +4184,7 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmCommand.cancel": {
+    "dialog.noriConfig.confirmCommand.cancel": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4201,7 +4201,7 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmCommand.message": {
+    "dialog.noriConfig.confirmCommand.message": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4218,7 +4218,7 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmCommand.run": {
+    "dialog.noriConfig.confirmCommand.run": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4235,7 +4235,7 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmCommand.title": {
+    "dialog.noriConfig.confirmCommand.title": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4252,7 +4252,7 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmRestart.cancel": {
+    "dialog.noriConfig.confirmRestart.cancel": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4269,7 +4269,7 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmRestart.message": {
+    "dialog.noriConfig.confirmRestart.message": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4286,7 +4286,7 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmRestart.recreate": {
+    "dialog.noriConfig.confirmRestart.recreate": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4303,7 +4303,7 @@
         }
       }
     },
-    "dialog.cmuxConfig.confirmRestart.title": {
+    "dialog.noriConfig.confirmRestart.title": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4320,24 +4320,24 @@
         }
       }
     },
-    "command.cmuxConfig.subtitle": {
+    "command.noriConfig.subtitle": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux.json"
+            "value": "nori.json"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux.json"
+            "value": "nori.json"
           }
         }
       }
     },
-    "command.cmuxConfig.customTitle": {
+    "command.noriConfig.customTitle": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4428,13 +4428,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Shell Command: Install 'cmux' in PATH"
+            "value": "Shell Command: Install 'nori' in PATH"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "シェルコマンド: 'cmux'をPATHにインストール"
+            "value": "シェルコマンド: 'nori'をPATHにインストール"
           }
         }
       }
@@ -5448,13 +5448,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Shell Command: Uninstall 'cmux' from PATH"
+            "value": "Shell Command: Uninstall 'nori' from PATH"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "シェルコマンド: 'cmux'をPATHからアンインストール"
+            "value": "シェルコマンド: 'nori'をPATHからアンインストール"
           }
         }
       }
@@ -7148,13 +7148,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Notifications are disabled for cmux. Enable them in System Settings to see alerts."
+            "value": "Notifications are disabled for nori. Enable them in System Settings to see alerts."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxの通知が無効になっています。アラートを表示するにはシステム設定で有効にしてください。"
+            "value": "noriの通知が無効になっています。アラートを表示するにはシステム設定で有効にしてください。"
           }
         }
       }
@@ -7199,13 +7199,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enable Notifications for cmux"
+            "value": "Enable Notifications for nori"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxの通知を有効にする"
+            "value": "noriの通知を有効にする"
           }
         }
       }
@@ -7216,13 +7216,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux could not move this tab to the selected destination."
+            "value": "nori could not move this tab to the selected destination."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxはこのタブを選択した移動先に移動できませんでした。"
+            "value": "noriはこのタブを選択した移動先に移動できませんでした。"
           }
         }
       }
@@ -7329,7 +7329,7 @@
         }
       }
     },
-    "dialog.quitCmux.message": {
+    "dialog.quitNori.message": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -7346,7 +7346,7 @@
         }
       }
     },
-    "dialog.quitCmux.quit": {
+    "dialog.quitNori.quit": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -7363,19 +7363,19 @@
         }
       }
     },
-    "dialog.quitCmux.title": {
+    "dialog.quitNori.title": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quit cmux?"
+            "value": "Quit nori?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux を終了しますか？"
+            "value": "nori を終了しますか？"
           }
         }
       }
@@ -7522,13 +7522,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "About cmux"
+            "value": "About nori"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxについて"
+            "value": "noriについて"
           }
         }
       }
@@ -7584,7 +7584,7 @@
         }
       }
     },
-    "menu.app.openCmuxSettingsFile": {
+    "menu.app.openNoriSettingsFile": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -8298,19 +8298,19 @@
         }
       }
     },
-    "menu.quitCmux": {
+    "menu.quitNori": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quit cmux"
+            "value": "Quit nori"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux を終了"
+            "value": "nori を終了"
           }
         }
       }
@@ -9103,13 +9103,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep cmux in the menu bar for unread notifications and quick actions."
+            "value": "Keep nori in the menu bar for unread notifications and quick actions."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "未読通知の確認やクイック操作のために、cmuxをメニューバーに表示します。"
+            "value": "未読通知の確認やクイック操作のために、noriをメニューバーに表示します。"
           }
         }
       }
@@ -9188,13 +9188,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Restart cmux to apply"
+            "value": "Restart nori to apply"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxを再起動して適用"
+            "value": "noriを再起動して適用"
           }
         }
       }
@@ -9358,13 +9358,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "When cmux is inactive, the first click only activates the window. Click again to focus the pane."
+            "value": "When nori is inactive, the first click only activates the window. Click again to focus the pane."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxが非アクティブのとき、最初のクリックはウインドウをアクティブにするだけです。ペインにフォーカスするにはもう一度クリックします。"
+            "value": "noriが非アクティブのとき、最初のクリックはウインドウをアクティブにするだけです。ペインにフォーカスするにはもう一度クリックします。"
           }
         }
       }
@@ -9375,13 +9375,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "When cmux is inactive, clicking a pane activates the window and focuses that pane in one click."
+            "value": "When nori is inactive, clicking a pane activates the window and focuses that pane in one click."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxが非アクティブのとき、ペインをクリックすると1回でウインドウをアクティブにしてそのペインへフォーカスします。"
+            "value": "noriが非アクティブのとき、ペインをクリックすると1回でウインドウをアクティブにしてそのペインへフォーカスします。"
           }
         }
       }
@@ -9392,13 +9392,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Sidebar PR Links in cmux Browser"
+            "value": "Open Sidebar PR Links in nori Browser"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サイドバーのPRリンクをcmuxブラウザで開く"
+            "value": "サイドバーのPRリンクをnoriブラウザで開く"
           }
         }
       }
@@ -9426,13 +9426,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clicks open inside cmux browser."
+            "value": "Clicks open inside nori browser."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "クリックするとcmuxブラウザ内で開きます。"
+            "value": "クリックするとnoriブラウザ内で開きます。"
           }
         }
       }
@@ -9443,13 +9443,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Sidebar Port Links in cmux Browser"
+            "value": "Open Sidebar Port Links in nori Browser"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サイドバーのポートリンクをcmuxブラウザで開く"
+            "value": "サイドバーのポートリンクをnoriブラウザで開く"
           }
         }
       }
@@ -9477,13 +9477,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Port clicks open inside cmux browser."
+            "value": "Port clicks open inside nori browser."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ポートをクリックするとcmuxブラウザ内で開きます。"
+            "value": "ポートをクリックするとnoriブラウザ内で開きます。"
           }
         }
       }
@@ -10157,13 +10157,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Share anonymized crash and usage data to help improve cmux."
+            "value": "Share anonymized crash and usage data to help improve nori."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxの改善に役立てるため、匿名化されたクラッシュおよび使用状況データを共有します。"
+            "value": "noriの改善に役立てるため、匿名化されたクラッシュおよび使用状況データを共有します。"
           }
         }
       }
@@ -10497,13 +10497,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Briefly flash a blue outline when cmux highlights a pane."
+            "value": "Briefly flash a blue outline when nori highlights a pane."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux がペインを強調表示するときに短い青いアウトラインを表示します。"
+            "value": "nori がペインを強調表示するときに短い青いアウトラインを表示します。"
           }
         }
       }
@@ -10633,13 +10633,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "When enabled, cmux wraps the claude command to inject session tracking and notification hooks. Disable if you prefer to manage Claude Code hooks yourself."
+            "value": "When enabled, nori wraps the claude command to inject session tracking and notification hooks. Disable if you prefer to manage Claude Code hooks yourself."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "有効にすると、cmuxはclaudeコマンドをラップしてセッション追跡と通知フックを挿入します。Claude Codeのフックを自分で管理する場合は無効にしてください。"
+            "value": "有効にすると、noriはclaudeコマンドをラップしてセッション追跡と通知フックを挿入します。Claude Codeのフックを自分で管理する場合は無効にしてください。"
           }
         }
       }
@@ -10650,13 +10650,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Code runs without cmux integration."
+            "value": "Claude Code runs without nori integration."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Codeはcmux連携なしで実行されます。"
+            "value": "Claude Codeはnori連携なしで実行されます。"
           }
         }
       }
@@ -10701,13 +10701,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hooks must be installed with `cmux cursor install-hooks`. They no-op outside cmux terminals."
+            "value": "Hooks must be installed with `nori cursor install-hooks`. They no-op outside nori terminals."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "フックは`cmux cursor install-hooks`でインストールする必要があります。cmuxターミナル外では動作しません。"
+            "value": "フックは`nori cursor install-hooks`でインストールする必要があります。noriターミナル外では動作しません。"
           }
         }
       }
@@ -10718,13 +10718,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cursor runs without cmux integration."
+            "value": "Cursor runs without nori integration."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cursorはcmux連携なしで動作します。"
+            "value": "Cursorはnori連携なしで動作します。"
           }
         }
       }
@@ -10769,13 +10769,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hooks must be installed with `cmux gemini install-hooks`. They no-op outside cmux terminals."
+            "value": "Hooks must be installed with `nori gemini install-hooks`. They no-op outside nori terminals."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "フックは`cmux gemini install-hooks`でインストールする必要があります。cmuxターミナル外では動作しません。"
+            "value": "フックは`nori gemini install-hooks`でインストールする必要があります。noriターミナル外では動作しません。"
           }
         }
       }
@@ -10786,13 +10786,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gemini runs without cmux integration."
+            "value": "Gemini runs without nori integration."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "GeminiはCmux連携なしで動作します。"
+            "value": "GeminiはNori連携なしで動作します。"
           }
         }
       }
@@ -10905,13 +10905,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Each workspace gets CMUX_PORT and CMUX_PORT_END env vars with a dedicated port range. New terminals inherit these values."
+            "value": "Each workspace gets NORI_PORT and NORI_PORT_END env vars with a dedicated port range. New terminals inherit these values."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "各ワークスペースにはCMUX_PORTとCMUX_PORT_END環境変数で専用のポート範囲が割り当てられます。新しいターミナルはこれらの値を継承します。"
+            "value": "各ワークスペースにはNORI_PORTとNORI_PORT_END環境変数で専用のポート範囲が割り当てられます。新しいターミナルはこれらの値を継承します。"
           }
         }
       }
@@ -10939,13 +10939,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Starting port for CMUX_PORT env var."
+            "value": "Starting port for NORI_PORT env var."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "CMUX_PORT環境変数の開始ポート。"
+            "value": "NORI_PORT環境変数の開始ポート。"
           }
         }
       }
@@ -11024,13 +11024,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Overrides: CMUX_SOCKET_ENABLE, CMUX_SOCKET_MODE, and CMUX_SOCKET_PATH (set CMUX_ALLOW_SOCKET_OVERRIDE=1 for stable/nightly builds)."
+            "value": "Overrides: NORI_SOCKET_ENABLE, NORI_SOCKET_MODE, and NORI_SOCKET_PATH (set NORI_ALLOW_SOCKET_OVERRIDE=1 for stable/nightly builds)."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "オーバーライド: CMUX_SOCKET_ENABLE、CMUX_SOCKET_MODE、CMUX_SOCKET_PATH（stable/nightlyビルドではCMUX_ALLOW_SOCKET_OVERRIDE=1を設定）。"
+            "value": "オーバーライド: NORI_SOCKET_ENABLE、NORI_SOCKET_MODE、NORI_SOCKET_PATH（stable/nightlyビルドではNORI_ALLOW_SOCKET_OVERRIDE=1を設定）。"
           }
         }
       }
@@ -11670,13 +11670,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Applies to terminal link clicks and intercepted `open https://...` calls. Only these hosts open in cmux. Others open in your default browser. One host or wildcard per line (for example: example.com, *.internal.example). Leave empty to open all hosts in cmux."
+            "value": "Applies to terminal link clicks and intercepted `open https://...` calls. Only these hosts open in nori. Others open in your default browser. One host or wildcard per line (for example: example.com, *.internal.example). Leave empty to open all hosts in nori."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ターミナルのリンククリックおよびインターセプトされた`open https://...`呼び出しに適用されます。これらのホストのみcmuxで開きます。その他はデフォルトブラウザで開きます。1行に1つのホストまたはワイルドカード（例: example.com, *.internal.example）。空欄にするとすべてのホストをcmuxで開きます。"
+            "value": "ターミナルのリンククリックおよびインターセプトされた`open https://...`呼び出しに適用されます。これらのホストのみnoriで開きます。その他はデフォルトブラウザで開きます。1行に1つのホストまたはワイルドカード（例: example.com, *.internal.example）。空欄にするとすべてのホストをnoriで開きます。"
           }
         }
       }
@@ -11704,13 +11704,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Controls which HTTP (non-HTTPS) hosts can open in cmux without a warning prompt. Defaults include localhost, 127.0.0.1, ::1, 0.0.0.0, and *.localtest.me."
+            "value": "Controls which HTTP (non-HTTPS) hosts can open in nori without a warning prompt. Defaults include localhost, 127.0.0.1, ::1, 0.0.0.0, and *.localtest.me."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "警告プロンプトなしでcmuxで開けるHTTP（非HTTPS）ホストを制御します。デフォルトにはlocalhost、127.0.0.1、::1、0.0.0.0、*.localtest.meが含まれます。"
+            "value": "警告プロンプトなしでnoriで開けるHTTP（非HTTPS）ホストを制御します。デフォルトにはlocalhost、127.0.0.1、::1、0.0.0.0、*.localtest.meが含まれます。"
           }
         }
       }
@@ -11789,13 +11789,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Terminal Links in cmux Browser"
+            "value": "Open Terminal Links in nori Browser"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ターミナルのリンクをcmuxブラウザで開く"
+            "value": "ターミナルのリンクをnoriブラウザで開く"
           }
         }
       }
@@ -12418,13 +12418,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Turn this on to show or hide all cmux windows from any app."
+            "value": "Turn this on to show or hide all nori windows from any app."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "どのアプリからでも cmux のすべてのウィンドウを表示または非表示にするにはオンにします。"
+            "value": "どのアプリからでも nori のすべてのウィンドウを表示または非表示にするにはオンにします。"
           }
         }
       }
@@ -12435,13 +12435,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Press the shortcut from any app to show or hide all cmux windows."
+            "value": "Press the shortcut from any app to show or hide all nori windows."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "どのアプリからでもこのショートカットで cmux のすべてのウィンドウを表示または非表示にできます。"
+            "value": "どのアプリからでもこのショートカットで nori のすべてのウィンドウを表示または非表示にできます。"
           }
         }
       }
@@ -14248,36 +14248,36 @@
         }
       }
     },
-    "socketControl.cmuxOnly.description": {
+    "socketControl.noriOnly.description": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only processes started inside cmux terminals can send commands."
+            "value": "Only processes started inside nori terminals can send commands."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux ターミナル内で起動したプロセスのみがコマンドを送信できます。"
+            "value": "nori ターミナル内で起動したプロセスのみがコマンドを送信できます。"
           }
         }
       }
     },
-    "socketControl.cmuxOnly.name": {
+    "socketControl.noriOnly.name": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux processes only"
+            "value": "nori processes only"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux プロセスのみ"
+            "value": "nori プロセスのみ"
           }
         }
       }
@@ -14917,13 +14917,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux couldn't download the update feed. Check your connection and try again."
+            "value": "nori couldn't download the update feed. Check your connection and try again."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux はアップデートフィードをダウンロードできませんでした。接続を確認してもう一度お試しください。"
+            "value": "nori はアップデートフィードをダウンロードできませんでした。接続を確認してもう一度お試しください。"
           }
         }
       }
@@ -15036,13 +15036,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux can't reach the update server. Check your internet connection and try again."
+            "value": "nori can't reach the update server. Check your internet connection and try again."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux はアップデートサーバーに接続できません。インターネット接続を確認してもう一度お試しください。"
+            "value": "nori はアップデートサーバーに接続できません。インターネット接続を確認してもう一度お試しください。"
           }
         }
       }
@@ -15070,13 +15070,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Move cmux into Applications and relaunch to enable updates."
+            "value": "Move nori into Applications and relaunch to enable updates."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アップデートを有効にするには、cmux を「アプリケーション」に移動して再起動してください。"
+            "value": "アップデートを有効にするには、nori を「アプリケーション」に移動して再起動してください。"
           }
         }
       }
@@ -15172,13 +15172,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux couldn't connect to the update server. Check your connection or try again later."
+            "value": "nori couldn't connect to the update server. Check your connection or try again later."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux はアップデートサーバーに接続できませんでした。接続を確認するか、後でもう一度お試しください。"
+            "value": "nori はアップデートサーバーに接続できませんでした。接続を確認するか、後でもう一度お試しください。"
           }
         }
       }
@@ -15410,13 +15410,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux can automatically check for updates in the background."
+            "value": "nori can automatically check for updates in the background."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux はバックグラウンドで自動的にアップデートを確認できます。"
+            "value": "nori はバックグラウンドで自動的にアップデートを確認できます。"
           }
         }
       }
@@ -16396,13 +16396,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux could not move this tab to the selected destination."
+            "value": "nori could not move this tab to the selected destination."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmuxはこのタブを選択した移動先に移動できませんでした。"
+            "value": "noriはこのタブを選択した移動先に移動できませんでした。"
           }
         }
       }

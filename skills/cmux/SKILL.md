@@ -1,15 +1,15 @@
 ---
-name: cmux
-description: End-user control of cmux topology and routing (windows, workspaces, panes/surfaces, focus, moves, reorder, identify, trigger flash). Use when automation needs deterministic placement and navigation in a multi-pane cmux layout.
+name: nori
+description: End-user control of nori topology and routing (windows, workspaces, panes/surfaces, focus, moves, reorder, identify, trigger flash). Use when automation needs deterministic placement and navigation in a multi-pane nori layout.
 ---
 
-# cmux Core Control
+# nori Core Control
 
-Use this skill to control non-browser cmux topology and routing.
+Use this skill to control non-browser nori topology and routing.
 
 ## Core Concepts
 
-- Window: top-level macOS cmux window.
+- Window: top-level macOS nori window.
 - Workspace: tab-like group within a window.
 - Pane: split container in a workspace.
 - Surface: a tab within a pane (terminal or browser panel).
@@ -18,22 +18,22 @@ Use this skill to control non-browser cmux topology and routing.
 
 ```bash
 # identify current caller context
-cmux identify --json
+nori identify --json
 
 # list topology
-cmux list-windows
-cmux list-workspaces
-cmux list-panes
-cmux list-pane-surfaces --pane pane:1
+nori list-windows
+nori list-workspaces
+nori list-panes
+nori list-pane-surfaces --pane pane:1
 
 # create/focus/move
-cmux new-workspace
-cmux new-split right --panel pane:1
-cmux move-surface --surface surface:7 --pane pane:2 --focus true
-cmux reorder-surface --surface surface:7 --before surface:3
+nori new-workspace
+nori new-split right --panel pane:1
+nori move-surface --surface surface:7 --pane pane:2 --focus true
+nori reorder-surface --surface surface:7 --before surface:3
 
 # attention cue
-cmux trigger-flash --surface surface:7
+nori trigger-flash --surface surface:7
 ```
 
 ## Handle Model
@@ -50,5 +50,5 @@ cmux trigger-flash --surface surface:7
 | [references/windows-workspaces.md](references/windows-workspaces.md) | Window/workspace lifecycle and reorder/move |
 | [references/panes-surfaces.md](references/panes-surfaces.md) | Splits, surfaces, move/reorder, focus routing |
 | [references/trigger-flash-and-health.md](references/trigger-flash-and-health.md) | Flash cue and surface health checks |
-| [../cmux-browser/SKILL.md](../cmux-browser/SKILL.md) | Browser automation on surface-backed webviews |
-| [../cmux-markdown/SKILL.md](../cmux-markdown/SKILL.md) | Markdown viewer panel with live file watching |
+| [../nori-browser/SKILL.md](../nori-browser/SKILL.md) | Browser automation on surface-backed webviews |
+| [../nori-markdown/SKILL.md](../nori-markdown/SKILL.md) | Markdown viewer panel with live file watching |

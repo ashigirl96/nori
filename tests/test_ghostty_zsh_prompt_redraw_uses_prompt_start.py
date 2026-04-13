@@ -36,38 +36,38 @@ setopt prompt_cr prompt_percent prompt_sp prompt_subst
 PROMPT='%F{4}%1~%f %# '
 RPROMPT=''
 
-typeset -gi _cmux_redraw_done=0
-typeset -g _cmux_redraw_fd=''
+typeset -gi _nori_redraw_done=0
+typeset -g _nori_redraw_fd=''
 
-_cmux_redraw_precmd() {
-  _cmux_redraw_done=0
+_nori_redraw_precmd() {
+  _nori_redraw_done=0
 }
 
-_cmux_redraw_ready() {
+_nori_redraw_ready() {
   emulate -L zsh
-  local fd="${1:-$_cmux_redraw_fd}"
+  local fd="${1:-$_nori_redraw_fd}"
   if [[ -n "$fd" ]]; then
     zle -F "$fd"
     exec {fd}<&-
   fi
-  _cmux_redraw_fd=''
-  (( _cmux_redraw_done )) && return 0
-  _cmux_redraw_done=1
+  _nori_redraw_fd=''
+  (( _nori_redraw_done )) && return 0
+  _nori_redraw_done=1
   zle reset-prompt
 }
 
-_cmux_redraw_line_init() {
-  if (( !_cmux_redraw_done )) && [[ -z "$_cmux_redraw_fd" ]]; then
-    exec {_cmux_redraw_fd}< <(
+_nori_redraw_line_init() {
+  if (( !_nori_redraw_done )) && [[ -z "$_nori_redraw_fd" ]]; then
+    exec {_nori_redraw_fd}< <(
       sleep 0.05
       printf 'ready\\n'
     )
-    zle -F "$_cmux_redraw_fd" _cmux_redraw_ready
+    zle -F "$_nori_redraw_fd" _nori_redraw_ready
   fi
 }
 
-add-zsh-hook precmd _cmux_redraw_precmd
-zle -N zle-line-init _cmux_redraw_line_init
+add-zsh-hook precmd _nori_redraw_precmd
+zle -N zle-line-init _nori_redraw_line_init
 """.lstrip(),
         encoding="utf-8",
     )
@@ -128,7 +128,7 @@ def main() -> int:
         print("SKIP: zsh not installed")
         return 0
 
-    base = Path(tempfile.mkdtemp(prefix="cmux_ghostty_prompt_redraw_"))
+    base = Path(tempfile.mkdtemp(prefix="nori_ghostty_prompt_redraw_"))
     try:
         home = base / "home"
         home.mkdir(parents=True, exist_ok=True)

@@ -11,12 +11,12 @@ from pathlib import Path
 _DEBUG_CLI_PATH = (
     Path.home()
     / "Library/Developer/Xcode/DerivedData/GhosttyTabs"
-    / "Build/Products/Debug/cmux DEV.app/Contents/MacOS/cmux DEV"
+    / "Build/Products/Debug/nori DEV.app/Contents/MacOS/nori DEV"
 )
 
 
-def resolve_cmux_cli() -> str:
-    explicit = os.environ.get("CMUX_CLI_BIN") or os.environ.get("CMUX_CLI")
+def resolve_nori_cli() -> str:
+    explicit = os.environ.get("NORI_CLI_BIN") or os.environ.get("NORI_CLI")
     if explicit and os.access(explicit, os.X_OK):
         return explicit
 
@@ -24,5 +24,5 @@ def resolve_cmux_cli() -> str:
         return str(_DEBUG_CLI_PATH)
 
     raise RuntimeError(
-        "Unable to find cmux CLI binary. Set CMUX_CLI_BIN or run ./scripts/reload.sh first."
+        "Unable to find nori CLI binary. Set NORI_CLI_BIN or run ./scripts/reload.sh first."
     )

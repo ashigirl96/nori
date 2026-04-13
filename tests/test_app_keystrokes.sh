@@ -1,24 +1,24 @@
 #!/bin/bash
-# Test script that sends keystrokes to cmux via AppleScript
+# Test script that sends keystrokes to nori via AppleScript
 # This tests the actual keyboard input path through the app
 
 set -e
 
-echo "=== cmux Keystroke Test ==="
+echo "=== nori Keystroke Test ==="
 echo ""
 
-# Check if cmux is running
-if ! pgrep -x "cmux" > /dev/null; then
-    echo "Error: cmux is not running"
-    echo "Please start cmux first"
+# Check if nori is running
+if ! pgrep -x "nori" > /dev/null; then
+    echo "Error: nori is not running"
+    echo "Please start nori first"
     exit 1
 fi
 
-echo "cmux is running"
+echo "nori is running"
 echo ""
 
-# Activate cmux
-osascript -e 'tell application "cmux" to activate'
+# Activate nori
+osascript -e 'tell application "nori" to activate'
 sleep 0.5
 
 echo "Test 1: Testing Ctrl+C (SIGINT)"
@@ -56,7 +56,7 @@ echo "  If cat exited, Ctrl+D is working!"
 echo ""
 
 echo "=== Manual Verification Required ==="
-echo "Please check the cmux window to verify:"
+echo "Please check the nori window to verify:"
 echo "  1. The 'sleep 30' command was interrupted by Ctrl+C"
 echo "  2. The 'cat' command exited after Ctrl+D"
 echo ""

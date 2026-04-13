@@ -23,7 +23,7 @@ private func debugWorkspaceDescriptionPreview(_ text: String?, limit: Int = 120)
 }
 #endif
 
-struct CmuxSurfaceConfigTemplate {
+struct NoriSurfaceConfigTemplate {
     var fontSize: Float32 = 0
     var workingDirectory: String?
     var command: String?
@@ -57,7 +57,7 @@ struct CmuxSurfaceConfigTemplate {
     }
 }
 
-func cmuxSurfaceContextName(_ context: ghostty_surface_context_e) -> String {
+func noriSurfaceContextName(_ context: ghostty_surface_context_e) -> String {
     switch context {
     case GHOSTTY_SURFACE_CONTEXT_WINDOW:
         return "window"
@@ -70,7 +70,7 @@ func cmuxSurfaceContextName(_ context: ghostty_surface_context_e) -> String {
     }
 }
 
-private func cmuxPointerAppearsLive(_ pointer: UnsafeMutableRawPointer?) -> Bool {
+private func noriPointerAppearsLive(_ pointer: UnsafeMutableRawPointer?) -> Bool {
     guard let pointer,
           malloc_zone_from_ptr(pointer) != nil else {
         return false
@@ -78,15 +78,15 @@ private func cmuxPointerAppearsLive(_ pointer: UnsafeMutableRawPointer?) -> Bool
     return malloc_size(pointer) > 0
 }
 
-func cmuxSurfacePointerAppearsLive(_ surface: ghostty_surface_t) -> Bool {
+func noriSurfacePointerAppearsLive(_ surface: ghostty_surface_t) -> Bool {
     // Best-effort check: reject pointers that no longer belong to an active
     // malloc zone allocation. A Swift wrapper around `ghostty_surface_t` can
     // remain non-nil after the backing native surface has already been freed.
-    cmuxPointerAppearsLive(surface)
+    noriPointerAppearsLive(surface)
 }
 
-func cmuxCurrentSurfaceFontSizePoints(_ surface: ghostty_surface_t) -> Float? {
-    guard cmuxSurfacePointerAppearsLive(surface) else {
+func noriCurrentSurfaceFontSizePoints(_ surface: ghostty_surface_t) -> Float? {
+    guard noriSurfacePointerAppearsLive(surface) else {
         return nil
     }
 
@@ -100,16 +100,16 @@ func cmuxCurrentSurfaceFontSizePoints(_ surface: ghostty_surface_t) -> Float? {
     return points
 }
 
-func cmuxInheritedSurfaceConfig(
+func noriInheritedSurfaceConfig(
     sourceSurface: ghostty_surface_t,
     context: ghostty_surface_context_e
-) -> CmuxSurfaceConfigTemplate {
+) -> NoriSurfaceConfigTemplate {
     let inherited = ghostty_surface_inherited_config(sourceSurface, context)
-    var config = CmuxSurfaceConfigTemplate(cConfig: inherited)
+    var config = NoriSurfaceConfigTemplate(cConfig: inherited)
 
     // Make runtime zoom inheritance explicit, even when Ghostty's
     // inherit-font-size config is disabled.
-    let runtimePoints = cmuxCurrentSurfaceFontSizePoints(sourceSurface)
+    let runtimePoints = noriCurrentSurfaceFontSizePoints(sourceSurface)
     if let points = runtimePoints {
         config.fontSize = points
     }
@@ -119,7 +119,7 @@ func cmuxInheritedSurfaceConfig(
     let runtimeText = runtimePoints.map { String(format: "%.2f", $0) } ?? "nil"
     let finalText = String(format: "%.2f", config.fontSize)
     dlog(
-        "zoom.inherit context=\(cmuxSurfaceContextName(context)) " +
+        "zoom.inherit context=\(noriSurfaceContextName(context)) " +
         "inherited=\(inheritedText) runtime=\(runtimeText) final=\(finalText)"
     )
 #endif
@@ -756,14 +756,14 @@ extension Workspace {
     }
 }
 
-// MARK: - cmux.json custom layout
+// MARK: - nori.json custom layout
 
 extension Workspace {
 
-    func applyCustomLayout(_ layout: CmuxLayoutNode, baseCwd: String) {
+    func applyCustomLayout(_ layout: NoriLayoutNode, baseCwd: String) {
         guard let rootPaneId = bonsplitController.allPaneIds.first else { return }
 
-        var leaves: [(paneId: PaneID, surfaces: [CmuxSurfaceDefinition])] = []
+        var leaves: [(paneId: PaneID, surfaces: [NoriSurfaceDefinition])] = []
         buildCustomLayoutTree(layout, inPane: rootPaneId, leaves: &leaves)
 
         // First leaf reuses the initial terminal created by addWorkspace;
@@ -783,9 +783,9 @@ extension Workspace {
     }
 
     private func buildCustomLayoutTree(
-        _ node: CmuxLayoutNode,
+        _ node: NoriLayoutNode,
         inPane paneId: PaneID,
-        leaves: inout [(paneId: PaneID, surfaces: [CmuxSurfaceDefinition])]
+        leaves: inout [(paneId: PaneID, surfaces: [NoriSurfaceDefinition])]
     ) {
         switch node {
         case .pane(let pane):
@@ -793,7 +793,7 @@ extension Workspace {
 
         case .split(let split):
             guard split.children.count == 2 else {
-                NSLog("[CmuxConfig] split node requires exactly 2 children, got %d", split.children.count)
+                NSLog("[NoriConfig] split node requires exactly 2 children, got %d", split.children.count)
                 leaves.append((paneId: paneId, surfaces: []))
                 return
             }
@@ -826,7 +826,7 @@ extension Workspace {
 
     private func populateCustomPane(
         _ paneId: PaneID,
-        surfaces: [CmuxSurfaceDefinition],
+        surfaces: [NoriSurfaceDefinition],
         baseCwd: String,
         focusPanelId: inout UUID?
     ) {
@@ -860,14 +860,14 @@ extension Workspace {
     private func configureExistingSurface(
         panelId: UUID,
         inPane paneId: PaneID,
-        surface: CmuxSurfaceDefinition,
+        surface: NoriSurfaceDefinition,
         baseCwd: String,
         focusPanelId: inout UUID?
     ) {
         switch surface.type {
         case .terminal where surface.cwd != nil || surface.env != nil:
             // Placeholder can't change cwd/env — replace it
-            let resolvedCwd = CmuxConfigStore.resolveCwd(surface.cwd, relativeTo: baseCwd)
+            let resolvedCwd = NoriConfigStore.resolveCwd(surface.cwd, relativeTo: baseCwd)
             if let panel = newTerminalSurface(
                 inPane: paneId,
                 focus: false,
@@ -899,13 +899,13 @@ extension Workspace {
 
     private func createNewSurface(
         inPane paneId: PaneID,
-        surface: CmuxSurfaceDefinition,
+        surface: NoriSurfaceDefinition,
         baseCwd: String,
         focusPanelId: inout UUID?
     ) {
         switch surface.type {
         case .terminal:
-            let resolvedCwd = CmuxConfigStore.resolveCwd(surface.cwd, relativeTo: baseCwd)
+            let resolvedCwd = NoriConfigStore.resolveCwd(surface.cwd, relativeTo: baseCwd)
             if let panel = newTerminalSurface(
                 inPane: paneId,
                 focus: false,
@@ -927,7 +927,7 @@ extension Workspace {
     }
 
     private func applyCustomDividerPositions(
-        configNode: CmuxLayoutNode,
+        configNode: NoriLayoutNode,
         liveNode: ExternalTreeNode
     ) {
         switch (configNode, liveNode) {
@@ -972,7 +972,7 @@ extension Workspace {
             guard !resolved else { return }
             resolved = true
             if let observer { NotificationCenter.default.removeObserver(observer) }
-            NSLog("[CmuxConfig] surface not ready after 3s, dropping command (%d chars)", text.count)
+            NSLog("[NoriConfig] surface not ready after 3s, dropping command (%d chars)", text.count)
         }
     }
 }
@@ -996,7 +996,7 @@ final class WorkspaceRemoteDaemonPendingCallRegistry {
         case timedOut
     }
 
-    private let queue = DispatchQueue(label: "com.cmux.remote-ssh.daemon-rpc.pending.\(UUID().uuidString)")
+    private let queue = DispatchQueue(label: "com.nori.remote-ssh.daemon-rpc.pending.\(UUID().uuidString)")
     private var nextRequestID = 1
     private var pendingCalls: [Int: PendingCall] = [:]
 
@@ -1206,8 +1206,8 @@ private final class WorkspaceRemoteDaemonRPCClient {
     private let configuration: WorkspaceRemoteConfiguration
     private let remotePath: String
     private let onUnexpectedTermination: (String) -> Void
-    private let writeQueue = DispatchQueue(label: "com.cmux.remote-ssh.daemon-rpc.write.\(UUID().uuidString)")
-    private let stateQueue = DispatchQueue(label: "com.cmux.remote-ssh.daemon-rpc.state.\(UUID().uuidString)")
+    private let writeQueue = DispatchQueue(label: "com.nori.remote-ssh.daemon-rpc.write.\(UUID().uuidString)")
+    private let stateQueue = DispatchQueue(label: "com.nori.remote-ssh.daemon-rpc.state.\(UUID().uuidString)")
     private let pendingCalls = WorkspaceRemoteDaemonPendingCallRegistry()
 
     private var process: Process?
@@ -1273,7 +1273,7 @@ private final class WorkspaceRemoteDaemonRPCClient {
         do {
             try process.run()
         } catch {
-            throw NSError(domain: "cmux.remote.daemon.rpc", code: 1, userInfo: [
+            throw NSError(domain: "nori.remote.daemon.rpc", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Failed to launch SSH daemon transport: \(error.localizedDescription)",
             ])
         }
@@ -1295,7 +1295,7 @@ private final class WorkspaceRemoteDaemonRPCClient {
             let hello = try call(method: "hello", params: [:], timeout: 8.0)
             let capabilities = (hello["capabilities"] as? [String]) ?? []
             guard capabilities.contains(Self.requiredProxyStreamCapability) else {
-                throw NSError(domain: "cmux.remote.daemon.rpc", code: 2, userInfo: [
+                throw NSError(domain: "nori.remote.daemon.rpc", code: 2, userInfo: [
                     NSLocalizedDescriptionKey: "remote daemon missing required capability \(Self.requiredProxyStreamCapability)",
                 ])
             }
@@ -1321,7 +1321,7 @@ private final class WorkspaceRemoteDaemonRPCClient {
         )
         let streamID = (result["stream_id"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !streamID.isEmpty else {
-            throw NSError(domain: "cmux.remote.daemon.rpc", code: 3, userInfo: [
+            throw NSError(domain: "nori.remote.daemon.rpc", code: 3, userInfo: [
                 NSLocalizedDescriptionKey: "proxy.open missing stream_id",
             ])
         }
@@ -1346,7 +1346,7 @@ private final class WorkspaceRemoteDaemonRPCClient {
     ) throws {
         let trimmedStreamID = streamID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedStreamID.isEmpty else {
-            throw NSError(domain: "cmux.remote.daemon.rpc", code: 17, userInfo: [
+            throw NSError(domain: "nori.remote.daemon.rpc", code: 17, userInfo: [
                 NSLocalizedDescriptionKey: "proxy.stream.subscribe requires stream_id",
             ])
         }
@@ -1397,7 +1397,7 @@ private final class WorkspaceRemoteDaemonRPCClient {
             ])
         } catch {
             pendingCalls.remove(pendingCall)
-            throw NSError(domain: "cmux.remote.daemon.rpc", code: 10, userInfo: [
+            throw NSError(domain: "nori.remote.daemon.rpc", code: 10, userInfo: [
                 NSLocalizedDescriptionKey: "failed to encode daemon RPC request \(method): \(error.localizedDescription)",
             ])
         }
@@ -1415,15 +1415,15 @@ private final class WorkspaceRemoteDaemonRPCClient {
         switch pendingCalls.wait(for: pendingCall, timeout: timeout) {
         case .timedOut:
             stop(suppressTerminationCallback: false)
-            throw NSError(domain: "cmux.remote.daemon.rpc", code: 11, userInfo: [
+            throw NSError(domain: "nori.remote.daemon.rpc", code: 11, userInfo: [
                 NSLocalizedDescriptionKey: "daemon RPC timeout waiting for \(method) response",
             ])
         case .failure(let failure):
-            throw NSError(domain: "cmux.remote.daemon.rpc", code: 12, userInfo: [
+            throw NSError(domain: "nori.remote.daemon.rpc", code: 12, userInfo: [
                 NSLocalizedDescriptionKey: failure,
             ])
         case .missing:
-            throw NSError(domain: "cmux.remote.daemon.rpc", code: 13, userInfo: [
+            throw NSError(domain: "nori.remote.daemon.rpc", code: 13, userInfo: [
                 NSLocalizedDescriptionKey: "daemon RPC \(method) returned empty response",
             ])
         case .response(let pendingResponse):
@@ -1438,7 +1438,7 @@ private final class WorkspaceRemoteDaemonRPCClient {
         let errorObject = (response["error"] as? [String: Any]) ?? [:]
         let code = (errorObject["code"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "rpc_error"
         let message = (errorObject["message"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "daemon RPC call failed"
-        throw NSError(domain: "cmux.remote.daemon.rpc", code: 14, userInfo: [
+        throw NSError(domain: "nori.remote.daemon.rpc", code: 14, userInfo: [
             NSLocalizedDescriptionKey: "\(method) failed (\(code)): \(message)",
         ])
     }
@@ -1448,7 +1448,7 @@ private final class WorkspaceRemoteDaemonRPCClient {
             self.stdinHandle ?? FileHandle.nullDevice
         }
         if stdinHandle === FileHandle.nullDevice {
-            throw NSError(domain: "cmux.remote.daemon.rpc", code: 15, userInfo: [
+            throw NSError(domain: "nori.remote.daemon.rpc", code: 15, userInfo: [
                 NSLocalizedDescriptionKey: "daemon transport is not connected",
             ])
         }
@@ -1457,7 +1457,7 @@ private final class WorkspaceRemoteDaemonRPCClient {
             try stdinHandle.write(contentsOf: Data([0x0A]))
         } catch {
             stop(suppressTerminationCallback: false)
-            throw NSError(domain: "cmux.remote.daemon.rpc", code: 16, userInfo: [
+            throw NSError(domain: "nori.remote.daemon.rpc", code: 16, userInfo: [
                 NSLocalizedDescriptionKey: "failed writing daemon RPC request: \(error.localizedDescription)",
             ])
         }
@@ -1916,7 +1916,7 @@ enum RemoteLoopbackHTTPResponseRewriter {
 private final class WorkspaceRemoteDaemonProxyTunnel {
     private final class ProxySession {
         private static let maxHandshakeBytes = 64 * 1024
-        private static let remoteLoopbackProxyAliasHost = "cmux-loopback.localtest.me"
+        private static let remoteLoopbackProxyAliasHost = "nori-loopback.localtest.me"
 
         private enum HandshakeProtocol {
             case undecided
@@ -2098,7 +2098,7 @@ private final class WorkspaceRemoteDaemonProxyTunnel {
             let bytes = [UInt8](data)
             guard bytes.count >= 4 else { return nil }
             guard bytes[0] == 0x05 else {
-                throw NSError(domain: "cmux.remote.proxy", code: 1, userInfo: [NSLocalizedDescriptionKey: "invalid SOCKS version"])
+                throw NSError(domain: "nori.remote.proxy", code: 1, userInfo: [NSLocalizedDescriptionKey: "invalid SOCKS version"])
             }
 
             let command = bytes[1]
@@ -2138,18 +2138,18 @@ private final class WorkspaceRemoteDaemonProxyTunnel {
                 cursor += 16
 
             default:
-                throw NSError(domain: "cmux.remote.proxy", code: 2, userInfo: [NSLocalizedDescriptionKey: "invalid SOCKS address type"])
+                throw NSError(domain: "nori.remote.proxy", code: 2, userInfo: [NSLocalizedDescriptionKey: "invalid SOCKS address type"])
             }
 
             guard !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw NSError(domain: "cmux.remote.proxy", code: 3, userInfo: [NSLocalizedDescriptionKey: "empty SOCKS host"])
+                throw NSError(domain: "nori.remote.proxy", code: 3, userInfo: [NSLocalizedDescriptionKey: "empty SOCKS host"])
             }
             guard bytes.count >= cursor + 2 else { return nil }
             let port = Int(UInt16(bytes[cursor]) << 8 | UInt16(bytes[cursor + 1]))
             cursor += 2
 
             guard port > 0 && port <= 65535 else {
-                throw NSError(domain: "cmux.remote.proxy", code: 4, userInfo: [NSLocalizedDescriptionKey: "invalid SOCKS port"])
+                throw NSError(domain: "nori.remote.proxy", code: 4, userInfo: [NSLocalizedDescriptionKey: "invalid SOCKS port"])
             }
 
             return SocksRequest(host: host, port: port, command: command, consumedBytes: cursor)
@@ -2378,7 +2378,7 @@ private final class WorkspaceRemoteDaemonProxyTunnel {
         }
 
         private static func httpResponse(status: String, closeAfterResponse: Bool = true) -> Data {
-            var text = "HTTP/1.1 \(status)\r\nProxy-Agent: cmux\r\n"
+            var text = "HTTP/1.1 \(status)\r\nProxy-Agent: nori\r\n"
             if closeAfterResponse {
                 text += "Connection: close\r\n"
             }
@@ -2391,7 +2391,7 @@ private final class WorkspaceRemoteDaemonProxyTunnel {
     private let remotePath: String
     private let localPort: Int
     private let onFatalError: (String) -> Void
-    private let queue = DispatchQueue(label: "com.cmux.remote-ssh.daemon-tunnel.\(UUID().uuidString)", qos: .utility)
+    private let queue = DispatchQueue(label: "com.nori.remote-ssh.daemon-tunnel.\(UUID().uuidString)", qos: .utility)
 
     private var listener: NWListener?
     private var rpcClient: WorkspaceRemoteDaemonRPCClient?
@@ -2414,7 +2414,7 @@ private final class WorkspaceRemoteDaemonProxyTunnel {
         var capturedError: Error?
         queue.sync {
             guard !isStopped else {
-                capturedError = NSError(domain: "cmux.remote.proxy", code: 20, userInfo: [
+                capturedError = NSError(domain: "nori.remote.proxy", code: 20, userInfo: [
                     NSLocalizedDescriptionKey: "proxy tunnel already stopped",
                 ])
                 return
@@ -2521,7 +2521,7 @@ private final class WorkspaceRemoteDaemonProxyTunnel {
 
     private static func makeLoopbackListener(port: Int) throws -> NWListener {
         guard let localPort = NWEndpoint.Port(rawValue: UInt16(port)) else {
-            throw NSError(domain: "cmux.remote.proxy", code: 21, userInfo: [
+            throw NSError(domain: "nori.remote.proxy", code: 21, userInfo: [
                 NSLocalizedDescriptionKey: "invalid local proxy port \(port)",
             ])
         }
@@ -2581,7 +2581,7 @@ private final class WorkspaceRemoteProxyBroker {
 
     static let shared = WorkspaceRemoteProxyBroker()
 
-    private let queue = DispatchQueue(label: "com.cmux.remote-ssh.proxy-broker", qos: .utility)
+    private let queue = DispatchQueue(label: "com.nori.remote-ssh.proxy-broker", qos: .utility)
     private var entries: [String: Entry] = [:]
 
     func acquire(
@@ -2798,7 +2798,7 @@ private final class WorkspaceRemoteCLIRelayServer {
         private let relayToken: Data
         private let queue: DispatchQueue
         private let onClose: () -> Void
-        private let challengeProtocol = "cmux-relay-auth"
+        private let challengeProtocol = "nori-relay-auth"
         private let challengeVersion = 1
         private let minimumFailureDelay: TimeInterval = 0.05
         private let maximumFrameBytes = 16 * 1024
@@ -3035,7 +3035,7 @@ private final class WorkspaceRemoteCLIRelayServer {
         private static func roundTripUnixSocket(socketPath: String, request: Data) throws -> Data {
             let fd = socket(AF_UNIX, SOCK_STREAM, 0)
             guard fd >= 0 else {
-                throw NSError(domain: "cmux.remote.relay", code: 1, userInfo: [
+                throw NSError(domain: "nori.remote.relay", code: 1, userInfo: [
                     NSLocalizedDescriptionKey: "failed to create local relay socket",
                 ])
             }
@@ -3051,7 +3051,7 @@ private final class WorkspaceRemoteCLIRelayServer {
             address.sun_family = sa_family_t(AF_UNIX)
             let pathBytes = Array(socketPath.utf8CString)
             guard pathBytes.count <= MemoryLayout.size(ofValue: address.sun_path) else {
-                throw NSError(domain: "cmux.remote.relay", code: 2, userInfo: [
+                throw NSError(domain: "nori.remote.relay", code: 2, userInfo: [
                     NSLocalizedDescriptionKey: "local relay socket path is too long",
                 ])
             }
@@ -3070,8 +3070,8 @@ private final class WorkspaceRemoteCLIRelayServer {
                 }
             }
             guard connectResult == 0 else {
-                throw NSError(domain: "cmux.remote.relay", code: 3, userInfo: [
-                    NSLocalizedDescriptionKey: "failed to connect to local cmux socket",
+                throw NSError(domain: "nori.remote.relay", code: 3, userInfo: [
+                    NSLocalizedDescriptionKey: "failed to connect to local nori socket",
                 ])
             }
 
@@ -3082,7 +3082,7 @@ private final class WorkspaceRemoteCLIRelayServer {
                 while bytesRemaining > 0 {
                     let written = Darwin.write(fd, pointer, bytesRemaining)
                     if written <= 0 {
-                        throw NSError(domain: "cmux.remote.relay", code: 4, userInfo: [
+                        throw NSError(domain: "nori.remote.relay", code: 4, userInfo: [
                             NSLocalizedDescriptionKey: "failed to write relay request",
                         ])
                     }
@@ -3108,12 +3108,12 @@ private final class WorkspaceRemoteCLIRelayServer {
                     if !response.isEmpty {
                         break
                     }
-                    throw NSError(domain: "cmux.remote.relay", code: 5, userInfo: [
-                        NSLocalizedDescriptionKey: "timed out waiting for local cmux response",
+                    throw NSError(domain: "nori.remote.relay", code: 5, userInfo: [
+                        NSLocalizedDescriptionKey: "timed out waiting for local nori response",
                     ])
                 }
-                throw NSError(domain: "cmux.remote.relay", code: 6, userInfo: [
-                    NSLocalizedDescriptionKey: "failed to read local cmux response",
+                throw NSError(domain: "nori.remote.relay", code: 6, userInfo: [
+                    NSLocalizedDescriptionKey: "failed to read local nori response",
                 ])
             }
             return response
@@ -3123,7 +3123,7 @@ private final class WorkspaceRemoteCLIRelayServer {
     private let localSocketPath: String
     private let relayID: String
     private let relayToken: Data
-    private let queue = DispatchQueue(label: "com.cmux.remote-ssh.cli-relay.\(UUID().uuidString)", qos: .utility)
+    private let queue = DispatchQueue(label: "com.nori.remote-ssh.cli-relay.\(UUID().uuidString)", qos: .utility)
 
     private var listener: NWListener?
     private var sessions: [UUID: Session] = [:]
@@ -3132,7 +3132,7 @@ private final class WorkspaceRemoteCLIRelayServer {
 
     init(localSocketPath: String, relayID: String, relayTokenHex: String) throws {
         guard let relayToken = Session.hexData(from: relayTokenHex), !relayToken.isEmpty else {
-            throw NSError(domain: "cmux.remote.relay", code: 7, userInfo: [
+            throw NSError(domain: "nori.remote.relay", code: 7, userInfo: [
                 NSLocalizedDescriptionKey: "invalid relay token",
             ])
         }
@@ -3185,7 +3185,7 @@ private final class WorkspaceRemoteCLIRelayServer {
             listener.newConnectionHandler = nil
             listener.stateUpdateHandler = nil
             listener.cancel()
-            throw NSError(domain: "cmux.remote.relay", code: 8, userInfo: [
+            throw NSError(domain: "nori.remote.relay", code: 8, userInfo: [
                 NSLocalizedDescriptionKey: "timed out waiting for local relay listener",
             ])
         }
@@ -3199,7 +3199,7 @@ private final class WorkspaceRemoteCLIRelayServer {
             listener.newConnectionHandler = nil
             listener.stateUpdateHandler = nil
             listener.cancel()
-            throw NSError(domain: "cmux.remote.relay", code: 8, userInfo: [
+            throw NSError(domain: "nori.remote.relay", code: 8, userInfo: [
                 NSLocalizedDescriptionKey: "failed to bind local relay listener",
             ])
         }
@@ -3315,7 +3315,7 @@ final class WorkspaceRemoteSessionController {
         let remotePath: String
     }
 
-    private let queue = DispatchQueue(label: "com.cmux.remote-ssh.\(UUID().uuidString)", qos: .utility)
+    private let queue = DispatchQueue(label: "com.nori.remote-ssh.\(UUID().uuidString)", qos: .utility)
     private let queueKey = DispatchSpecificKey<Void>()
     private weak var workspace: Workspace?
     private let configuration: WorkspaceRemoteConfiguration
@@ -3530,7 +3530,7 @@ final class WorkspaceRemoteSessionController {
         do {
             let hello = try bootstrapDaemonLocked()
             guard hello.capabilities.contains(WorkspaceRemoteDaemonRPCClient.requiredProxyStreamCapability) else {
-                throw NSError(domain: "cmux.remote.daemon", code: 43, userInfo: [
+                throw NSError(domain: "nori.remote.daemon", code: 43, userInfo: [
                     NSLocalizedDescriptionKey: "remote daemon missing required capability \(WorkspaceRemoteDaemonRPCClient.requiredProxyStreamCapability)",
                 ])
             }
@@ -3953,7 +3953,7 @@ final class WorkspaceRemoteSessionController {
         bootstrapRemoteTTYFetchInFlight = true
         defer { bootstrapRemoteTTYFetchInFlight = false }
 
-        let command = "sh -c \(Self.shellSingleQuoted("tty_path=\"$HOME/.cmux/relay/\(relayPort).tty\"; if [ -r \"$tty_path\" ]; then cat \"$tty_path\"; fi"))"
+        let command = "sh -c \(Self.shellSingleQuoted("tty_path=\"$HOME/.nori/relay/\(relayPort).tty\"; if [ -r \"$tty_path\" ]; then cat \"$tty_path\"; fi"))"
         do {
             let result = try sshExec(
                 arguments: sshCommonArguments(batchMode: true) + [configuration.destination, command],
@@ -4058,9 +4058,9 @@ final class WorkspaceRemoteSessionController {
         _ = try? sshExec(arguments: arguments, timeout: 4)
     }
 
-    private static let remotePlatformProbeOSMarker = "__CMUX_REMOTE_OS__="
-    private static let remotePlatformProbeArchMarker = "__CMUX_REMOTE_ARCH__="
-    private static let remotePlatformProbeExistsMarker = "__CMUX_REMOTE_EXISTS__="
+    private static let remotePlatformProbeOSMarker = "__NORI_REMOTE_OS__="
+    private static let remotePlatformProbeArchMarker = "__NORI_REMOTE_ARCH__="
+    private static let remotePlatformProbeExistsMarker = "__NORI_REMOTE_EXISTS__="
     private static let bootstrapRemoteTTYRetryDelay: TimeInterval = 0.5
     private static let bootstrapRemoteTTYRetryLimit = 8
 
@@ -4195,7 +4195,7 @@ final class WorkspaceRemoteSessionController {
 
         let stdoutHandle = stdoutPipe.fileHandleForReading
         let stderrHandle = stderrPipe.fileHandleForReading
-        let captureQueue = DispatchQueue(label: "cmux.remote.process.capture")
+        let captureQueue = DispatchQueue(label: "nori.remote.process.capture")
         let exitSemaphore = DispatchSemaphore(value: 0)
         var stdoutData = Data()
         var stderrData = Data()
@@ -4230,7 +4230,7 @@ final class WorkspaceRemoteSessionController {
                 "remote.proc.launchFailed exec=\(URL(fileURLWithPath: executable).lastPathComponent) " +
                 "error=\(error.localizedDescription)"
             )
-            throw NSError(domain: "cmux.remote.process", code: 1, userInfo: [
+            throw NSError(domain: "nori.remote.process", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Failed to launch \(URL(fileURLWithPath: executable).lastPathComponent): \(error.localizedDescription)",
             ])
         }
@@ -4268,7 +4268,7 @@ final class WorkspaceRemoteSessionController {
                 "remote.proc.timeout exec=\(URL(fileURLWithPath: executable).lastPathComponent) " +
                 "timeout=\(Int(timeout)) args=\(debugShellCommand(executable: executable, arguments: arguments))"
             )
-            throw NSError(domain: "cmux.remote.process", code: 2, userInfo: [
+            throw NSError(domain: "nori.remote.process", code: 2, userInfo: [
                 NSLocalizedDescriptionKey: "\(URL(fileURLWithPath: executable).lastPathComponent) timed out after \(Int(timeout))s",
             ])
         }
@@ -4375,7 +4375,7 @@ final class WorkspaceRemoteSessionController {
         let result = try sshExec(arguments: sshCommonArguments(batchMode: true) + [configuration.destination, command], timeout: 8)
         guard result.status == 0 else {
             let detail = Self.bestErrorLine(stderr: result.stderr, stdout: result.stdout) ?? "ssh exited \(result.status)"
-            throw NSError(domain: "cmux.remote.relay", code: 70, userInfo: [
+            throw NSError(domain: "nori.remote.relay", code: 70, userInfo: [
                 NSLocalizedDescriptionKey: "failed to install remote relay metadata: \(detail)",
             ])
         }
@@ -4395,32 +4395,32 @@ final class WorkspaceRemoteSessionController {
     static func remoteRelayMetadataCleanupScript(relayPort: Int) -> String {
         """
         relay_socket='127.0.0.1:\(relayPort)'
-        socket_addr_file="$HOME/.cmux/socket_addr"
+        socket_addr_file="$HOME/.nori/socket_addr"
         if [ -r "$socket_addr_file" ] && [ "$(tr -d '\\r\\n' < "$socket_addr_file")" = "$relay_socket" ]; then
           rm -f "$socket_addr_file"
         fi
-        rm -f "$HOME/.cmux/relay/\(relayPort).auth" "$HOME/.cmux/relay/\(relayPort).daemon_path" "$HOME/.cmux/relay/\(relayPort).tty"
+        rm -f "$HOME/.nori/relay/\(relayPort).auth" "$HOME/.nori/relay/\(relayPort).daemon_path" "$HOME/.nori/relay/\(relayPort).tty"
         """
     }
 
     private func probeRemoteBootstrapStateLocked(version: String) throws -> RemoteBootstrapState {
         let script = """
-        cmux_uname_os="$(uname -s)"
-        cmux_uname_arch="$(uname -m)"
-        printf '%s%s\\n' '\(Self.remotePlatformProbeOSMarker)' "$cmux_uname_os"
-        printf '%s%s\\n' '\(Self.remotePlatformProbeArchMarker)' "$cmux_uname_arch"
-        case "$(printf '%s' "$cmux_uname_os" | tr '[:upper:]' '[:lower:]')" in
-          linux|darwin|freebsd) cmux_go_os="$(printf '%s' "$cmux_uname_os" | tr '[:upper:]' '[:lower:]')" ;;
+        nori_uname_os="$(uname -s)"
+        nori_uname_arch="$(uname -m)"
+        printf '%s%s\\n' '\(Self.remotePlatformProbeOSMarker)' "$nori_uname_os"
+        printf '%s%s\\n' '\(Self.remotePlatformProbeArchMarker)' "$nori_uname_arch"
+        case "$(printf '%s' "$nori_uname_os" | tr '[:upper:]' '[:lower:]')" in
+          linux|darwin|freebsd) nori_go_os="$(printf '%s' "$nori_uname_os" | tr '[:upper:]' '[:lower:]')" ;;
           *) exit 70 ;;
         esac
-        case "$(printf '%s' "$cmux_uname_arch" | tr '[:upper:]' '[:lower:]')" in
-          x86_64|amd64) cmux_go_arch=amd64 ;;
-          aarch64|arm64) cmux_go_arch=arm64 ;;
-          armv7l) cmux_go_arch=arm ;;
+        case "$(printf '%s' "$nori_uname_arch" | tr '[:upper:]' '[:lower:]')" in
+          x86_64|amd64) nori_go_arch=amd64 ;;
+          aarch64|arm64) nori_go_arch=arm64 ;;
+          armv7l) nori_go_arch=arm ;;
           *) exit 71 ;;
         esac
-        cmux_remote_path="$HOME/.cmux/bin/cmuxd-remote/\(version)/${cmux_go_os}-${cmux_go_arch}/cmuxd-remote"
-        if [ -x "$cmux_remote_path" ]; then
+        nori_remote_path="$HOME/.nori/bin/norid-remote/\(version)/${nori_go_os}-${nori_go_arch}/norid-remote"
+        if [ -x "$nori_remote_path" ]; then
           printf '%syes\\n' '\(Self.remotePlatformProbeExistsMarker)'
         else
           printf '%sno\\n' '\(Self.remotePlatformProbeExistsMarker)'
@@ -4439,14 +4439,14 @@ final class WorkspaceRemoteSessionController {
             .map { String($0.dropFirst(Self.remotePlatformProbeArchMarker.count)) }
         guard let unameOS, let unameArch else {
             let detail = Self.bestErrorLine(stderr: result.stderr, stdout: result.stdout) ?? "ssh exited \(result.status)"
-            throw NSError(domain: "cmux.remote.daemon", code: 11, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 11, userInfo: [
                 NSLocalizedDescriptionKey: "failed to query remote platform: \(detail)",
             ])
         }
 
         guard let goOS = Self.mapUnameOS(unameOS),
               let goArch = Self.mapUnameArch(unameArch) else {
-            throw NSError(domain: "cmux.remote.daemon", code: 12, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 12, userInfo: [
                 NSLocalizedDescriptionKey: "unsupported remote platform \(unameOS)/\(unameArch)",
             ])
         }
@@ -4455,7 +4455,7 @@ final class WorkspaceRemoteSessionController {
             .map { String($0.dropFirst(Self.remotePlatformProbeExistsMarker.count)) == "yes" }
         if result.status != 0, binaryExists == nil {
             let detail = Self.bestErrorLine(stderr: result.stderr, stdout: result.stdout) ?? "ssh exited \(result.status)"
-            throw NSError(domain: "cmux.remote.daemon", code: 13, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 13, userInfo: [
                 NSLocalizedDescriptionKey: "failed to query remote daemon state: \(detail)",
             ])
         }
@@ -4466,7 +4466,7 @@ final class WorkspaceRemoteSessionController {
         )
     }
 
-    static let remoteDaemonManifestInfoKey = "CMUXRemoteDaemonManifestJSON"
+    static let remoteDaemonManifestInfoKey = "NORIRemoteDaemonManifestJSON"
 
     static func remoteDaemonManifest(from infoDictionary: [String: Any]?) -> WorkspaceRemoteDaemonManifest? {
         guard let rawManifest = infoDictionary?[remoteDaemonManifestInfoKey] as? String else { return nil }
@@ -4488,7 +4488,7 @@ final class WorkspaceRemoteSessionController {
             create: true
         )
         let cacheRoot = appSupportRoot
-            .appendingPathComponent("cmux", isDirectory: true)
+            .appendingPathComponent("nori", isDirectory: true)
             .appendingPathComponent("remote-daemons", isDirectory: true)
         try fileManager.createDirectory(at: cacheRoot, withIntermediateDirectories: true)
         return cacheRoot
@@ -4503,7 +4503,7 @@ final class WorkspaceRemoteSessionController {
         try remoteDaemonCacheRoot(fileManager: fileManager)
             .appendingPathComponent(version, isDirectory: true)
             .appendingPathComponent("\(goOS)-\(goArch)", isDirectory: true)
-            .appendingPathComponent("cmuxd-remote", isDirectory: false)
+            .appendingPathComponent("norid-remote", isDirectory: false)
     }
 
     private static func sha256Hex(forFile url: URL) throws -> String {
@@ -4513,12 +4513,12 @@ final class WorkspaceRemoteSessionController {
     }
 
     private static func allowLocalDaemonBuildFallback(environment: [String: String] = ProcessInfo.processInfo.environment) -> Bool {
-        environment["CMUX_REMOTE_DAEMON_ALLOW_LOCAL_BUILD"] == "1"
+        environment["NORI_REMOTE_DAEMON_ALLOW_LOCAL_BUILD"] == "1"
     }
 
     private static func explicitRemoteDaemonBinaryURL(environment: [String: String] = ProcessInfo.processInfo.environment) -> URL? {
         guard allowLocalDaemonBuildFallback(environment: environment) else { return nil }
-        guard let path = environment["CMUX_REMOTE_DAEMON_BINARY"]?.trimmingCharacters(in: .whitespacesAndNewlines),
+        guard let path = environment["NORI_REMOTE_DAEMON_BINARY"]?.trimmingCharacters(in: .whitespacesAndNewlines),
               !path.isEmpty else {
             return nil
         }
@@ -4527,18 +4527,18 @@ final class WorkspaceRemoteSessionController {
 
     private static func versionedRemoteDaemonBuildURL(goOS: String, goArch: String, version: String) -> URL {
         URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-            .appendingPathComponent("cmux-remote-daemon-build", isDirectory: true)
+            .appendingPathComponent("nori-remote-daemon-build", isDirectory: true)
             .appendingPathComponent(version, isDirectory: true)
             .appendingPathComponent("\(goOS)-\(goArch)", isDirectory: true)
-            .appendingPathComponent("cmuxd-remote", isDirectory: false)
+            .appendingPathComponent("norid-remote", isDirectory: false)
     }
 
     /// Fetch the live manifest JSON from the release, returning nil on any failure.
     private static func fetchRemoteManifestLocked(releaseURL: String, version: String) -> WorkspaceRemoteDaemonManifest? {
-        guard let manifestURL = URL(string: "\(releaseURL)/cmuxd-remote-manifest.json") else { return nil }
+        guard let manifestURL = URL(string: "\(releaseURL)/norid-remote-manifest.json") else { return nil }
         let request = NSMutableURLRequest(url: manifestURL)
         request.timeoutInterval = 15
-        request.setValue("cmux/\(version)", forHTTPHeaderField: "User-Agent")
+        request.setValue("nori/\(version)", forHTTPHeaderField: "User-Agent")
         let session = URLSession(configuration: .ephemeral)
         let semaphore = DispatchSemaphore(value: 0)
         var resultData: Data?
@@ -4557,7 +4557,7 @@ final class WorkspaceRemoteSessionController {
 
     private func downloadRemoteDaemonBinaryLocked(entry: WorkspaceRemoteDaemonManifest.Entry, version: String, releaseURL: String? = nil) throws -> URL {
         guard let url = URL(string: entry.downloadURL) else {
-            throw NSError(domain: "cmux.remote.daemon", code: 25, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 25, userInfo: [
                 NSLocalizedDescriptionKey: "remote daemon manifest has an invalid download URL",
             ])
         }
@@ -4568,7 +4568,7 @@ final class WorkspaceRemoteSessionController {
 
         let request = NSMutableURLRequest(url: url)
         request.timeoutInterval = 60
-        request.setValue("cmux/\(version)", forHTTPHeaderField: "User-Agent")
+        request.setValue("nori/\(version)", forHTTPHeaderField: "User-Agent")
         let session = URLSession(configuration: .ephemeral)
 
         let semaphore = DispatchSemaphore(value: 0)
@@ -4582,7 +4582,7 @@ final class WorkspaceRemoteSessionController {
             }
             if let httpResponse = response as? HTTPURLResponse,
                !(200...299).contains(httpResponse.statusCode) {
-                downloadError = NSError(domain: "cmux.remote.daemon", code: 26, userInfo: [
+                downloadError = NSError(domain: "nori.remote.daemon", code: 26, userInfo: [
                     NSLocalizedDescriptionKey: "remote daemon download failed with HTTP \(httpResponse.statusCode)",
                 ])
                 return
@@ -4596,7 +4596,7 @@ final class WorkspaceRemoteSessionController {
             throw downloadError
         }
         guard let downloadedURL else {
-            throw NSError(domain: "cmux.remote.daemon", code: 27, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 27, userInfo: [
                 NSLocalizedDescriptionKey: "remote daemon download did not produce a file",
             ])
         }
@@ -4613,7 +4613,7 @@ final class WorkspaceRemoteSessionController {
                downloadedSHA == liveEntry.sha256.lowercased() {
                 debugLog("remote.download.checksum-fallback: embedded manifest checksum stale, live manifest matched for \(entry.assetName)")
             } else {
-                throw NSError(domain: "cmux.remote.daemon", code: 28, userInfo: [
+                throw NSError(domain: "nori.remote.daemon", code: 28, userInfo: [
                     NSLocalizedDescriptionKey: "remote daemon checksum mismatch for \(entry.assetName)",
                 ])
             }
@@ -4655,26 +4655,26 @@ final class WorkspaceRemoteSessionController {
         }
 
         guard Self.allowLocalDaemonBuildFallback() else {
-            throw NSError(domain: "cmux.remote.daemon", code: 20, userInfo: [
-                NSLocalizedDescriptionKey: "this build does not include a verified cmuxd-remote manifest for \(goOS)-\(goArch). Use a release/nightly build, or set CMUX_REMOTE_DAEMON_ALLOW_LOCAL_BUILD=1 for a dev-only fallback.",
+            throw NSError(domain: "nori.remote.daemon", code: 20, userInfo: [
+                NSLocalizedDescriptionKey: "this build does not include a verified norid-remote manifest for \(goOS)-\(goArch). Use a release/nightly build, or set NORI_REMOTE_DAEMON_ALLOW_LOCAL_BUILD=1 for a dev-only fallback.",
             ])
         }
 
         guard let repoRoot = Self.findRepoRoot() else {
-            throw NSError(domain: "cmux.remote.daemon", code: 20, userInfo: [
-                NSLocalizedDescriptionKey: "cannot locate cmux repo root for dev-only cmuxd-remote build fallback",
+            throw NSError(domain: "nori.remote.daemon", code: 20, userInfo: [
+                NSLocalizedDescriptionKey: "cannot locate nori repo root for dev-only norid-remote build fallback",
             ])
         }
         let daemonRoot = repoRoot.appendingPathComponent("daemon/remote", isDirectory: true)
         let goModPath = daemonRoot.appendingPathComponent("go.mod").path
         guard FileManager.default.fileExists(atPath: goModPath) else {
-            throw NSError(domain: "cmux.remote.daemon", code: 21, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 21, userInfo: [
                 NSLocalizedDescriptionKey: "missing daemon module at \(goModPath)",
             ])
         }
         guard let goBinary = Self.which("go") else {
-            throw NSError(domain: "cmux.remote.daemon", code: 22, userInfo: [
-                NSLocalizedDescriptionKey: "go is required for the dev-only cmuxd-remote build fallback",
+            throw NSError(domain: "nori.remote.daemon", code: 22, userInfo: [
+                NSLocalizedDescriptionKey: "go is required for the dev-only norid-remote build fallback",
             ])
         }
 
@@ -4688,7 +4688,7 @@ final class WorkspaceRemoteSessionController {
         let ldflags = "-s -w -X main.version=\(version)"
         let result = try runProcess(
             executable: goBinary,
-            arguments: ["build", "-trimpath", "-buildvcs=false", "-ldflags", ldflags, "-o", output.path, "./cmd/cmuxd-remote"],
+            arguments: ["build", "-trimpath", "-buildvcs=false", "-ldflags", ldflags, "-o", output.path, "./cmd/norid-remote"],
             environment: env,
             currentDirectory: daemonRoot,
             stdin: nil,
@@ -4696,13 +4696,13 @@ final class WorkspaceRemoteSessionController {
         )
         guard result.status == 0 else {
             let detail = Self.bestErrorLine(stderr: result.stderr, stdout: result.stdout) ?? "go build failed with status \(result.status)"
-            throw NSError(domain: "cmux.remote.daemon", code: 23, userInfo: [
-                NSLocalizedDescriptionKey: "failed to build cmuxd-remote: \(detail)",
+            throw NSError(domain: "nori.remote.daemon", code: 23, userInfo: [
+                NSLocalizedDescriptionKey: "failed to build norid-remote: \(detail)",
             ])
         }
         guard FileManager.default.isExecutableFile(atPath: output.path) else {
-            throw NSError(domain: "cmux.remote.daemon", code: 24, userInfo: [
-                NSLocalizedDescriptionKey: "cmuxd-remote build output is not executable",
+            throw NSError(domain: "nori.remote.daemon", code: 24, userInfo: [
+                NSLocalizedDescriptionKey: "norid-remote build output is not executable",
             ])
         }
         debugLog("remote.build.output path=\(output.path)")
@@ -4721,7 +4721,7 @@ final class WorkspaceRemoteSessionController {
         let mkdirResult = try sshExec(arguments: sshCommonArguments(batchMode: true) + [configuration.destination, mkdirCommand], timeout: 12)
         guard mkdirResult.status == 0 else {
             let detail = Self.bestErrorLine(stderr: mkdirResult.stderr, stdout: mkdirResult.stdout) ?? "ssh exited \(mkdirResult.status)"
-            throw NSError(domain: "cmux.remote.daemon", code: 30, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 30, userInfo: [
                 NSLocalizedDescriptionKey: "failed to create remote daemon directory: \(detail)",
             ])
         }
@@ -4746,8 +4746,8 @@ final class WorkspaceRemoteSessionController {
         let scpResult = try scpExec(arguments: scpArgs, timeout: 45)
         guard scpResult.status == 0 else {
             let detail = Self.bestErrorLine(stderr: scpResult.stderr, stdout: scpResult.stdout) ?? "scp exited \(scpResult.status)"
-            throw NSError(domain: "cmux.remote.daemon", code: 31, userInfo: [
-                NSLocalizedDescriptionKey: "failed to upload cmuxd-remote: \(detail)",
+            throw NSError(domain: "nori.remote.daemon", code: 31, userInfo: [
+                NSLocalizedDescriptionKey: "failed to upload norid-remote: \(detail)",
             ])
         }
 
@@ -4759,7 +4759,7 @@ final class WorkspaceRemoteSessionController {
         let finalizeResult = try sshExec(arguments: sshCommonArguments(batchMode: true) + [configuration.destination, finalizeCommand], timeout: 12)
         guard finalizeResult.status == 0 else {
             let detail = Self.bestErrorLine(stderr: finalizeResult.stderr, stdout: finalizeResult.stdout) ?? "ssh exited \(finalizeResult.status)"
-            throw NSError(domain: "cmux.remote.daemon", code: 32, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 32, userInfo: [
                 NSLocalizedDescriptionKey: "failed to install remote daemon binary: \(detail)",
             ])
         }
@@ -4816,7 +4816,7 @@ final class WorkspaceRemoteSessionController {
     static func remoteDropPath(for fileURL: URL, uuid: UUID = UUID()) -> String {
         let extensionSuffix = fileURL.pathExtension.trimmingCharacters(in: .whitespacesAndNewlines)
         let lowercasedSuffix = extensionSuffix.isEmpty ? "" : ".\(extensionSuffix.lowercased())"
-        return "/tmp/cmux-drop-\(uuid.uuidString.lowercased())\(lowercasedSuffix)"
+        return "/tmp/nori-drop-\(uuid.uuidString.lowercased())\(lowercasedSuffix)"
     }
 
     private func cleanupUploadedRemotePaths(_ remotePaths: [String]) {
@@ -4836,7 +4836,7 @@ final class WorkspaceRemoteSessionController {
         let result = try sshExec(arguments: sshCommonArguments(batchMode: true) + [configuration.destination, command], timeout: 12)
         guard result.status == 0 else {
             let detail = Self.bestErrorLine(stderr: result.stderr, stdout: result.stdout) ?? "ssh exited \(result.status)"
-            throw NSError(domain: "cmux.remote.daemon", code: 40, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 40, userInfo: [
                 NSLocalizedDescriptionKey: "failed to start remote daemon: \(detail)",
             ])
         }
@@ -4848,7 +4848,7 @@ final class WorkspaceRemoteSessionController {
         guard !responseLine.isEmpty,
               let data = responseLine.data(using: .utf8),
               let payload = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
-            throw NSError(domain: "cmux.remote.daemon", code: 41, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 41, userInfo: [
                 NSLocalizedDescriptionKey: "remote daemon hello returned invalid JSON",
             ])
         }
@@ -4862,7 +4862,7 @@ final class WorkspaceRemoteSessionController {
                 }
                 return "hello call failed"
             }()
-            throw NSError(domain: "cmux.remote.daemon", code: 42, userInfo: [
+            throw NSError(domain: "nori.remote.daemon", code: 42, userInfo: [
                 NSLocalizedDescriptionKey: "remote daemon hello failed: \(errorMessage)",
             ])
         }
@@ -4872,7 +4872,7 @@ final class WorkspaceRemoteSessionController {
         let version = (resultObject["version"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
         let capabilities = (resultObject["capabilities"] as? [String]) ?? []
         return DaemonHello(
-            name: (name?.isEmpty == false ? name! : "cmuxd-remote"),
+            name: (name?.isEmpty == false ? name! : "norid-remote"),
             version: (version?.isEmpty == false ? version! : "dev"),
             capabilities: capabilities,
             remotePath: remotePath
@@ -4935,15 +4935,15 @@ final class WorkspaceRemoteSessionController {
         #!/bin/sh
         set -eu
 
-        daemon="$HOME/.cmux/bin/cmuxd-remote-current"
-        socket_path="${CMUX_SOCKET_PATH:-}"
-        if [ -z "$socket_path" ] && [ -r "$HOME/.cmux/socket_addr" ]; then
-          socket_path="$(tr -d '\\r\\n' < "$HOME/.cmux/socket_addr")"
+        daemon="$HOME/.nori/bin/norid-remote-current"
+        socket_path="${NORI_SOCKET_PATH:-}"
+        if [ -z "$socket_path" ] && [ -r "$HOME/.nori/socket_addr" ]; then
+          socket_path="$(tr -d '\\r\\n' < "$HOME/.nori/socket_addr")"
         fi
 
         if [ -n "$socket_path" ] && [ "${socket_path#/}" = "$socket_path" ] && [ "${socket_path#*:}" != "$socket_path" ]; then
           relay_port="${socket_path##*:}"
-          relay_map="$HOME/.cmux/relay/${relay_port}.daemon_path"
+          relay_map="$HOME/.nori/relay/${relay_port}.daemon_path"
           if [ -r "$relay_map" ]; then
             mapped_daemon="$(tr -d '\\r\\n' < "$relay_map")"
             if [ -n "$mapped_daemon" ] && [ -x "$mapped_daemon" ]; then
@@ -4959,14 +4959,14 @@ final class WorkspaceRemoteSessionController {
     static func remoteCLIWrapperInstallScript(daemonRemotePath: String) -> String {
         let trimmedRemotePath = daemonRemotePath.trimmingCharacters(in: .whitespacesAndNewlines)
         return """
-        mkdir -p "$HOME/.cmux/bin" "$HOME/.cmux/relay"
-        ln -sf "$HOME/\(trimmedRemotePath)" "$HOME/.cmux/bin/cmuxd-remote-current"
-        wrapper_tmp="$HOME/.cmux/bin/.cmux-wrapper.tmp.$$"
-        cat > "$wrapper_tmp" <<'CMUXWRAPPER'
+        mkdir -p "$HOME/.nori/bin" "$HOME/.nori/relay"
+        ln -sf "$HOME/\(trimmedRemotePath)" "$HOME/.nori/bin/norid-remote-current"
+        wrapper_tmp="$HOME/.nori/bin/.nori-wrapper.tmp.$$"
+        cat > "$wrapper_tmp" <<'NORIWRAPPER'
         \(remoteCLIWrapperScript())
-        CMUXWRAPPER
+        NORIWRAPPER
         chmod 755 "$wrapper_tmp"
-        mv -f "$wrapper_tmp" "$HOME/.cmux/bin/cmux"
+        mv -f "$wrapper_tmp" "$HOME/.nori/bin/nori"
         """
     }
 
@@ -4982,15 +4982,15 @@ final class WorkspaceRemoteSessionController {
         """
         return """
         umask 077
-        mkdir -p "$HOME/.cmux" "$HOME/.cmux/relay"
-        chmod 700 "$HOME/.cmux/relay"
+        mkdir -p "$HOME/.nori" "$HOME/.nori/relay"
+        chmod 700 "$HOME/.nori/relay"
         \(remoteCLIWrapperInstallScript(daemonRemotePath: trimmedRemotePath))
-        printf '%s' "$HOME/\(trimmedRemotePath)" > "$HOME/.cmux/relay/\(relayPort).daemon_path"
-        cat > "$HOME/.cmux/relay/\(relayPort).auth" <<'CMUXRELAYAUTH'
+        printf '%s' "$HOME/\(trimmedRemotePath)" > "$HOME/.nori/relay/\(relayPort).daemon_path"
+        cat > "$HOME/.nori/relay/\(relayPort).auth" <<'NORIRELAYAUTH'
         \(authPayload)
-        CMUXRELAYAUTH
-        chmod 600 "$HOME/.cmux/relay/\(relayPort).auth"
-        printf '%s' '127.0.0.1:\(relayPort)' > "$HOME/.cmux/socket_addr"
+        NORIRELAYAUTH
+        chmod 600 "$HOME/.nori/relay/\(relayPort).auth"
+        printf '%s' '127.0.0.1:\(relayPort)' > "$HOME/.nori/socket_addr"
         """
     }
 
@@ -5077,10 +5077,10 @@ final class WorkspaceRemoteSessionController {
     }
 
     private static func remoteDaemonPath(version: String, goOS: String, goArch: String) -> String {
-        ".cmux/bin/cmuxd-remote/\(version)/\(goOS)-\(goArch)/cmuxd-remote"
+        ".nori/bin/norid-remote/\(version)/\(goOS)-\(goArch)/norid-remote"
     }
 
-    static func orphanedCMUXRemoteSSHPIDs(
+    static func orphanedNORIRemoteSSHPIDs(
         psOutput: String,
         destination: String,
         relayPort: Int? = nil
@@ -5093,7 +5093,7 @@ final class WorkspaceRemoteSessionController {
             .compactMap { line -> Int? in
                 guard let parsed = parsePSLine(line) else { return nil }
                 guard parsed.ppid == 1 else { return nil }
-                guard isOrphanedCMUXRemoteSSHCommand(
+                guard isOrphanedNORIRemoteSSHCommand(
                     parsed.command,
                     destination: trimmedDestination,
                     relayPort: relayPort
@@ -5113,7 +5113,7 @@ final class WorkspaceRemoteSessionController {
             return
         }
 
-        for pid in orphanedCMUXRemoteSSHPIDs(
+        for pid in orphanedNORIRemoteSSHPIDs(
             psOutput: output,
             destination: destination,
             relayPort: relayPort
@@ -5166,7 +5166,7 @@ final class WorkspaceRemoteSessionController {
         return (pidValue, ppidValue, command)
     }
 
-    private static func isOrphanedCMUXRemoteSSHCommand(
+    private static func isOrphanedNORIRemoteSSHCommand(
         _ command: String,
         destination: String,
         relayPort: Int?
@@ -5184,7 +5184,7 @@ final class WorkspaceRemoteSessionController {
         if trimmed.contains(" -N ") && trimmed.contains(" -R 127.0.0.1:") {
             return true
         }
-        if trimmed.contains("cmuxd-remote") && trimmed.contains(" serve --stdio") {
+        if trimmed.contains("norid-remote") && trimmed.contains(" serve --stdio") {
             return true
         }
         return false
@@ -5306,11 +5306,11 @@ final class WorkspaceRemoteSessionController {
             .deletingLastPathComponent() // repo root
         candidates.append(compileTimeRoot)
         let environment = ProcessInfo.processInfo.environment
-        if let envRoot = environment["CMUX_REMOTE_DAEMON_SOURCE_ROOT"],
+        if let envRoot = environment["NORI_REMOTE_DAEMON_SOURCE_ROOT"],
            !envRoot.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             candidates.append(URL(fileURLWithPath: envRoot, isDirectory: true))
         }
-        if let envRoot = environment["CMUXTERM_REPO_ROOT"],
+        if let envRoot = environment["NORITERM_REPO_ROOT"],
            !envRoot.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             candidates.append(URL(fileURLWithPath: envRoot, isDirectory: true))
         }
@@ -5551,7 +5551,7 @@ final class WorkspaceRemoteSessionController {
         )
         guard result.status == 0 else {
             let detail = Self.bestErrorLine(stderr: result.stderr, stdout: result.stdout) ?? "ssh exited \(result.status)"
-            throw NSError(domain: "cmux.remote.ports", code: 90, userInfo: [
+            throw NSError(domain: "nori.remote.ports", code: 90, userInfo: [
                 NSLocalizedDescriptionKey: "remote port scan failed: \(detail)",
             ])
         }
@@ -5646,7 +5646,7 @@ final class WorkspaceRemoteSessionController {
             )
             guard result.status == 0 else {
                 let detail = Self.bestErrorLine(stderr: result.stderr, stdout: result.stdout) ?? "ssh exited \(result.status)"
-                throw NSError(domain: "cmux.remote.ports", code: 90, userInfo: [
+                throw NSError(domain: "nori.remote.ports", code: 90, userInfo: [
                     NSLocalizedDescriptionKey: "remote port scan failed: \(detail)",
                 ])
             }
@@ -5685,7 +5685,7 @@ final class WorkspaceRemoteSessionController {
     }
 
     private func shouldUseFallbackRemotePortPollingLocked() -> Bool {
-        // `cmux ssh` owns the remote shell bootstrap and can report the remote
+        // `nori ssh` owns the remote shell bootstrap and can report the remote
         // TTY precisely. Falling back to host-wide port scans in that path leaks
         // unrelated listeners from the remote machine into the workspace card.
         let startupCommand = configuration.terminalStartupCommand?
@@ -5694,7 +5694,7 @@ final class WorkspaceRemoteSessionController {
     }
 
     private func shouldUseTTYFallbackRemotePortPollingLocked() -> Bool {
-        // `cmux ssh` can still land in shells without our command hooks, such as
+        // `nori ssh` can still land in shells without our command hooks, such as
         // `/bin/sh` in the Docker fixture. Once the workspace knows the TTY,
         // keep a low-frequency TTY-scoped poll so unsupported shells still
         // surface ports without bringing back noisy host-wide scans.
@@ -5761,35 +5761,35 @@ final class WorkspaceRemoteSessionController {
 
         return """
         set -eu
-        cmux_tracked_ttys=" \(ttySet) "
-        cmux_tty_csv='\(ttyCSV)'
-        cmux_excluded_ports=" \(excludedPorts) "
+        nori_tracked_ttys=" \(ttySet) "
+        nori_tty_csv='\(ttyCSV)'
+        nori_excluded_ports=" \(excludedPorts) "
 
-        cmux_emit_port() {
-          cmux_tty="$1"
-          cmux_port="$2"
-          case "$cmux_tracked_ttys" in
-            *" $cmux_tty "*) ;;
+        nori_emit_port() {
+          nori_tty="$1"
+          nori_port="$2"
+          case "$nori_tracked_ttys" in
+            *" $nori_tty "*) ;;
             *) return 0 ;;
           esac
-          case "$cmux_excluded_ports" in
-            *" $cmux_port "*) return 0 ;;
+          case "$nori_excluded_ports" in
+            *" $nori_port "*) return 0 ;;
           esac
-          [ "$cmux_port" -ge 1024 ] && [ "$cmux_port" -le 65535 ] || return 0
-          printf '%s\\t%s\\n' "$cmux_tty" "$cmux_port"
+          [ "$nori_port" -ge 1024 ] && [ "$nori_port" -le 65535 ] || return 0
+          printf '%s\\t%s\\n' "$nori_tty" "$nori_port"
         }
 
-        cmux_used_ss=0
+        nori_used_ss=0
         if [ -d /proc ] && command -v ss >/dev/null 2>&1; then
-          cmux_ss_output="$(ss -ltnpH 2>/dev/null || true)"
-          case "$cmux_ss_output" in
+          nori_ss_output="$(ss -ltnpH 2>/dev/null || true)"
+          case "$nori_ss_output" in
             *pid=*)
-              cmux_used_ss=1
-              printf '%s\\n' "$cmux_ss_output" | while IFS= read -r cmux_line; do
-                [ -n "$cmux_line" ] || continue
-                cmux_port="$(printf '%s\\n' "$cmux_line" | awk '{print $4}' | sed -E 's/.*:([0-9]+)$/\\1/' | awk '/^[0-9]+$/ { print $1; exit }')"
-                [ -n "$cmux_port" ] || continue
-                printf '%s\\n' "$cmux_line" | awk '
+              nori_used_ss=1
+              printf '%s\\n' "$nori_ss_output" | while IFS= read -r nori_line; do
+                [ -n "$nori_line" ] || continue
+                nori_port="$(printf '%s\\n' "$nori_line" | awk '{print $4}' | sed -E 's/.*:([0-9]+)$/\\1/' | awk '/^[0-9]+$/ { print $1; exit }')"
+                [ -n "$nori_port" ] || continue
+                printf '%s\\n' "$nori_line" | awk '
                   {
                     line = $0
                     while (match(line, /pid=[0-9]+/)) {
@@ -5797,34 +5797,34 @@ final class WorkspaceRemoteSessionController {
                       line = substr(line, RSTART + RLENGTH)
                     }
                   }
-                ' | while IFS= read -r cmux_pid; do
-                  [ -n "$cmux_pid" ] || continue
-                  cmux_tty_path="$(readlink "/proc/$cmux_pid/fd/0" 2>/dev/null || true)"
-                  [ -n "$cmux_tty_path" ] || continue
-                  cmux_tty="${cmux_tty_path##*/}"
-                  [ -n "$cmux_tty" ] || continue
-                  cmux_emit_port "$cmux_tty" "$cmux_port"
+                ' | while IFS= read -r nori_pid; do
+                  [ -n "$nori_pid" ] || continue
+                  nori_tty_path="$(readlink "/proc/$nori_pid/fd/0" 2>/dev/null || true)"
+                  [ -n "$nori_tty_path" ] || continue
+                  nori_tty="${nori_tty_path##*/}"
+                  [ -n "$nori_tty" ] || continue
+                  nori_emit_port "$nori_tty" "$nori_port"
                 done
               done
               ;;
           esac
         fi
 
-        if [ "$cmux_used_ss" -eq 0 ] && command -v lsof >/dev/null 2>&1 && [ -n "$cmux_tty_csv" ]; then
-          cmux_tmpdir="$(mktemp -d 2>/dev/null || mktemp -d -t cmux-ports)"
-          trap 'rm -rf "$cmux_tmpdir"' EXIT INT TERM
-          cmux_pid_tty_map="$cmux_tmpdir/pid_tty"
-          ps -t "$cmux_tty_csv" -o pid=,tty= 2>/dev/null | awk '
+        if [ "$nori_used_ss" -eq 0 ] && command -v lsof >/dev/null 2>&1 && [ -n "$nori_tty_csv" ]; then
+          nori_tmpdir="$(mktemp -d 2>/dev/null || mktemp -d -t nori-ports)"
+          trap 'rm -rf "$nori_tmpdir"' EXIT INT TERM
+          nori_pid_tty_map="$nori_tmpdir/pid_tty"
+          ps -t "$nori_tty_csv" -o pid=,tty= 2>/dev/null | awk '
             NF >= 2 {
               tty = $2
               sub(/^.*\\//, "", tty)
               print $1 "\\t" tty
             }
-          ' > "$cmux_pid_tty_map"
-          [ -s "$cmux_pid_tty_map" ] || exit 0
-          cmux_pid_csv="$(awk '{print $1}' "$cmux_pid_tty_map" | paste -sd, -)"
-          [ -n "$cmux_pid_csv" ] || exit 0
-          lsof -nP -a -p "$cmux_pid_csv" -iTCP -sTCP:LISTEN -Fpn 2>/dev/null | awk -v map="$cmux_pid_tty_map" '
+          ' > "$nori_pid_tty_map"
+          [ -s "$nori_pid_tty_map" ] || exit 0
+          nori_pid_csv="$(awk '{print $1}' "$nori_pid_tty_map" | paste -sd, -)"
+          [ -n "$nori_pid_csv" ] || exit 0
+          lsof -nP -a -p "$nori_pid_csv" -iTCP -sTCP:LISTEN -Fpn 2>/dev/null | awk -v map="$nori_pid_tty_map" '
             BEGIN {
               while ((getline < map) > 0) {
                 pid_to_tty[$1] = $2
@@ -5845,10 +5845,10 @@ final class WorkspaceRemoteSessionController {
                 print tty "\\t" name
               }
             }
-          ' | while IFS=$'\\t' read -r cmux_tty cmux_port; do
-            [ -n "$cmux_tty" ] || continue
-            [ -n "$cmux_port" ] || continue
-            cmux_emit_port "$cmux_tty" "$cmux_port"
+          ' | while IFS=$'\\t' read -r nori_tty nori_port; do
+            [ -n "$nori_tty" ] || continue
+            [ -n "$nori_port" ] || continue
+            nori_emit_port "$nori_tty" "$nori_port"
           done
         fi
         """
@@ -5859,31 +5859,31 @@ final class WorkspaceRemoteSessionController {
 
         return """
         set -eu
-        cmux_excluded_ports=" \(excludedPorts) "
+        nori_excluded_ports=" \(excludedPorts) "
 
-        cmux_emit_port() {
-          cmux_port="$1"
-          case "$cmux_excluded_ports" in
-            *" $cmux_port "*) return 0 ;;
+        nori_emit_port() {
+          nori_port="$1"
+          case "$nori_excluded_ports" in
+            *" $nori_port "*) return 0 ;;
           esac
-          [ "$cmux_port" -ge 1024 ] && [ "$cmux_port" -le 65535 ] || return 0
-          printf '%s\\n' "$cmux_port"
+          [ "$nori_port" -ge 1024 ] && [ "$nori_port" -le 65535 ] || return 0
+          printf '%s\\n' "$nori_port"
         }
 
         if command -v ss >/dev/null 2>&1; then
-          ss -ltnH 2>/dev/null | awk '{print $4}' | sed -E 's/.*:([0-9]+)$/\\1/' | awk '/^[0-9]+$/ {print $1}' | while IFS= read -r cmux_port; do
-            [ -n "$cmux_port" ] || continue
-            cmux_emit_port "$cmux_port"
+          ss -ltnH 2>/dev/null | awk '{print $4}' | sed -E 's/.*:([0-9]+)$/\\1/' | awk '/^[0-9]+$/ {print $1}' | while IFS= read -r nori_port; do
+            [ -n "$nori_port" ] || continue
+            nori_emit_port "$nori_port"
           done
         elif command -v netstat >/dev/null 2>&1; then
-          netstat -lnt 2>/dev/null | awk 'NR > 2 {print $4}' | sed -E 's/.*:([0-9]+)$/\\1/' | awk '/^[0-9]+$/ {print $1}' | while IFS= read -r cmux_port; do
-            [ -n "$cmux_port" ] || continue
-            cmux_emit_port "$cmux_port"
+          netstat -lnt 2>/dev/null | awk 'NR > 2 {print $4}' | sed -E 's/.*:([0-9]+)$/\\1/' | awk '/^[0-9]+$/ {print $1}' | while IFS= read -r nori_port; do
+            [ -n "$nori_port" ] || continue
+            nori_emit_port "$nori_port"
           done
         elif command -v lsof >/dev/null 2>&1; then
-          lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 {print $9}' | sed -E 's/.*:([0-9]+)$/\\1/' | awk '/^[0-9]+$/ {print $1}' | while IFS= read -r cmux_port; do
-            [ -n "$cmux_port" ] || continue
-            cmux_emit_port "$cmux_port"
+          lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 {print $9}' | sed -E 's/.*:([0-9]+)$/\\1/' | awk '/^[0-9]+$/ {print $1}' | while IFS= read -r nori_port; do
+            [ -n "$nori_port" ] || continue
+            nori_emit_port "$nori_port"
           done
         fi
         """
@@ -6489,7 +6489,7 @@ final class Workspace: Identifiable, ObservableObject {
     @Published var currentDirectory: String
     private(set) var preferredBrowserProfileID: UUID?
 
-    /// Ordinal for CMUX_PORT range assignment (monotonically increasing per app session)
+    /// Ordinal for NORI_PORT range assignment (monotonically increasing per app session)
     var portOrdinal: Int = 0
 
     /// The bonsplit controller managing the split panes for this workspace
@@ -6599,7 +6599,7 @@ final class Workspace: Identifiable, ObservableObject {
     private static let remotePortConflictStatusKey = "remote.port_conflicts"
     private static let remoteNotificationCooldown: TimeInterval = 5 * 60
     private static let sshControlMasterCleanupQueue = DispatchQueue(
-        label: "com.cmux.remote-ssh.control-master-cleanup",
+        label: "com.nori.remote-ssh.control-master-cleanup",
         qos: .utility
     )
     private static let remoteHeartbeatDateFormatter: ISO8601DateFormatter = {
@@ -6852,7 +6852,7 @@ final class Workspace: Identifiable, ObservableObject {
         title: String = "Terminal",
         workingDirectory: String? = nil,
         portOrdinal: Int = 0,
-        configTemplate: CmuxSurfaceConfigTemplate? = nil,
+        configTemplate: NoriSurfaceConfigTemplate? = nil,
         initialTerminalCommand: String? = nil,
         initialTerminalEnvironment: [String: String] = [:]
     ) {
@@ -8620,7 +8620,7 @@ final class Workspace: Identifiable, ObservableObject {
 
     private func seedTerminalInheritanceFontPoints(
         panelId: UUID,
-        configTemplate: CmuxSurfaceConfigTemplate?
+        configTemplate: NoriSurfaceConfigTemplate?
     ) {
         guard let fontPoints = configTemplate?.fontSize, fontPoints > 0 else { return }
         terminalInheritanceFontPointsByPanelId[panelId] = fontPoints
@@ -8630,9 +8630,9 @@ final class Workspace: Identifiable, ObservableObject {
     private func resolvedTerminalInheritanceFontPoints(
         for terminalPanel: TerminalPanel,
         sourceSurface: ghostty_surface_t,
-        inheritedConfig: CmuxSurfaceConfigTemplate
+        inheritedConfig: NoriSurfaceConfigTemplate
     ) -> Float? {
-        let runtimePoints = cmuxCurrentSurfaceFontSizePoints(sourceSurface)
+        let runtimePoints = noriCurrentSurfaceFontSizePoints(sourceSurface)
         if let rooted = terminalInheritanceFontPointsByPanelId[terminalPanel.id], rooted > 0 {
             if let runtimePoints, abs(runtimePoints - rooted) > 0.05 {
                 // Runtime zoom changed after lineage was seeded (manual zoom on descendant);
@@ -8650,7 +8650,7 @@ final class Workspace: Identifiable, ObservableObject {
     private func rememberTerminalConfigInheritanceSource(_ terminalPanel: TerminalPanel) {
         lastTerminalConfigInheritancePanelId = terminalPanel.id
         if let sourceSurface = terminalPanel.surface.surface,
-           let runtimePoints = cmuxCurrentSurfaceFontSizePoints(sourceSurface) {
+           let runtimePoints = noriCurrentSurfaceFontSizePoints(sourceSurface) {
             let existing = terminalInheritanceFontPointsByPanelId[terminalPanel.id]
             if existing == nil || abs((existing ?? runtimePoints) - runtimePoints) > 0.05 {
                 terminalInheritanceFontPointsByPanelId[terminalPanel.id] = runtimePoints
@@ -8740,7 +8740,7 @@ final class Workspace: Identifiable, ObservableObject {
     private func inheritedTerminalConfig(
         preferredPanelId: UUID? = nil,
         inPane preferredPaneId: PaneID? = nil
-    ) -> CmuxSurfaceConfigTemplate? {
+    ) -> NoriSurfaceConfigTemplate? {
         // Walk candidates in priority order and use the first panel that still exposes
         // a runtime surface pointer.
         for terminalPanel in terminalPanelConfigInheritanceCandidates(
@@ -8750,11 +8750,11 @@ final class Workspace: Identifiable, ObservableObject {
             // Pin the panel and its TerminalSurface wrapper for the duration of
             // this iteration. The raw ghostty_surface_t extracted below is owned
             // by `surface` (the TerminalSurface) — ARC must not release it while
-            // ghostty_surface_inherited_config or cmuxCurrentSurfaceFontSizePoints
+            // ghostty_surface_inherited_config or noriCurrentSurfaceFontSizePoints
             // is still reading through the pointer.
             let surface = terminalPanel.surface
             guard let sourceSurface = surface.surface else { continue }
-            var config = cmuxInheritedSurfaceConfig(
+            var config = noriInheritedSurfaceConfig(
                 sourceSurface: sourceSurface,
                 context: GHOSTTY_SURFACE_CONTEXT_SPLIT
             )
@@ -8776,7 +8776,7 @@ final class Workspace: Identifiable, ObservableObject {
         }
 
         if let fallbackFontPoints = lastTerminalConfigInheritanceFontPoints {
-            var config = CmuxSurfaceConfigTemplate()
+            var config = NoriSurfaceConfigTemplate()
             config.fontSize = fallbackFontPoints
 #if DEBUG
             dlog(
@@ -9310,7 +9310,7 @@ final class Workspace: Identifiable, ObservableObject {
         // Mapping can transiently drift during split-tree mutations. If the target panel is
         // currently focused (or is the active terminal first responder), close whichever tab
         // bonsplit marks selected in that focused pane.
-        let firstResponderPanelId = cmuxOwningGhosttyView(
+        let firstResponderPanelId = noriOwningGhosttyView(
             for: NSApp.keyWindow?.firstResponder ?? NSApp.mainWindow?.firstResponder
         )?.terminalSurface?.id
         let targetIsActive = focusedPanelId == panelId || firstResponderPanelId == panelId
@@ -11157,7 +11157,7 @@ final class Workspace: Identifiable, ObservableObject {
             let failure = NSAlert()
             failure.alertStyle = .warning
             failure.messageText = String(localized: "alert.moveTab.failed.title", defaultValue: "Move Failed")
-            failure.informativeText = String(localized: "alert.moveTab.failed.message", defaultValue: "cmux could not move this tab to the selected destination.")
+            failure.informativeText = String(localized: "alert.moveTab.failed.message", defaultValue: "nori could not move this tab to the selected destination.")
             failure.addButton(withTitle: String(localized: "alert.ok", defaultValue: "OK"))
             _ = failure.runModal()
         }
@@ -12065,7 +12065,7 @@ extension Workspace: BonsplitDelegate {
         // If the new pane already has a tab, this split moved an existing tab (drag-to-split).
         //
         // In the "drag the only tab to split edge" case, bonsplit inserts a placeholder "Empty"
-        // tab in the source pane to avoid leaving it tabless. In cmux, this is undesirable:
+        // tab in the source pane to avoid leaving it tabless. In nori, this is undesirable:
         // it creates a pane with no real surfaces and leaves an "Empty" tab in the tab bar.
         //
         // Replace placeholder-only source panes with a real terminal surface, then drop the

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Builds the Release configuration of cmux and installs it to /Applications.
+# Builds the Release configuration of nori and installs it to /Applications.
 # This is the counterpart to reload.sh (which handles iterative Debug builds).
-# Use this when you want to replace the production /Applications/cmux.app with
+# Use this when you want to replace the production /Applications/nori.app with
 # a local build from this fork.
 
 LAUNCH=0
@@ -17,10 +17,10 @@ while [[ $# -gt 0 ]]; do
       cat <<'EOF'
 Usage: ./scripts/install.sh [--launch]
 
-Builds the Release configuration of cmux and copies it to /Applications/cmux.app.
+Builds the Release configuration of nori and copies it to /Applications/nori.app.
 
 Options:
-  --launch   Open /Applications/cmux.app after installing.
+  --launch   Open /Applications/nori.app after installing.
   -h, --help Show this help.
 EOF
       exit 0
@@ -37,7 +37,7 @@ done
 # Mirror reload.sh: the Ghostty CLI helper build phase can't link on
 # macOS 26 + zig 0.15.2, so auto-skip there.
 should_skip_ghostty_cli_helper_zig_build() {
-  if [[ "${CMUX_SKIP_ZIG_BUILD:-}" == "1" ]]; then
+  if [[ "${NORI_SKIP_ZIG_BUILD:-}" == "1" ]]; then
     return 0
   fi
   local product_version zig_version major_version
@@ -45,31 +45,31 @@ should_skip_ghostty_cli_helper_zig_build() {
   zig_version="$(zig version 2>/dev/null || true)"
   major_version="${product_version%%.*}"
   if [[ "$zig_version" == "0.15.2" ]] && [[ "$major_version" =~ ^[0-9]+$ ]] && (( major_version >= 26 )); then
-    echo "Auto-enabling CMUX_SKIP_ZIG_BUILD=1 for Ghostty CLI helper (macOS ${product_version} + zig ${zig_version})"
+    echo "Auto-enabling NORI_SKIP_ZIG_BUILD=1 for Ghostty CLI helper (macOS ${product_version} + zig ${zig_version})"
     return 0
   fi
   return 1
 }
 
 if should_skip_ghostty_cli_helper_zig_build; then
-  export CMUX_SKIP_ZIG_BUILD=1
+  export NORI_SKIP_ZIG_BUILD=1
 fi
 
 DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData/GhosttyTabs"
 
 XCODEBUILD_ARGS=(
   -project GhosttyTabs.xcodeproj
-  -scheme cmux
+  -scheme nori
   -configuration Release
   -destination 'platform=macOS'
   -derivedDataPath "$DERIVED_DATA"
 )
-if [[ "${CMUX_SKIP_ZIG_BUILD:-}" == "1" ]]; then
-  XCODEBUILD_ARGS+=(CMUX_SKIP_ZIG_BUILD=1)
+if [[ "${NORI_SKIP_ZIG_BUILD:-}" == "1" ]]; then
+  XCODEBUILD_ARGS+=(NORI_SKIP_ZIG_BUILD=1)
 fi
 XCODEBUILD_ARGS+=(build)
 
-XCODE_LOG="/tmp/cmux-xcodebuild-release.log"
+XCODE_LOG="/tmp/nori-xcodebuild-release.log"
 set +e
 xcodebuild "${XCODEBUILD_ARGS[@]}" 2>&1 | tee "$XCODE_LOG" | grep -E '(warning:|error:|fatal:|BUILD FAILED|BUILD SUCCEEDED|\*\* BUILD)'
 XCODE_PIPESTATUS=("${PIPESTATUS[@]}")
@@ -81,35 +81,35 @@ if [[ "$XCODE_EXIT" -ne 0 ]]; then
   exit "$XCODE_EXIT"
 fi
 
-APP_SRC="$DERIVED_DATA/Build/Products/Release/cmux.app"
+APP_SRC="$DERIVED_DATA/Build/Products/Release/nori.app"
 if [[ ! -d "$APP_SRC" ]]; then
-  echo "error: cmux.app not found at $APP_SRC" >&2
+  echo "error: nori.app not found at $APP_SRC" >&2
   exit 1
 fi
 
-# Mirror reload.sh: if a local cmuxd sidecar exists, build it with ReleaseFast
-# and inject it into the bundle. The current fork has no cmuxd/ directory, so
+# Mirror reload.sh: if a local norid sidecar exists, build it with ReleaseFast
+# and inject it into the bundle. The current fork has no norid/ directory, so
 # this is a no-op today, but keeps install.sh in sync with reload.sh if the
 # sidecar is ever reintroduced.
-if [[ -d "$PWD/cmuxd" ]]; then
-  (cd "$PWD/cmuxd" && zig build -Doptimize=ReleaseFast)
-  CMUXD_SRC="$PWD/cmuxd/zig-out/bin/cmuxd"
-  if [[ -x "$CMUXD_SRC" ]]; then
+if [[ -d "$PWD/norid" ]]; then
+  (cd "$PWD/norid" && zig build -Doptimize=ReleaseFast)
+  NORID_SRC="$PWD/norid/zig-out/bin/norid"
+  if [[ -x "$NORID_SRC" ]]; then
     BIN_DIR="$APP_SRC/Contents/Resources/bin"
     mkdir -p "$BIN_DIR"
-    install -m 0755 "$CMUXD_SRC" "$BIN_DIR/cmuxd"
+    install -m 0755 "$NORID_SRC" "$BIN_DIR/norid"
   fi
 fi
 
-INSTALL_PATH="/Applications/cmux.app"
+INSTALL_PATH="/Applications/nori.app"
 
 # Quit any running production instance before overwriting its bundle to avoid
-# racing LaunchServices on a re-open. Use exact-name match on "cmux" so we
-# don't also terminate the Debug "cmux DEV" process.
-/usr/bin/osascript -e 'tell application id "com.cmuxterm.app" to quit' >/dev/null 2>&1 || true
-pkill -x "cmux" 2>/dev/null || true
+# racing LaunchServices on a re-open. Use exact-name match on "nori" so we
+# don't also terminate the Debug "nori DEV" process.
+/usr/bin/osascript -e 'tell application id "com.nori.app" to quit' >/dev/null 2>&1 || true
+pkill -x "nori" 2>/dev/null || true
 for _ in $(seq 1 40); do
-  pgrep -x "cmux" >/dev/null || break
+  pgrep -x "nori" >/dev/null || break
   sleep 0.05
 done
 

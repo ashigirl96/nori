@@ -17,11 +17,11 @@ final class KeyboardShortcutSettingsObserver: ObservableObject {
     }
 }
 
-final class CmuxSettingsFileStore {
-    static let shared = CmuxSettingsFileStore()
+final class NoriSettingsFileStore {
+    static let shared = NoriSettingsFileStore()
 
     static let currentSchemaVersion = 1
-    static let schemaURLString = "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux-settings.schema.json"
+    static let schemaURLString = "https://raw.githubusercontent.com/manaflow-ai/nori/main/web/data/nori-settings.schema.json"
     // Keep this in sync with the parser below and the web schema/docs. Settings UI rows
     // validate against this set so new persisted settings need an explicit settings.json review.
     static let supportedSettingsJSONPaths: Set<String> = [
@@ -50,8 +50,8 @@ final class CmuxSettingsFileStore {
         "sidebar.showNotificationMessage",
         "sidebar.showBranchDirectory",
         "sidebar.showPullRequests",
-        "sidebar.openPullRequestLinksInCmuxBrowser",
-        "sidebar.openPortLinksInCmuxBrowser",
+        "sidebar.openPullRequestLinksInNoriBrowser",
+        "sidebar.openPortLinksInNoriBrowser",
         "sidebar.showSSH",
         "sidebar.showPorts",
         "sidebar.showLog",
@@ -80,8 +80,8 @@ final class CmuxSettingsFileStore {
         "browser.defaultSearchEngine",
         "browser.showSearchSuggestions",
         "browser.theme",
-        "browser.openTerminalLinksInCmuxBrowser",
-        "browser.interceptTerminalOpenCommandInCmuxBrowser",
+        "browser.openTerminalLinksInNoriBrowser",
+        "browser.interceptTerminalOpenCommandInNoriBrowser",
         "browser.hostsToOpenInEmbeddedBrowser",
         "browser.urlsToAlwaysOpenExternally",
         "browser.insecureHttpHostsAllowedInEmbeddedBrowser",
@@ -91,14 +91,14 @@ final class CmuxSettingsFileStore {
         "shortcuts.bindings",
     ]
 
-    private static let releaseBundleIdentifier = "com.cmuxterm.app"
-    private static let backupsDefaultsKey = "cmux.settingsFile.backups.v1"
+    private static let releaseBundleIdentifier = "com.nori.app"
+    private static let backupsDefaultsKey = "nori.settingsFile.backups.v1"
     fileprivate static let trustedDirectoriesBackupIdentifier = "customCommands.trustedDirectories"
     fileprivate static let socketPasswordBackupIdentifier = "automation.socketPassword"
 
     static var defaultPrimaryPath: String {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return (home as NSString).appendingPathComponent(".config/cmux/settings.json")
+        return (home as NSString).appendingPathComponent(".config/nori/settings.json")
     }
 
     static var defaultFallbackPath: String? {
@@ -133,8 +133,8 @@ final class CmuxSettingsFileStore {
     private(set) var activeSourcePath: String?
 
     init(
-        primaryPath: String = CmuxSettingsFileStore.defaultPrimaryPath,
-        fallbackPath: String? = CmuxSettingsFileStore.defaultFallbackPath,
+        primaryPath: String = NoriSettingsFileStore.defaultPrimaryPath,
+        fallbackPath: String? = NoriSettingsFileStore.defaultFallbackPath,
         fileManager: FileManager = .default,
         notificationCenter: NotificationCenter = .default,
         startWatching: Bool = true
@@ -166,7 +166,7 @@ final class CmuxSettingsFileStore {
                 self?.reapplyManagedSettingsIfNeeded()
             }
         trustObserver = notificationCenter.addObserver(
-            forName: CmuxDirectoryTrust.didChangeNotification,
+            forName: NoriDirectoryTrust.didChangeNotification,
             object: nil,
             queue: nil
         ) { [weak self] _ in
@@ -257,7 +257,7 @@ final class CmuxSettingsFileStore {
             try template.write(to: fileURL, atomically: true, encoding: .utf8)
             try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: fileURL.path)
         } catch {
-            NSLog("[CmuxSettingsFileStore] failed to bootstrap %@: %@", primaryPath, String(describing: error))
+            NSLog("[NoriSettingsFileStore] failed to bootstrap %@: %@", primaryPath, String(describing: error))
         }
     }
 
@@ -330,7 +330,7 @@ final class CmuxSettingsFileStore {
             }
             return .parsed(parseSettingsFile(root: root, sourcePath: path))
         } catch {
-            NSLog("[CmuxSettingsFileStore] parse error at %@: %@", path, String(describing: error))
+            NSLog("[NoriSettingsFileStore] parse error at %@: %@", path, String(describing: error))
             return .invalid
         }
     }
@@ -339,7 +339,7 @@ final class CmuxSettingsFileStore {
         let schemaVersion = jsonInt(root["schemaVersion"]) ?? 1
         if schemaVersion > Self.currentSchemaVersion {
             NSLog(
-                "[CmuxSettingsFileStore] %@ uses future schemaVersion %d; parsing known fields only",
+                "[NoriSettingsFileStore] %@ uses future schemaVersion %d; parsing known fields only",
                 sourcePath,
                 schemaVersion
             )
@@ -503,11 +503,11 @@ final class CmuxSettingsFileStore {
         if let value = jsonBool(section["showPullRequests"]) {
             snapshot.managedUserDefaults["sidebarShowPullRequest"] = .bool(value)
         }
-        if let value = jsonBool(section["openPullRequestLinksInCmuxBrowser"]) {
-            snapshot.managedUserDefaults[BrowserLinkOpenSettings.openSidebarPullRequestLinksInCmuxBrowserKey] = .bool(value)
+        if let value = jsonBool(section["openPullRequestLinksInNoriBrowser"]) {
+            snapshot.managedUserDefaults[BrowserLinkOpenSettings.openSidebarPullRequestLinksInNoriBrowserKey] = .bool(value)
         }
-        if let value = jsonBool(section["openPortLinksInCmuxBrowser"]) {
-            snapshot.managedUserDefaults[BrowserLinkOpenSettings.openSidebarPortLinksInCmuxBrowserKey] = .bool(value)
+        if let value = jsonBool(section["openPortLinksInNoriBrowser"]) {
+            snapshot.managedUserDefaults[BrowserLinkOpenSettings.openSidebarPortLinksInNoriBrowserKey] = .bool(value)
         }
         if let value = jsonBool(section["showSSH"]) {
             snapshot.managedUserDefaults["sidebarShowSSH"] = .bool(value)
@@ -568,12 +568,12 @@ final class CmuxSettingsFileStore {
             for (rawName, rawValue) in rawColors {
                 let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !name.isEmpty else {
-                    NSLog("[CmuxSettingsFileStore] ignoring empty workspace color name in %@", sourcePath)
+                    NSLog("[NoriSettingsFileStore] ignoring empty workspace color name in %@", sourcePath)
                     continue
                 }
                 guard let hex = jsonString(rawValue),
                       let normalizedHex = WorkspaceTabColorSettings.normalizedHex(hex) else {
-                    NSLog("[CmuxSettingsFileStore] ignoring invalid workspace color '%@' in %@", name, sourcePath)
+                    NSLog("[NoriSettingsFileStore] ignoring invalid workspace color '%@' in %@", name, sourcePath)
                     continue
                 }
                 normalizedPalette[name] = normalizedHex
@@ -590,12 +590,12 @@ final class CmuxSettingsFileStore {
             )
             for (name, rawValue) in rawOverrides {
                 guard validNames.contains(name) else {
-                    NSLog("[CmuxSettingsFileStore] ignoring unknown workspace color '%@' in %@", name, sourcePath)
+                    NSLog("[NoriSettingsFileStore] ignoring unknown workspace color '%@' in %@", name, sourcePath)
                     continue
                 }
                 guard let hex = jsonString(rawValue),
                       let normalizedHex = WorkspaceTabColorSettings.normalizedHex(hex) else {
-                    NSLog("[CmuxSettingsFileStore] ignoring invalid workspace color override '%@' in %@", name, sourcePath)
+                    NSLog("[NoriSettingsFileStore] ignoring invalid workspace color override '%@' in %@", name, sourcePath)
                     continue
                 }
                 palette[name] = normalizedHex
@@ -670,7 +670,7 @@ final class CmuxSettingsFileStore {
     ) {
         if let raw = jsonString(section["socketControlMode"]) {
             let knownModes = Set([
-                "off", "cmuxonly", "automation", "password", "allowall", "openaccess", "fullopenaccess",
+                "off", "norionly", "automation", "password", "allowall", "openaccess", "fullopenaccess",
                 "notifications", "full",
             ])
             let normalizedRaw = raw.replacingOccurrences(of: "-", with: "").lowercased()
@@ -709,14 +709,14 @@ final class CmuxSettingsFileStore {
                 logInvalid("automation.portBase", sourcePath: sourcePath)
                 return
             }
-            snapshot.managedUserDefaults["cmuxPortBase"] = .int(value)
+            snapshot.managedUserDefaults["noriPortBase"] = .int(value)
         }
         if let value = jsonInt(section["portRange"]) {
             guard value > 0 else {
                 logInvalid("automation.portRange", sourcePath: sourcePath)
                 return
             }
-            snapshot.managedUserDefaults["cmuxPortRange"] = .int(value)
+            snapshot.managedUserDefaults["noriPortRange"] = .int(value)
         }
     }
 
@@ -757,11 +757,11 @@ final class CmuxSettingsFileStore {
             }
             snapshot.managedUserDefaults[BrowserThemeSettings.modeKey] = .string(mode.rawValue)
         }
-        if let value = jsonBool(section["openTerminalLinksInCmuxBrowser"]) {
-            snapshot.managedUserDefaults[BrowserLinkOpenSettings.openTerminalLinksInCmuxBrowserKey] = .bool(value)
+        if let value = jsonBool(section["openTerminalLinksInNoriBrowser"]) {
+            snapshot.managedUserDefaults[BrowserLinkOpenSettings.openTerminalLinksInNoriBrowserKey] = .bool(value)
         }
-        if let value = jsonBool(section["interceptTerminalOpenCommandInCmuxBrowser"]) {
-            snapshot.managedUserDefaults[BrowserLinkOpenSettings.interceptTerminalOpenCommandInCmuxBrowserKey] = .bool(value)
+        if let value = jsonBool(section["interceptTerminalOpenCommandInNoriBrowser"]) {
+            snapshot.managedUserDefaults[BrowserLinkOpenSettings.interceptTerminalOpenCommandInNoriBrowserKey] = .bool(value)
         }
         if let values = jsonStringArray(section["hostsToOpenInEmbeddedBrowser"]) {
             let normalized = values
@@ -820,12 +820,12 @@ final class CmuxSettingsFileStore {
 
         for (rawAction, rawBinding) in bindings {
             guard let action = KeyboardShortcutSettings.Action(rawValue: rawAction) else {
-                NSLog("[CmuxSettingsFileStore] ignoring unknown shortcut action '%@' in %@", rawAction, sourcePath)
+                NSLog("[NoriSettingsFileStore] ignoring unknown shortcut action '%@' in %@", rawAction, sourcePath)
                 continue
             }
             guard let shortcut = parseShortcutBindingValue(rawBinding, action: action) else {
                 NSLog(
-                    "[CmuxSettingsFileStore] ignoring invalid shortcut binding for '%@' in %@",
+                    "[NoriSettingsFileStore] ignoring invalid shortcut binding for '%@' in %@",
                     rawAction,
                     sourcePath
                 )
@@ -991,7 +991,7 @@ final class CmuxSettingsFileStore {
             }
             if snapshot.managedCustomSettings.trustedDirectories != nil,
                backups[Self.trustedDirectoriesBackupIdentifier] == nil {
-                backups[Self.trustedDirectoriesBackupIdentifier] = .stringArray(CmuxDirectoryTrust.shared.allTrustedPaths)
+                backups[Self.trustedDirectoriesBackupIdentifier] = .stringArray(NoriDirectoryTrust.shared.allTrustedPaths)
             }
             if snapshot.managedCustomSettings.socketPassword != nil,
                backups[Self.socketPasswordBackupIdentifier] == nil {
@@ -1017,8 +1017,8 @@ final class CmuxSettingsFileStore {
 
     private func applyManagedCustomSettings(_ settings: ManagedCustomSettings) {
         if let trustedDirectories = settings.trustedDirectories,
-           CmuxDirectoryTrust.shared.allTrustedPaths != trustedDirectories {
-            CmuxDirectoryTrust.shared.replaceAll(with: trustedDirectories)
+           NoriDirectoryTrust.shared.allTrustedPaths != trustedDirectories {
+            NoriDirectoryTrust.shared.replaceAll(with: trustedDirectories)
         }
 
         if let socketPassword = settings.socketPassword {
@@ -1041,9 +1041,9 @@ final class CmuxSettingsFileStore {
         switch identifier {
         case Self.trustedDirectoriesBackupIdentifier:
             if case .stringArray(let values) = backup {
-                CmuxDirectoryTrust.shared.replaceAll(with: values)
+                NoriDirectoryTrust.shared.replaceAll(with: values)
             } else {
-                CmuxDirectoryTrust.shared.replaceAll(with: [])
+                NoriDirectoryTrust.shared.replaceAll(with: [])
             }
         case Self.socketPasswordBackupIdentifier:
             switch backup {
@@ -1224,7 +1224,7 @@ final class CmuxSettingsFileStore {
     }
 
     private func logInvalid(_ path: String, sourcePath: String) {
-        NSLog("[CmuxSettingsFileStore] ignoring invalid setting '%@' in %@", path, sourcePath)
+        NSLog("[NoriSettingsFileStore] ignoring invalid setting '%@' in %@", path, sourcePath)
     }
 
     private func jsonString(_ rawValue: Any?) -> String? {
@@ -1271,8 +1271,8 @@ final class CmuxSettingsFileStore {
             "  // This file uses JSON with comments (JSONC).",
             "  // Uncomment and edit any setting to make it file-managed.",
             "  // Remove a setting to fall back to the value saved in Settings.",
-            "  // cmux creates this template on launch when both settings file locations are missing.",
-            "  // ~/.config/cmux/settings.json takes precedence over the Application Support fallback.",
+            "  // nori creates this template on launch when both settings file locations are missing.",
+            "  // ~/.config/nori/settings.json takes precedence over the Application Support fallback.",
             "",
         ]
 
@@ -1350,8 +1350,8 @@ final class CmuxSettingsFileStore {
                     "showNotificationMessage": SidebarWorkspaceDetailSettings.defaultShowNotificationMessage,
                     "showBranchDirectory": true,
                     "showPullRequests": true,
-                    "openPullRequestLinksInCmuxBrowser": BrowserLinkOpenSettings.defaultOpenSidebarPullRequestLinksInCmuxBrowser,
-                    "openPortLinksInCmuxBrowser": BrowserLinkOpenSettings.defaultOpenSidebarPortLinksInCmuxBrowser,
+                    "openPullRequestLinksInNoriBrowser": BrowserLinkOpenSettings.defaultOpenSidebarPullRequestLinksInNoriBrowser,
+                    "openPortLinksInNoriBrowser": BrowserLinkOpenSettings.defaultOpenSidebarPortLinksInNoriBrowser,
                     "showSSH": true,
                     "showPorts": true,
                     "showLog": true,
@@ -1400,8 +1400,8 @@ final class CmuxSettingsFileStore {
                     "defaultSearchEngine": BrowserSearchSettings.defaultSearchEngine.rawValue,
                     "showSearchSuggestions": BrowserSearchSettings.defaultSearchSuggestionsEnabled,
                     "theme": BrowserThemeSettings.defaultMode.rawValue,
-                    "openTerminalLinksInCmuxBrowser": BrowserLinkOpenSettings.defaultOpenTerminalLinksInCmuxBrowser,
-                    "interceptTerminalOpenCommandInCmuxBrowser": BrowserLinkOpenSettings.defaultInterceptTerminalOpenCommandInCmuxBrowser,
+                    "openTerminalLinksInNoriBrowser": BrowserLinkOpenSettings.defaultOpenTerminalLinksInNoriBrowser,
+                    "interceptTerminalOpenCommandInNoriBrowser": BrowserLinkOpenSettings.defaultInterceptTerminalOpenCommandInNoriBrowser,
                     "hostsToOpenInEmbeddedBrowser": [String](),
                     "urlsToAlwaysOpenExternally": [String](),
                     "insecureHttpHostsAllowedInEmbeddedBrowser": BrowserInsecureHTTPSettings.defaultAllowlistPatterns,
@@ -1459,7 +1459,7 @@ final class CmuxSettingsFileStore {
     }
 }
 
-typealias KeyboardShortcutSettingsFileStore = CmuxSettingsFileStore
+typealias KeyboardShortcutSettingsFileStore = NoriSettingsFileStore
 
 private struct ResolvedSettingsSnapshot {
     var path: String?
@@ -1484,10 +1484,10 @@ private struct ManagedCustomSettings: Equatable {
     var managedIdentifiers: Set<String> {
         var identifiers: Set<String> = []
         if trustedDirectories != nil {
-            identifiers.insert(CmuxSettingsFileStore.trustedDirectoriesBackupIdentifier)
+            identifiers.insert(NoriSettingsFileStore.trustedDirectoriesBackupIdentifier)
         }
         if socketPassword != nil {
-            identifiers.insert(CmuxSettingsFileStore.socketPasswordBackupIdentifier)
+            identifiers.insert(NoriSettingsFileStore.socketPasswordBackupIdentifier)
         }
         return identifiers
     }
@@ -1709,7 +1709,7 @@ private final class ShortcutSettingsFileWatcher {
     private let path: String
     private let fileManager: FileManager
     private let onChange: () -> Void
-    private let watchQueue = DispatchQueue(label: "com.cmux.shortcut-settings-file-watch")
+    private let watchQueue = DispatchQueue(label: "com.nori.shortcut-settings-file-watch")
 
     private var source: DispatchSourceFileSystemObject?
 

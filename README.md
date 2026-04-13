@@ -1,6 +1,6 @@
-# cmux (personal fork)
+# nori (personal fork)
 
-Personal fork of [cmux](https://github.com/manaflow-ai/cmux): a Ghostty-based macOS
+Personal fork of [nori](https://github.com/manaflow-ai/nori): a Ghostty-based macOS
 terminal with vertical tabs and notifications for AI coding agents.
 
 This fork is not published — no DMG, no Homebrew cask, no auto-update. Builds
@@ -23,15 +23,15 @@ Initializes submodules and builds `GhosttyKit.xcframework`.
 
 `reload.sh` prints an `App path:` line — cmd-click to open.
 
-## Install over `/Applications/cmux.app`
+## Install over `/Applications/nori.app`
 
 ```bash
-./scripts/install.sh          # build Release + copy to /Applications/cmux.app
+./scripts/install.sh          # build Release + copy to /Applications/nori.app
 ./scripts/install.sh --launch # build + install + open
 ```
 
-Produces `cmux.app` (bundle ID `com.cmuxterm.app`) and replaces any existing
-`/Applications/cmux.app`. Any running production instance is quit first.
+Produces `nori.app` (bundle ID `com.nori.app`) and replaces any existing
+`/Applications/nori.app`. Any running production instance is quit first.
 
 See `CLAUDE.md` for the full build/debug workflow and policies.
 

@@ -1,88 +1,88 @@
-# Command Reference (cmux Browser)
+# Command Reference (nori Browser)
 
-This maps common `agent-browser` usage to `cmux browser` usage.
+This maps common `agent-browser` usage to `nori browser` usage.
 
 ## Direct Equivalents
 
-- `agent-browser open <url>` -> `cmux browser open <url>`
-- `agent-browser goto|navigate <url>` -> `cmux browser <surface> goto|navigate <url>`
-- `agent-browser snapshot -i` -> `cmux browser <surface> snapshot --interactive`
-- `agent-browser click <ref>` -> `cmux browser <surface> click <ref>`
-- `agent-browser fill <ref> <text>` -> `cmux browser <surface> fill <ref> <text>`
-- `agent-browser type <ref> <text>` -> `cmux browser <surface> type <ref> <text>`
-- `agent-browser select <ref> <value>` -> `cmux browser <surface> select <ref> <value>`
-- `agent-browser get text <ref>` -> `cmux browser <surface> get text <ref-or-selector>`
-- `agent-browser get url` -> `cmux browser <surface> get url`
-- `agent-browser get title` -> `cmux browser <surface> get title`
+- `agent-browser open <url>` -> `nori browser open <url>`
+- `agent-browser goto|navigate <url>` -> `nori browser <surface> goto|navigate <url>`
+- `agent-browser snapshot -i` -> `nori browser <surface> snapshot --interactive`
+- `agent-browser click <ref>` -> `nori browser <surface> click <ref>`
+- `agent-browser fill <ref> <text>` -> `nori browser <surface> fill <ref> <text>`
+- `agent-browser type <ref> <text>` -> `nori browser <surface> type <ref> <text>`
+- `agent-browser select <ref> <value>` -> `nori browser <surface> select <ref> <value>`
+- `agent-browser get text <ref>` -> `nori browser <surface> get text <ref-or-selector>`
+- `agent-browser get url` -> `nori browser <surface> get url`
+- `agent-browser get title` -> `nori browser <surface> get title`
 
 ## Core Command Groups
 
 ### Navigation
 
 ```bash
-cmux browser open <url>                        # opens in caller's workspace (uses CMUX_WORKSPACE_ID)
-cmux browser open <url> --workspace <id|ref>   # opens in a specific workspace
-cmux browser <surface> goto <url>
-cmux browser <surface> back|forward|reload
-cmux browser <surface> get url|title
+nori browser open <url>                        # opens in caller's workspace (uses NORI_WORKSPACE_ID)
+nori browser open <url> --workspace <id|ref>   # opens in a specific workspace
+nori browser <surface> goto <url>
+nori browser <surface> back|forward|reload
+nori browser <surface> get url|title
 ```
 
-> **Workspace context:** `browser open` targets the workspace of the terminal where the command is run (via `CMUX_WORKSPACE_ID`), even if a different workspace is currently focused. Use `--workspace` to override.
+> **Workspace context:** `browser open` targets the workspace of the terminal where the command is run (via `NORI_WORKSPACE_ID`), even if a different workspace is currently focused. Use `--workspace` to override.
 
 ### Snapshot and Inspection
 
 ```bash
-cmux browser <surface> snapshot --interactive
-cmux browser <surface> snapshot --interactive --compact --max-depth 3
-cmux browser <surface> get text body
-cmux browser <surface> get html body
-cmux browser <surface> get value "#email"
-cmux browser <surface> get attr "#email" --attr placeholder
-cmux browser <surface> get count ".row"
-cmux browser <surface> get box "#submit"
-cmux browser <surface> get styles "#submit" --property color
-cmux browser <surface> eval '<js>'
+nori browser <surface> snapshot --interactive
+nori browser <surface> snapshot --interactive --compact --max-depth 3
+nori browser <surface> get text body
+nori browser <surface> get html body
+nori browser <surface> get value "#email"
+nori browser <surface> get attr "#email" --attr placeholder
+nori browser <surface> get count ".row"
+nori browser <surface> get box "#submit"
+nori browser <surface> get styles "#submit" --property color
+nori browser <surface> eval '<js>'
 ```
 
 ### Interaction
 
 ```bash
-cmux browser <surface> click|dblclick|hover|focus <selector-or-ref>
-cmux browser <surface> fill <selector-or-ref> [text]   # empty text clears
-cmux browser <surface> type <selector-or-ref> <text>
-cmux browser <surface> press|keydown|keyup <key>
-cmux browser <surface> select <selector-or-ref> <value>
-cmux browser <surface> check|uncheck <selector-or-ref>
-cmux browser <surface> scroll [--selector <css>] [--dx <n>] [--dy <n>]
+nori browser <surface> click|dblclick|hover|focus <selector-or-ref>
+nori browser <surface> fill <selector-or-ref> [text]   # empty text clears
+nori browser <surface> type <selector-or-ref> <text>
+nori browser <surface> press|keydown|keyup <key>
+nori browser <surface> select <selector-or-ref> <value>
+nori browser <surface> check|uncheck <selector-or-ref>
+nori browser <surface> scroll [--selector <css>] [--dx <n>] [--dy <n>]
 ```
 
 ### Wait
 
 ```bash
-cmux browser <surface> wait --selector "#ready" --timeout-ms 10000
-cmux browser <surface> wait --text "Done" --timeout-ms 10000
-cmux browser <surface> wait --url-contains "/dashboard" --timeout-ms 10000
-cmux browser <surface> wait --load-state complete --timeout-ms 15000
-cmux browser <surface> wait --function "document.readyState === 'complete'" --timeout-ms 10000
+nori browser <surface> wait --selector "#ready" --timeout-ms 10000
+nori browser <surface> wait --text "Done" --timeout-ms 10000
+nori browser <surface> wait --url-contains "/dashboard" --timeout-ms 10000
+nori browser <surface> wait --load-state complete --timeout-ms 15000
+nori browser <surface> wait --function "document.readyState === 'complete'" --timeout-ms 10000
 ```
 
 ### Session/State
 
 ```bash
-cmux browser <surface> cookies get|set|clear ...
-cmux browser <surface> storage local|session get|set|clear ...
-cmux browser <surface> tab list|new|switch|close ...
-cmux browser <surface> state save|load <path>
+nori browser <surface> cookies get|set|clear ...
+nori browser <surface> storage local|session get|set|clear ...
+nori browser <surface> tab list|new|switch|close ...
+nori browser <surface> state save|load <path>
 ```
 
 ### Diagnostics
 
 ```bash
-cmux browser <surface> console list|clear
-cmux browser <surface> errors list|clear
-cmux browser <surface> highlight <selector>
-cmux browser <surface> screenshot
-cmux browser <surface> download wait --timeout-ms 10000
+nori browser <surface> console list|clear
+nori browser <surface> errors list|clear
+nori browser <surface> highlight <selector>
+nori browser <surface> screenshot
+nori browser <surface> download wait --timeout-ms 10000
 ```
 
 ## Agent Reliability Tips

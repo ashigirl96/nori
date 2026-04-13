@@ -744,7 +744,7 @@ final class FileExplorerStore: ObservableObject {
 final class FileExplorerDirectoryWatcher {
     private var fileDescriptor: Int32 = -1
     private var watchSource: DispatchSourceFileSystemObject?
-    private let watchQueue = DispatchQueue(label: "com.cmux.fileExplorerWatcher", qos: .utility)
+    private let watchQueue = DispatchQueue(label: "com.nori.fileExplorerWatcher", qos: .utility)
     private var debounceWorkItem: DispatchWorkItem?
     private let onChange: () -> Void
 
