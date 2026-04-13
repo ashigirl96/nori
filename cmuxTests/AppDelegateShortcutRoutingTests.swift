@@ -1612,7 +1612,7 @@ final class AppDelegateShortcutRoutingTests: XCTestCase {
         XCTAssertTrue(hasTitlebarAccessory(), "Expected visible-titlebar mode to attach the titlebar accessory")
 
         defaults.set(WorkspacePresentationModeSettings.Mode.minimal.rawValue, forKey: WorkspacePresentationModeSettings.modeKey)
-        appDelegate.attachUpdateAccessory(to: window)
+        appDelegate.attachTitlebarAccessory(to: window)
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05))
 
         XCTAssertFalse(
