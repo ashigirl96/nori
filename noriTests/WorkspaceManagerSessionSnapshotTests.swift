@@ -7,9 +7,9 @@ import XCTest
 #endif
 
 @MainActor
-final class TabManagerSessionSnapshotTests: XCTestCase {
+final class WorkspaceManagerSessionSnapshotTests: XCTestCase {
     func testSessionSnapshotSerializesWorkspacesAndRestoreRebuildsSelection() {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         guard let firstWorkspace = manager.selectedWorkspace else {
             XCTFail("Expected initial workspace")
             return
@@ -18,37 +18,37 @@ final class TabManagerSessionSnapshotTests: XCTestCase {
 
         let secondWorkspace = manager.addWorkspace(select: true)
         secondWorkspace.setCustomTitle("Second")
-        XCTAssertEqual(manager.tabs.count, 2)
-        XCTAssertEqual(manager.selectedTabId, secondWorkspace.id)
+        XCTAssertEqual(manager.workspaces.count, 2)
+        XCTAssertEqual(manager.selectedWorkspaceId, secondWorkspace.id)
 
         let snapshot = manager.sessionSnapshot(includeScrollback: false)
         XCTAssertEqual(snapshot.workspaces.count, 2)
         XCTAssertEqual(snapshot.selectedWorkspaceIndex, 1)
 
-        let restored = TabManager()
+        let restored = WorkspaceManager()
         restored.restoreSessionSnapshot(snapshot)
 
-        XCTAssertEqual(restored.tabs.count, 2)
-        XCTAssertEqual(restored.selectedTabId, restored.tabs[1].id)
-        XCTAssertEqual(restored.tabs[0].customTitle, "First")
-        XCTAssertEqual(restored.tabs[1].customTitle, "Second")
+        XCTAssertEqual(restored.workspaces.count, 2)
+        XCTAssertEqual(restored.selectedWorkspaceId, restored.workspaces[1].id)
+        XCTAssertEqual(restored.workspaces[0].customTitle, "First")
+        XCTAssertEqual(restored.workspaces[1].customTitle, "Second")
     }
 
     func testRestoreSessionSnapshotWithNoWorkspacesKeepsSingleFallbackWorkspace() {
-        let manager = TabManager()
-        let emptySnapshot = SessionTabManagerSnapshot(
+        let manager = WorkspaceManager()
+        let emptySnapshot = SessionWorkspaceManagerSnapshot(
             selectedWorkspaceIndex: nil,
             workspaces: []
         )
 
         manager.restoreSessionSnapshot(emptySnapshot)
 
-        XCTAssertEqual(manager.tabs.count, 1)
-        XCTAssertNotNil(manager.selectedTabId)
+        XCTAssertEqual(manager.workspaces.count, 1)
+        XCTAssertNotNil(manager.selectedWorkspaceId)
     }
 
     func testSessionSnapshotExcludesRemoteWorkspacesFromRestore() throws {
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let remoteWorkspace = manager.addWorkspace(select: true)
         let configuration = WorkspaceRemoteConfiguration(
             destination: "nori-macmini",

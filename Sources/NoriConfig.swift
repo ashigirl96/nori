@@ -291,13 +291,13 @@ final class NoriConfigStore: ObservableObject {
 
     // MARK: - Public API
 
-    func wireDirectoryTracking(tabManager: TabManager) {
+    func wireDirectoryTracking(workspaceManager: WorkspaceManager) {
         cancellables.removeAll()
 
-        tabManager.$selectedTabId
-            .compactMap { [weak tabManager] tabId -> Workspace? in
-                guard let tabId, let tabManager else { return nil }
-                return tabManager.tabs.first(where: { $0.id == tabId })
+        workspaceManager.$selectedWorkspaceId
+            .compactMap { [weak workspaceManager] tabId -> Workspace? in
+                guard let tabId, let workspaceManager else { return nil }
+                return workspaceManager.workspaces.first(where: { $0.id == tabId })
             }
             .removeDuplicates(by: { $0.id == $1.id })
             .map { workspace -> AnyPublisher<String, Never> in
@@ -311,7 +311,7 @@ final class NoriConfigStore: ObservableObject {
             }
             .store(in: &cancellables)
 
-        if let directory = tabManager.selectedWorkspace?.currentDirectory {
+        if let directory = workspaceManager.selectedWorkspace?.currentDirectory {
             updateLocalConfigPath(directory)
         }
     }

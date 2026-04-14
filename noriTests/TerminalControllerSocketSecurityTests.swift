@@ -28,11 +28,11 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
     }
 
     func testSocketPermissionsFollowAccessMode() throws {
-        let tabManager = TabManager()
+        let workspaceManager = WorkspaceManager()
 
         let allowAllPath = makeSocketPath("allow-all")
         TerminalController.shared.start(
-            tabManager: tabManager,
+            workspaceManager: workspaceManager,
             socketPath: allowAllPath,
             accessMode: .allowAll
         )
@@ -43,7 +43,7 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
 
         let restrictedPath = makeSocketPath("nori-only")
         TerminalController.shared.start(
-            tabManager: tabManager,
+            workspaceManager: workspaceManager,
             socketPath: restrictedPath,
             accessMode: .noriOnly
         )
@@ -53,10 +53,10 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
 
     func testPasswordModeRejectsUnauthenticatedCommands() throws {
         let socketPath = makeSocketPath("password-mode")
-        let tabManager = TabManager()
+        let workspaceManager = WorkspaceManager()
 
         TerminalController.shared.start(
-            tabManager: tabManager,
+            workspaceManager: workspaceManager,
             socketPath: socketPath,
             accessMode: .password
         )
@@ -150,8 +150,8 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
     }
 
     func testRemoteStatusPayloadOmitsSensitiveSSHConfiguration() {
-        let tabManager = TabManager()
-        let workspace = tabManager.addWorkspace(select: false, eagerLoadTerminal: false)
+        let workspaceManager = WorkspaceManager()
+        let workspace = workspaceManager.addWorkspace(select: false, eagerLoadTerminal: false)
 
         workspace.configureRemoteConnection(
             .init(
@@ -180,24 +180,24 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
         let socketPath = makeSocketPath("notify-surface")
         let store = TerminalNotificationStore.shared
         let appDelegate = AppDelegate.shared ?? AppDelegate()
-        let manager = appDelegate.tabManager ?? TabManager()
+        let manager = appDelegate.workspaceManager ?? WorkspaceManager()
 
-        let originalTabManager = appDelegate.tabManager
+        let originalWorkspaceManager = appDelegate.workspaceManager
         let originalNotificationStore = appDelegate.notificationStore
 
         store.replaceNotificationsForTesting([])
         store.configureNotificationDeliveryHandlerForTesting { _, _ in }
-        appDelegate.tabManager = manager
+        appDelegate.workspaceManager = manager
         appDelegate.notificationStore = store
 
         let workspace = manager.addWorkspace(select: true)
         defer {
-            if manager.tabs.contains(where: { $0.id == workspace.id }) {
+            if manager.workspaces.contains(where: { $0.id == workspace.id }) {
                 manager.closeWorkspace(workspace)
             }
             store.replaceNotificationsForTesting([])
             store.resetNotificationDeliveryHandlerForTesting()
-            appDelegate.tabManager = originalTabManager
+            appDelegate.workspaceManager = originalWorkspaceManager
             appDelegate.notificationStore = originalNotificationStore
         }
 
@@ -212,7 +212,7 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
         workspace.focusPanel(focusedPanelId)
 
         TerminalController.shared.start(
-            tabManager: manager,
+            workspaceManager: manager,
             socketPath: socketPath,
             accessMode: .allowAll
         )
@@ -246,11 +246,11 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
 
     func testSurfaceRelayRPCsReturnResolvedFocusedSurfaceWhenSurfaceIDOmitted() async throws {
         let socketPath = makeSocketPath("relay-fallback")
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let workspace = manager.addWorkspace(select: true)
 
         defer {
-            if manager.tabs.contains(where: { $0.id == workspace.id }) {
+            if manager.workspaces.contains(where: { $0.id == workspace.id }) {
                 manager.closeWorkspace(workspace)
             }
         }
@@ -261,7 +261,7 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
         }
 
         TerminalController.shared.start(
-            tabManager: manager,
+            workspaceManager: manager,
             socketPath: socketPath,
             accessMode: .allowAll
         )
@@ -294,11 +294,11 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
 
     func testSurfaceRelayRPCsRejectExplicitUnknownSurfaceID() async throws {
         let socketPath = makeSocketPath("relay-invalid")
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let workspace = manager.addWorkspace(select: true)
 
         defer {
-            if manager.tabs.contains(where: { $0.id == workspace.id }) {
+            if manager.workspaces.contains(where: { $0.id == workspace.id }) {
                 manager.closeWorkspace(workspace)
             }
         }
@@ -306,7 +306,7 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
         let unknownSurfaceId = UUID()
 
         TerminalController.shared.start(
-            tabManager: manager,
+            workspaceManager: manager,
             socketPath: socketPath,
             accessMode: .allowAll
         )
@@ -347,12 +347,12 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
 
     func testWorkspaceCloseRejectsPinnedWorkspace() async throws {
         let socketPath = makeSocketPath("close-pinned")
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let pinnedWorkspace = manager.addWorkspace(select: false)
         manager.setPinned(pinnedWorkspace, pinned: true)
 
         TerminalController.shared.start(
-            tabManager: manager,
+            workspaceManager: manager,
             socketPath: socketPath,
             accessMode: .allowAll
         )
@@ -380,7 +380,7 @@ final class TerminalControllerSocketSecurityTests: XCTestCase {
         let data = try XCTUnwrap(error["data"] as? [String: Any], "Expected error data payload")
         XCTAssertEqual(data["workspace_id"] as? String, pinnedWorkspace.id.uuidString)
         XCTAssertEqual(data["pinned"] as? Bool, true)
-        XCTAssertTrue(manager.tabs.contains(where: { $0.id == pinnedWorkspace.id }))
+        XCTAssertTrue(manager.workspaces.contains(where: { $0.id == pinnedWorkspace.id }))
     }
 
     private func waitForSocket(at path: String, timeout: TimeInterval = 5.0) throws {

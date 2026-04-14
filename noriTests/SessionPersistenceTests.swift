@@ -87,7 +87,7 @@ final class SessionPersistenceTests: XCTestCase {
         XCTAssertNotNil(loaded)
         XCTAssertEqual(loaded?.version, SessionSnapshotSchema.currentVersion)
         XCTAssertEqual(loaded?.windows.count, 1)
-        XCTAssertEqual(loaded?.windows.first?.sidebar.selection, .tabs)
+        XCTAssertEqual(loaded?.windows.first?.sidebar.selection, .workspaces)
         let frame = try XCTUnwrap(loaded?.windows.first?.frame)
         XCTAssertEqual(frame.x, 10, accuracy: 0.001)
         XCTAssertEqual(frame.y, 20, accuracy: 0.001)
@@ -106,13 +106,13 @@ final class SessionPersistenceTests: XCTestCase {
 
         let snapshotURL = tempDir.appendingPathComponent("session.json", isDirectory: false)
         var snapshot = makeSnapshot(version: SessionSnapshotSchema.currentVersion)
-        snapshot.windows[0].tabManager.workspaces[0].customColor = "#C0392B"
+        snapshot.windows[0].workspaceManager.workspaces[0].customColor = "#C0392B"
 
         XCTAssertTrue(SessionPersistenceStore.save(snapshot, fileURL: snapshotURL))
 
         let loaded = SessionPersistenceStore.load(fileURL: snapshotURL)
         XCTAssertEqual(
-            loaded?.windows.first?.tabManager.workspaces.first?.customColor,
+            loaded?.windows.first?.workspaceManager.workspaces.first?.customColor,
             "#C0392B"
         )
     }
@@ -141,7 +141,7 @@ final class SessionPersistenceTests: XCTestCase {
 
     func testWorkspaceCustomColorDecodeSupportsMissingLegacyField() throws {
         var snapshot = makeSnapshot(version: SessionSnapshotSchema.currentVersion)
-        snapshot.windows[0].tabManager.workspaces[0].customColor = nil
+        snapshot.windows[0].workspaceManager.workspaces[0].customColor = nil
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(snapshot)
@@ -149,7 +149,7 @@ final class SessionPersistenceTests: XCTestCase {
         XCTAssertFalse(json.contains("\"customColor\""))
 
         let decoded = try JSONDecoder().decode(AppSessionSnapshot.self, from: data)
-        XCTAssertNil(decoded.windows.first?.tabManager.workspaces.first?.customColor)
+        XCTAssertNil(decoded.windows.first?.workspaceManager.workspaces.first?.customColor)
     }
 
     func testLoadRejectsSchemaVersionMismatch() {
@@ -641,8 +641,8 @@ final class SessionPersistenceTests: XCTestCase {
                 frame: SessionRectSnapshot(x: 0, y: 0, width: 1_600, height: 1_000),
                 visibleFrame: SessionRectSnapshot(x: 0, y: 0, width: 1_600, height: 1_000)
             ),
-            tabManager: SessionTabManagerSnapshot(selectedWorkspaceIndex: nil, workspaces: []),
-            sidebar: SessionSidebarSnapshot(isVisible: true, selection: .tabs, width: 220)
+            workspaceManager: SessionWorkspaceManagerSnapshot(selectedWorkspaceIndex: nil, workspaces: []),
+            sidebar: SessionSidebarSnapshot(isVisible: true, selection: .workspaces, width: 220)
         )
         let fallbackFrame = SessionRectSnapshot(x: 40, y: 30, width: 700, height: 500)
         let fallbackDisplay = SessionDisplaySnapshot(
@@ -888,7 +888,7 @@ final class SessionPersistenceTests: XCTestCase {
             gitBranch: nil
         )
 
-        let tabManager = SessionTabManagerSnapshot(
+        let workspaceManager = SessionWorkspaceManagerSnapshot(
             selectedWorkspaceIndex: 0,
             workspaces: [workspace]
         )
@@ -900,8 +900,8 @@ final class SessionPersistenceTests: XCTestCase {
                 frame: SessionRectSnapshot(x: 0, y: 0, width: 1920, height: 1200),
                 visibleFrame: SessionRectSnapshot(x: 0, y: 25, width: 1920, height: 1175)
             ),
-            tabManager: tabManager,
-            sidebar: SessionSidebarSnapshot(isVisible: true, selection: .tabs, width: 240)
+            workspaceManager: workspaceManager,
+            sidebar: SessionSidebarSnapshot(isVisible: true, selection: .workspaces, width: 240)
         )
 
         return AppSessionSnapshot(

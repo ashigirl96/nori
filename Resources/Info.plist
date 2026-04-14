@@ -124,9 +124,9 @@
 		</dict>
 		<dict>
 			<key>UTTypeIdentifier</key>
-			<string>com.nori.sidebar-tab-reorder</string>
+			<string>com.nori.sidebar-workspace-reorder</string>
 			<key>UTTypeDescription</key>
-			<string>nori Sidebar Tab Reorder</string>
+			<string>nori Sidebar Workspace Reorder</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>

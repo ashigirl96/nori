@@ -343,7 +343,7 @@ struct SessionWorkspaceSnapshot: Codable, Sendable {
     var gitBranch: SessionGitBranchSnapshot?
 }
 
-struct SessionTabManagerSnapshot: Codable, Sendable {
+struct SessionWorkspaceManagerSnapshot: Codable, Sendable {
     var selectedWorkspaceIndex: Int?
     var workspaces: [SessionWorkspaceSnapshot]
 }
@@ -351,7 +351,7 @@ struct SessionTabManagerSnapshot: Codable, Sendable {
 struct SessionWindowSnapshot: Codable, Sendable {
     var frame: SessionRectSnapshot?
     var display: SessionDisplaySnapshot?
-    var tabManager: SessionTabManagerSnapshot
+    var workspaceManager: SessionWorkspaceManagerSnapshot
     var sidebar: SessionSidebarSnapshot
 }
 

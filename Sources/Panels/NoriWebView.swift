@@ -1892,7 +1892,7 @@ final class NoriWebView: WKWebView {
         NSPasteboard.PasteboardType("public.text"),
         NSPasteboard.PasteboardType("public.plain-text"),
         NSPasteboard.PasteboardType("com.splittabbar.tabtransfer"),
-        NSPasteboard.PasteboardType("com.nori.sidebar-tab-reorder"),
+        NSPasteboard.PasteboardType("com.nori.sidebar-workspace-reorder"),
     ]
 
     static func shouldRejectInternalPaneDrag(_ pasteboardTypes: [NSPasteboard.PasteboardType]?) -> Bool {

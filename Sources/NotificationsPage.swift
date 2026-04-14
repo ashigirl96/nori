@@ -3,7 +3,7 @@ import SwiftUI
 
 struct NotificationsPage: View {
     @EnvironmentObject var notificationStore: TerminalNotificationStore
-    @EnvironmentObject var tabManager: TabManager
+    @EnvironmentObject var workspaceManager: WorkspaceManager
     @Binding var selection: SidebarSelection
     @FocusState private var focusedNotificationId: UUID?
     @ObservedObject private var keyboardShortcutSettingsObserver = KeyboardShortcutSettingsObserver.shared
@@ -137,7 +137,7 @@ struct NotificationsPage: View {
     }
 
     private func tabTitle(for tabId: UUID) -> String? {
-        AppDelegate.shared?.tabTitle(for: tabId) ?? tabManager.tabs.first(where: { $0.id == tabId })?.title
+        AppDelegate.shared?.tabTitle(for: tabId) ?? workspaceManager.workspaces.first(where: { $0.id == tabId })?.title
     }
 
     private var hasUnreadNotifications: Bool {

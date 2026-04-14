@@ -630,9 +630,9 @@ extension Workspace {
         }()
 
         if let selectedPanelId,
-           let selectedTabId = surfaceIdFromPanelId(selectedPanelId) {
+           let selectedWorkspaceId = surfaceIdFromPanelId(selectedPanelId) {
             bonsplitController.focusPane(paneId)
-            bonsplitController.selectTab(selectedTabId)
+            bonsplitController.selectTab(selectedWorkspaceId)
         }
     }
 
@@ -6514,9 +6514,9 @@ final class Workspace: Identifiable, ObservableObject {
     /// a panel is explicitly re-zoomed by the user.
     private var terminalInheritanceFontPointsByPanelId: [UUID: Float] = [:]
 
-    /// Callback used by TabManager to capture recently closed browser panels for Cmd+Shift+T restore.
+    /// Callback used by WorkspaceManager to capture recently closed browser panels for Cmd+Shift+T restore.
     var onClosedBrowserPanel: ((ClosedBrowserPanelRestoreSnapshot) -> Void)?
-    weak var owningTabManager: TabManager?
+    weak var owningWorkspaceManager: WorkspaceManager?
 
 
     // Closing tabs mutates split layout immediately; terminal views handle their own AppKit
@@ -8903,7 +8903,7 @@ final class Workspace: Identifiable, ObservableObject {
             )
         }
 
-        owningTabManager?.scheduleInitialWorkspaceGitMetadataRefreshIfPossible(
+        owningWorkspaceManager?.scheduleInitialWorkspaceGitMetadataRefreshIfPossible(
             workspaceId: id,
             panelId: newPanel.id,
             reason: "splitCreate"
@@ -8984,7 +8984,7 @@ final class Workspace: Identifiable, ObservableObject {
             )
         }
 
-        owningTabManager?.scheduleInitialWorkspaceGitMetadataRefreshIfPossible(
+        owningWorkspaceManager?.scheduleInitialWorkspaceGitMetadataRefreshIfPossible(
             workspaceId: id,
             panelId: newPanel.id,
             reason: "surfaceCreate"
@@ -9269,7 +9269,7 @@ final class Workspace: Identifiable, ObservableObject {
     }
 
     /// Tear down all panels in this workspace, freeing their Ghostty surfaces.
-    /// Called before the workspace is removed from TabManager to ensure child
+    /// Called before the workspace is removed from WorkspaceManager to ensure child
     /// processes receive SIGHUP even if ARC deallocation is delayed.
     func teardownAllPanels() {
         // Hide portal-hosted content up front so a workspace being torn down
@@ -10076,7 +10076,7 @@ final class Workspace: Identifiable, ObservableObject {
             return false
         }
 
-        if let manager = app.tabManagerFor(tabId: id),
+        if let manager = app.workspaceManagerFor(tabId: id),
            let windowId = app.windowId(for: manager),
            let window = app.mainWindow(for: windowId),
            app.isCommandPaletteVisible(for: window) {
@@ -11086,7 +11086,7 @@ final class Workspace: Identifiable, ObservableObject {
         guard let panelId = panelIdFromSurfaceId(tabId),
               let app = AppDelegate.shared else { return }
 
-        let currentWindowId = app.tabManagerFor(tabId: id).flatMap { app.windowId(for: $0) }
+        let currentWindowId = app.workspaceManagerFor(tabId: id).flatMap { app.windowId(for: $0) }
         let workspaceTargets = app.workspaceMoveTargets(
             excludingWorkspaceId: id,
             referenceWindowId: currentWindowId
@@ -11119,7 +11119,7 @@ final class Workspace: Identifiable, ObservableObject {
         let moved: Bool
         switch destination {
         case .newWorkspaceInCurrentWindow:
-            guard let manager = app.tabManagerFor(tabId: id) else { return }
+            guard let manager = app.workspaceManagerFor(tabId: id) else { return }
             let workspace = manager.addWorkspace(select: true)
             moved = app.moveSurface(
                 panelId: panelId,
@@ -11130,8 +11130,8 @@ final class Workspace: Identifiable, ObservableObject {
 
         case .selectedWorkspaceInNewWindow:
             let newWindowId = app.createMainWindow()
-            guard let destinationManager = app.tabManagerFor(windowId: newWindowId),
-                  let destinationWorkspaceId = destinationManager.selectedTabId else {
+            guard let destinationManager = app.workspaceManagerFor(windowId: newWindowId),
+                  let destinationWorkspaceId = destinationManager.selectedWorkspaceId else {
                 return
             }
             moved = app.moveSurface(
@@ -11224,11 +11224,11 @@ final class Workspace: Identifiable, ObservableObject {
 extension Workspace: BonsplitDelegate {
     @MainActor
     private func shouldCloseWorkspaceOnLastSurface(for tabId: TabID) -> Bool {
-        let manager = owningTabManager ?? AppDelegate.shared?.tabManagerFor(tabId: id) ?? AppDelegate.shared?.tabManager
+        let manager = owningWorkspaceManager ?? AppDelegate.shared?.workspaceManagerFor(tabId: id) ?? AppDelegate.shared?.workspaceManager
         guard panels.count <= 1,
               panelIdFromSurfaceId(tabId) != nil,
               let manager,
-              manager.tabs.contains(where: { $0.id == id }) else {
+              manager.workspaces.contains(where: { $0.id == id }) else {
             return false
         }
         return true
@@ -11324,9 +11324,9 @@ extension Workspace: BonsplitDelegate {
     }
 
     /// Hide browser portals for tabs that are no longer selected in the given pane.
-    private func hideBrowserPortalsForDeselectedTabs(inPane pane: PaneID, selectedTabId: TabID) {
+    private func hideBrowserPortalsForDeselectedTabs(inPane pane: PaneID, selectedWorkspaceId: TabID) {
         for tab in bonsplitController.tabs(inPane: pane) {
-            guard tab.id != selectedTabId else { continue }
+            guard tab.id != selectedWorkspaceId else { continue }
             guard let panelId = panelIdFromSurfaceId(tab.id),
                   let browserPanel = panels[panelId] as? BrowserPanel else { continue }
             browserPanel.hideBrowserPortalView(source: "tabDeselected")
@@ -11364,23 +11364,23 @@ extension Workspace: BonsplitDelegate {
         }
 
         let focusedPane: PaneID
-        let selectedTabId: TabID
+        let selectedWorkspaceId: TabID
         if let currentPane = bonsplitController.focusedPaneId,
            let currentTabId = bonsplitController.selectedTab(inPane: currentPane)?.id {
             focusedPane = currentPane
-            selectedTabId = currentTabId
+            selectedWorkspaceId = currentTabId
         } else if bonsplitController.tabs(inPane: pane).contains(where: { $0.id == tabId }) {
             focusedPane = pane
-            selectedTabId = tabId
+            selectedWorkspaceId = tabId
             bonsplitController.focusPane(focusedPane)
-            bonsplitController.selectTab(selectedTabId)
+            bonsplitController.selectTab(selectedWorkspaceId)
         } else {
             return
         }
 
         // Focus the selected panel, but keep the previously focused terminal active while a
         // newly created split terminal is still unattached.
-        guard let selectedPanelId = panelIdFromSurfaceId(selectedTabId) else {
+        guard let selectedPanelId = panelIdFromSurfaceId(selectedWorkspaceId) else {
             return
         }
         let effectiveFocusedPanelId = effectiveSelectedPanelId(inPane: focusedPane) ?? selectedPanelId
@@ -11404,7 +11404,7 @@ extension Workspace: BonsplitDelegate {
         panel.prepareFocusIntentForActivation(activationIntent)
         let panelId = effectiveFocusedPanelId
 
-        syncPinnedStateForTab(selectedTabId, panelId: selectedPanelId)
+        syncPinnedStateForTab(selectedWorkspaceId, panelId: selectedPanelId)
         syncUnreadBadgeStateForPanel(selectedPanelId)
 
         // Unfocus all other panels
@@ -11417,7 +11417,7 @@ extension Workspace: BonsplitDelegate {
         // but portal-hosted WKWebViews render at the window level in AppKit and are not
         // affected by SwiftUI opacity. Without an explicit hide, the deselected browser's
         // portal layer can remain visible above the newly selected tab.
-        hideBrowserPortalsForDeselectedTabs(inPane: focusedPane, selectedTabId: selectedTabId)
+        hideBrowserPortalsForDeselectedTabs(inPane: focusedPane, selectedWorkspaceId: selectedWorkspaceId)
 
         if let focusWindow = activationWindow(for: panel) {
             yieldForeignOwnedFocusIfNeeded(
@@ -11481,7 +11481,7 @@ extension Workspace: BonsplitDelegate {
             dlog(
                 "focus.split.ensureFocus workspace=\(id.uuidString.prefix(5)) " +
                 "panel=\(panelId.uuidString.prefix(5)) pane=\(focusedPane.id.uuidString.prefix(5)) " +
-                "tab=\(selectedTabId.uuid.uuidString.prefix(5)) intent=\(String(describing: activationIntent))"
+                "tab=\(selectedWorkspaceId.uuid.uuidString.prefix(5)) intent=\(String(describing: activationIntent))"
             )
 #endif
             terminalPanel.hostedView.ensureFocus(for: id, surfaceId: panelId)
@@ -11512,7 +11512,7 @@ extension Workspace: BonsplitDelegate {
         dlog(
             "focus.split.apply.end workspace=\(id.uuidString.prefix(5)) " +
             "panel=\(panelId.uuidString.prefix(5)) type=\(String(describing: type(of: panel))) " +
-            "focusedPane=\(focusedPane.id.uuidString.prefix(5)) selectedTab=\(selectedTabId.uuid.uuidString.prefix(5)) " +
+            "focusedPane=\(focusedPane.id.uuidString.prefix(5)) selectedTab=\(selectedWorkspaceId.uuid.uuidString.prefix(5)) " +
             "prevPanel=\(prevPanelShort)"
         )
 #endif
@@ -11700,7 +11700,7 @@ extension Workspace: BonsplitDelegate {
 
         if explicitUserClose && shouldCloseWorkspaceOnLastSurface(for: tab.id) {
             clearStagedClosedBrowserRestoreSnapshot(for: tab.id)
-            owningTabManager?.closeWorkspaceWithConfirmation(self)
+            owningWorkspaceManager?.closeWorkspaceWithConfirmation(self)
             return false
         }
 

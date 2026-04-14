@@ -87,7 +87,7 @@ final class WorkspaceContentViewVisibilityTests: XCTestCase {
                 PaneGeometry(
                     paneId: paneID.id.uuidString,
                     frame: PixelRect(x: 877.5, y: 32, width: 500, height: 320),
-                    selectedTabId: nil,
+                    selectedWorkspaceId: nil,
                     tabIds: []
                 )
             ],
@@ -107,21 +107,21 @@ final class WorkspaceContentViewVisibilityTests: XCTestCase {
     @MainActor
     func testTmuxWorkspacePaneUnreadRectsIncludeFocusedReadIndicator() {
         let appDelegate = AppDelegate.shared ?? AppDelegate()
-        let manager = TabManager()
+        let manager = WorkspaceManager()
         let store = TerminalNotificationStore.shared
 
-        let originalTabManager = appDelegate.tabManager
+        let originalWorkspaceManager = appDelegate.workspaceManager
         let originalNotificationStore = appDelegate.notificationStore
 
         store.replaceNotificationsForTesting([])
         store.configureNotificationDeliveryHandlerForTesting { _, _ in }
-        appDelegate.tabManager = manager
+        appDelegate.workspaceManager = manager
         appDelegate.notificationStore = store
 
         defer {
             store.replaceNotificationsForTesting([])
             store.resetNotificationDeliveryHandlerForTesting()
-            appDelegate.tabManager = originalTabManager
+            appDelegate.workspaceManager = originalWorkspaceManager
             appDelegate.notificationStore = originalNotificationStore
         }
 
@@ -141,7 +141,7 @@ final class WorkspaceContentViewVisibilityTests: XCTestCase {
                 PaneGeometry(
                     paneId: paneId.id.uuidString,
                     frame: PixelRect(x: 877.5, y: 32, width: 500, height: 320),
-                    selectedTabId: surfaceId.uuid.uuidString,
+                    selectedWorkspaceId: surfaceId.uuid.uuidString,
                     tabIds: [surfaceId.uuid.uuidString]
                 )
             ],
