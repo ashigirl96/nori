@@ -494,12 +494,18 @@ enum KeyboardShortcutSettings {
 
     static func resetShortcut(for action: Action) {
         UserDefaults.standard.removeObject(forKey: action.defaultsKey)
+        if let legacyKey = action.legacyDefaultsKey {
+            UserDefaults.standard.removeObject(forKey: legacyKey)
+        }
         postDidChangeNotification(action: action)
     }
 
     static func resetAll() {
         for action in Action.allCases {
             UserDefaults.standard.removeObject(forKey: action.defaultsKey)
+            if let legacyKey = action.legacyDefaultsKey {
+                UserDefaults.standard.removeObject(forKey: legacyKey)
+            }
         }
         postDidChangeNotification()
     }
