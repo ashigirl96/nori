@@ -177,7 +177,7 @@ enum KeyboardShortcutSettings {
             case .toggleSidebar:
                 return StoredShortcut(key: "b", command: true, shift: false, option: false, control: false)
             case .newWorkspace:
-                return StoredShortcut(key: "n", command: true, shift: false, option: false, control: false)
+                return StoredShortcut(key: "p", command: false, shift: false, option: true, control: false)
             case .openFolder:
                 return StoredShortcut(key: "o", command: true, shift: false, option: false, control: false)
             case .goToWorkspace:
@@ -193,9 +193,9 @@ enum KeyboardShortcutSettings {
             case .triggerFlash:
                 return StoredShortcut(key: "h", command: true, shift: true, option: false, control: false)
             case .nextSidebarWorkspace:
-                return StoredShortcut(key: "]", command: true, shift: false, option: false, control: true)
+                return StoredShortcut(key: "j", command: false, shift: false, option: true, control: false)
             case .prevSidebarWorkspace:
-                return StoredShortcut(key: "[", command: true, shift: false, option: false, control: true)
+                return StoredShortcut(key: "k", command: false, shift: false, option: true, control: false)
             case .renameTab:
                 return StoredShortcut(key: "r", command: true, shift: false, option: false, control: false)
             case .renameWorkspace:
@@ -219,9 +219,17 @@ enum KeyboardShortcutSettings {
             case .focusDown:
                 return StoredShortcut(key: "↓", command: true, shift: false, option: true, control: false)
             case .splitRight:
-                return StoredShortcut(key: "d", command: true, shift: false, option: false, control: false)
+                // Chord: ctrl+t, shift+\
+                return StoredShortcut(
+                    key: "t", command: false, shift: false, option: false, control: true,
+                    chordKey: "\\", chordCommand: false, chordShift: true, chordOption: false, chordControl: false
+                )
             case .splitDown:
-                return StoredShortcut(key: "d", command: true, shift: true, option: false, control: false)
+                // Chord: ctrl+t, -
+                return StoredShortcut(
+                    key: "t", command: false, shift: false, option: false, control: true,
+                    chordKey: "-", chordCommand: false, chordShift: false, chordOption: false, chordControl: false
+                )
             case .toggleSplitZoom:
                 return StoredShortcut(key: "\r", command: true, shift: true, option: false, control: false)
             case .splitBrowserRight:
@@ -233,13 +241,17 @@ enum KeyboardShortcutSettings {
             case .movePaneLeft:
                 return StoredShortcut(key: "h", command: false, shift: true, option: false, control: true)
             case .nextSurface:
-                return StoredShortcut(key: "]", command: true, shift: true, option: false, control: false)
+                return StoredShortcut(key: "l", command: false, shift: false, option: true, control: false)
             case .prevSurface:
-                return StoredShortcut(key: "[", command: true, shift: true, option: false, control: false)
+                return StoredShortcut(key: "h", command: false, shift: false, option: true, control: false)
             case .selectSurfaceByNumber:
                 return StoredShortcut(key: "1", command: false, shift: false, option: false, control: true)
             case .newSurface:
-                return StoredShortcut(key: "t", command: true, shift: false, option: false, control: false)
+                // Chord: ctrl+t, c
+                return StoredShortcut(
+                    key: "t", command: false, shift: false, option: false, control: true,
+                    chordKey: "c", chordCommand: false, chordShift: false, chordOption: false, chordControl: false
+                )
             case .toggleTerminalCopyMode:
                 return StoredShortcut(key: "m", command: true, shift: true, option: false, control: false)
             case .selectWorkspaceByNumber:
