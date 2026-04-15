@@ -819,7 +819,7 @@ final class NoriSettingsFileStore {
         }
 
         for (rawAction, rawBinding) in bindings {
-            guard let action = KeyboardShortcutSettings.Action.fromPersistedRawValue(rawAction) else {
+            guard let action = KeyboardShortcutSettings.Action(rawValue: rawAction) else {
                 NSLog("[NoriSettingsFileStore] ignoring unknown shortcut action '%@' in %@", rawAction, sourcePath)
                 continue
             }

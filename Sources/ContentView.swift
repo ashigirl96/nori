@@ -6318,7 +6318,7 @@ struct ContentView: View {
     private func commandPaletteShortcutAction(for commandId: String) -> KeyboardShortcutSettings.Action? {
         switch commandId {
         case "palette.newWorkspace":
-            return .newTab
+            return .newWorkspace
         case "palette.newWindow":
             return .newWindow
         case "palette.openFolder":

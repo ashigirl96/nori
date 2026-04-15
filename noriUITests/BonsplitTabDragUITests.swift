@@ -182,7 +182,7 @@ final class BonsplitTabDragUITests: XCTestCase {
 
         let toggleSidebarButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.toggleSidebar").firstMatch
         let notificationsButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.showNotifications").firstMatch
-        let newWorkspaceButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.newTab").firstMatch
+        let newWorkspaceButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.newWorkspace").firstMatch
 
         XCTAssertTrue(
             waitForCondition(timeout: 2.0) {
@@ -231,7 +231,7 @@ final class BonsplitTabDragUITests: XCTestCase {
 
         let toggleSidebarButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.toggleSidebar").firstMatch
         let notificationsButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.showNotifications").firstMatch
-        let newWorkspaceButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.newTab").firstMatch
+        let newWorkspaceButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.newWorkspace").firstMatch
 
         let alphaTitle = ready["alphaTitle"] ?? "UITest Alpha"
         let alphaTab = app.buttons[alphaTitle]
@@ -306,7 +306,7 @@ final class BonsplitTabDragUITests: XCTestCase {
 
         let toggleSidebarButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.toggleSidebar").firstMatch
         let notificationsButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.showNotifications").firstMatch
-        let newWorkspaceButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.newTab").firstMatch
+        let newWorkspaceButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.newWorkspace").firstMatch
 
         hover(in: window, at: CGPoint(x: window.frame.maxX - 48, y: window.frame.minY + 18))
         XCTAssertTrue(
@@ -349,7 +349,7 @@ final class BonsplitTabDragUITests: XCTestCase {
 
         let toggleSidebarButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.toggleSidebar").firstMatch
         let notificationsButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.showNotifications").firstMatch
-        let newWorkspaceButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.newTab").firstMatch
+        let newWorkspaceButton = app.descendants(matching: .any).matching(identifier: "titlebarControl.newWorkspace").firstMatch
 
         window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).hover()
         XCTAssertTrue(

@@ -271,7 +271,7 @@ struct TitlebarControlsView: View {
     private enum HintSlot: Int, CaseIterable {
         case toggleSidebar
         case showNotifications
-        case newTab
+        case newWorkspace
 
         var action: KeyboardShortcutSettings.Action {
             switch self {
@@ -279,8 +279,8 @@ struct TitlebarControlsView: View {
                 return .toggleSidebar
             case .showNotifications:
                 return .showNotifications
-            case .newTab:
-                return .newTab
+            case .newWorkspace:
+                return .newWorkspace
             }
         }
     }
@@ -398,15 +398,15 @@ struct TitlebarControlsView: View {
 
             TitlebarControlButton(config: config, action: {
                 #if DEBUG
-                dlog("titlebar.newTab")
+                dlog("titlebar.newWorkspace")
                 #endif
                 onNewTab()
             }) {
                 iconLabel(systemName: "plus", config: config)
             }
-            .accessibilityIdentifier("titlebarControl.newTab")
+            .accessibilityIdentifier("titlebarControl.newWorkspace")
             .accessibilityLabel(String(localized: "titlebar.newWorkspace.accessibilityLabel", defaultValue: "New Workspace"))
-            .safeHelp(KeyboardShortcutSettings.Action.newTab.tooltip(String(localized: "titlebar.newWorkspace.tooltip", defaultValue: "New workspace")))
+            .safeHelp(KeyboardShortcutSettings.Action.newWorkspace.tooltip(String(localized: "titlebar.newWorkspace.tooltip", defaultValue: "New workspace")))
 
         }
 

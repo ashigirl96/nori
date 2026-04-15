@@ -521,7 +521,7 @@ struct noriApp: App {
                     appDelegate.openNewMainWindow(nil)
                 }
 
-                splitCommandButton(title: String(localized: "menu.file.newWorkspace", defaultValue: "New Workspace"), shortcut: menuShortcut(for: .newTab)) {
+                splitCommandButton(title: String(localized: "menu.file.newWorkspace", defaultValue: "New Workspace"), shortcut: menuShortcut(for: .newWorkspace)) {
                     if let appDelegate = AppDelegate.shared {
                         if appDelegate.addWorkspaceInPreferredMainWindow(debugSource: "menu.newWorkspace") == nil {
 #if DEBUG

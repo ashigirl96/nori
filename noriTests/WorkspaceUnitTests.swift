@@ -195,42 +195,6 @@ final class WorkspaceRenameShortcutDefaultsTests: XCTestCase {
         XCTAssertEqual(Set(keys).count, keys.count)
     }
 
-    func testLegacyRawValueAliasesResolveToCurrentAction() {
-        // Sidebar workspace navigation cases were renamed from nextSidebarTab /
-        // prevSidebarTab. settings.json / UserDefaults values written by
-        // earlier nori versions must still resolve.
-        XCTAssertEqual(
-            KeyboardShortcutSettings.Action.fromPersistedRawValue("nextSidebarTab"),
-            .nextSidebarWorkspace
-        )
-        XCTAssertEqual(
-            KeyboardShortcutSettings.Action.fromPersistedRawValue("prevSidebarTab"),
-            .prevSidebarWorkspace
-        )
-
-        // Current rawValues still resolve.
-        XCTAssertEqual(
-            KeyboardShortcutSettings.Action.fromPersistedRawValue("nextSidebarWorkspace"),
-            .nextSidebarWorkspace
-        )
-
-        // Unknown strings still return nil.
-        XCTAssertNil(KeyboardShortcutSettings.Action.fromPersistedRawValue("bogusAction"))
-    }
-
-    func testLegacyDefaultsKeyProvidesOldUserDefaultsKey() {
-        XCTAssertEqual(
-            KeyboardShortcutSettings.Action.nextSidebarWorkspace.legacyDefaultsKey,
-            "shortcut.nextSidebarTab"
-        )
-        XCTAssertEqual(
-            KeyboardShortcutSettings.Action.prevSidebarWorkspace.legacyDefaultsKey,
-            "shortcut.prevSidebarTab"
-        )
-        // Actions without a rename return nil.
-        XCTAssertNil(KeyboardShortcutSettings.Action.closeWorkspace.legacyDefaultsKey)
-    }
-
     func testChordedShortcutDisplayDisablesMenuKeyEquivalent() {
         let shortcut = StoredShortcut(
             key: "b",
@@ -402,7 +366,7 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
             StoredShortcut(key: "b", command: true, shift: false, option: false, control: false)
         )
         XCTAssertEqual(
-            store.override(for: .newTab),
+            store.override(for: .newWorkspace),
             StoredShortcut(key: "b", command: false, shift: false, option: false, control: true, chordKey: "c")
         )
         XCTAssertEqual(
@@ -437,7 +401,7 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
         )
 
         XCTAssertNil(store.override(for: .toggleSidebar))
-        XCTAssertNil(store.override(for: .newTab))
+        XCTAssertNil(store.override(for: .newWorkspace))
         XCTAssertEqual(
             store.override(for: .splitRight),
             StoredShortcut(key: "b", command: false, shift: false, option: false, control: true, chordKey: "d")
@@ -501,7 +465,7 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
 
         KeyboardShortcutSettings.setShortcut(
             StoredShortcut(key: "n", command: true, shift: false, option: false, control: false),
-            for: .newTab
+            for: .newWorkspace
         )
 
         KeyboardShortcutSettings.settingsFileStore = KeyboardShortcutSettingsFileStore(
@@ -511,11 +475,11 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            KeyboardShortcutSettings.shortcut(for: .newTab),
+            KeyboardShortcutSettings.shortcut(for: .newWorkspace),
             StoredShortcut(key: "b", command: false, shift: false, option: false, control: true, chordKey: "c")
         )
-        XCTAssertTrue(KeyboardShortcutSettings.isManagedBySettingsFile(.newTab))
-        XCTAssertNotNil(KeyboardShortcutSettings.settingsFileManagedSubtitle(for: .newTab))
+        XCTAssertTrue(KeyboardShortcutSettings.isManagedBySettingsFile(.newWorkspace))
+        XCTAssertNotNil(KeyboardShortcutSettings.settingsFileManagedSubtitle(for: .newWorkspace))
     }
 
     @MainActor
@@ -542,7 +506,7 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            KeyboardShortcutSettings.shortcut(for: .newTab),
+            KeyboardShortcutSettings.shortcut(for: .newWorkspace),
             StoredShortcut(key: "n", command: true, shift: false, option: false, control: false)
         )
 
@@ -560,7 +524,7 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
         GhosttyApp.shared.reloadConfiguration(source: "test.reload_config")
 
         XCTAssertEqual(
-            KeyboardShortcutSettings.shortcut(for: .newTab),
+            KeyboardShortcutSettings.shortcut(for: .newWorkspace),
             StoredShortcut(key: "b", command: false, shift: false, option: false, control: true, chordKey: "c")
         )
     }
@@ -574,7 +538,7 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
         let persistedShortcut = StoredShortcut(key: "n", command: true, shift: false, option: false, control: false)
         let managedShortcut = StoredShortcut(key: "b", command: false, shift: false, option: false, control: true, chordKey: "c")
 
-        KeyboardShortcutSettings.setShortcut(persistedShortcut, for: .newTab)
+        KeyboardShortcutSettings.setShortcut(persistedShortcut, for: .newWorkspace)
 
         try writeSettingsFile(
             """
@@ -593,14 +557,14 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
             startWatching: false
         )
 
-        XCTAssertEqual(KeyboardShortcutSettings.shortcut(for: .newTab), managedShortcut)
+        XCTAssertEqual(KeyboardShortcutSettings.shortcut(for: .newWorkspace), managedShortcut)
 
         KeyboardShortcutSettings.setShortcut(
             StoredShortcut(key: "t", command: true, shift: false, option: false, control: false),
-            for: .newTab
+            for: .newWorkspace
         )
 
-        XCTAssertEqual(KeyboardShortcutSettings.shortcut(for: .newTab), managedShortcut)
+        XCTAssertEqual(KeyboardShortcutSettings.shortcut(for: .newWorkspace), managedShortcut)
 
         KeyboardShortcutSettings.settingsFileStore = KeyboardShortcutSettingsFileStore(
             primaryPath: missingSettingsFileURL.path,
@@ -608,8 +572,8 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
             startWatching: false
         )
 
-        XCTAssertFalse(KeyboardShortcutSettings.isManagedBySettingsFile(.newTab))
-        XCTAssertEqual(KeyboardShortcutSettings.shortcut(for: .newTab), persistedShortcut)
+        XCTAssertFalse(KeyboardShortcutSettings.isManagedBySettingsFile(.newWorkspace))
+        XCTAssertEqual(KeyboardShortcutSettings.shortcut(for: .newWorkspace), persistedShortcut)
     }
 
     func testSystemWideHotkeySettingsPreserveInvalidManagedShortcutWithoutFallingBackToDefault() throws {
@@ -695,7 +659,7 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: settingsFileURL.path))
         XCTAssertEqual(store.activeSourcePath, settingsFileURL.path)
-        XCTAssertNil(store.override(for: .newTab))
+        XCTAssertNil(store.override(for: .newWorkspace))
 
         let contents = try String(contentsOf: settingsFileURL, encoding: .utf8)
         XCTAssertTrue(contents.contains(#""$schema": "https://raw.githubusercontent.com/manaflow-ai/nori/main/web/data/nori-settings.schema.json""#))
@@ -835,7 +799,7 @@ final class KeyboardShortcutSettingsFileStoreTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            store.override(for: .newTab),
+            store.override(for: .newWorkspace),
             StoredShortcut(key: "b", command: false, shift: false, option: false, control: true, chordKey: "c")
         )
     }
