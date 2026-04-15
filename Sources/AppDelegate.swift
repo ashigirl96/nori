@@ -4964,8 +4964,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         return windowId
     }
 
-    func locateBonsplitSurface(workspaceId: UUID) -> (windowId: UUID, workspaceId: UUID, panelId: UUID, workspaceManager: WorkspaceManager)? {
-        let bonsplitTabId = TabID(uuid: workspaceId)
+    func locateBonsplitSurface(surfaceId: UUID) -> (windowId: UUID, workspaceId: UUID, panelId: UUID, workspaceManager: WorkspaceManager)? {
+        let bonsplitTabId = TabID(uuid: surfaceId)
         for context in mainWindowContexts.values {
             for workspace in context.workspaceManager.workspaces {
                 if let panelId = workspace.panelIdFromSurfaceId(bonsplitTabId) {
@@ -5217,7 +5217,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     @discardableResult
     func moveBonsplitTab(
-        workspaceId: UUID,
+        surfaceId: UUID,
         toWorkspace targetWorkspaceId: UUID,
         targetPane: PaneID? = nil,
         targetIndex: Int? = nil,
@@ -5232,14 +5232,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             return String(format: "%.2f", ms)
         }
         dlog(
-            "surface.moveBonsplit.begin tab=\(workspaceId.uuidString.prefix(5)) targetWs=\(targetWorkspaceId.uuidString.prefix(5)) " +
+            "surface.moveBonsplit.begin tab=\(surfaceId.uuidString.prefix(5)) targetWs=\(targetWorkspaceId.uuidString.prefix(5)) " +
             "targetPane=\(targetPane?.id.uuidString.prefix(5) ?? "auto") targetIndex=\(targetIndex.map(String.init) ?? "nil")"
         )
 #endif
-        guard let located = locateBonsplitSurface(workspaceId: workspaceId) else {
+        guard let located = locateBonsplitSurface(surfaceId: surfaceId) else {
 #if DEBUG
             dlog(
-                "surface.moveBonsplit.fail tab=\(workspaceId.uuidString.prefix(5)) reason=tabNotFound " +
+                "surface.moveBonsplit.fail tab=\(surfaceId.uuidString.prefix(5)) reason=tabNotFound " +
                 "targetWs=\(targetWorkspaceId.uuidString.prefix(5)) elapsedMs=\(elapsedMs(since: moveStart))"
             )
 #endif
@@ -5247,7 +5247,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         }
 #if DEBUG
         dlog(
-            "surface.moveBonsplit.located tab=\(workspaceId.uuidString.prefix(5)) panel=\(located.panelId.uuidString.prefix(5)) " +
+            "surface.moveBonsplit.located tab=\(surfaceId.uuidString.prefix(5)) panel=\(located.panelId.uuidString.prefix(5)) " +
             "sourceWs=\(located.workspaceId.uuidString.prefix(5)) sourceWin=\(located.windowId.uuidString.prefix(5))"
         )
 #endif
@@ -5262,7 +5262,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         )
 #if DEBUG
         dlog(
-            "surface.moveBonsplit.end tab=\(workspaceId.uuidString.prefix(5)) panel=\(located.panelId.uuidString.prefix(5)) " +
+            "surface.moveBonsplit.end tab=\(surfaceId.uuidString.prefix(5)) panel=\(located.panelId.uuidString.prefix(5)) " +
             "moved=\(moved ? 1 : 0) elapsedMs=\(elapsedMs(since: moveStart))"
         )
 #endif

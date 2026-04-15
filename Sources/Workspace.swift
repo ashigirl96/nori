@@ -11200,7 +11200,7 @@ final class Workspace: Identifiable, ObservableObject {
         )
         #endif
         let moved = app.moveBonsplitTab(
-            workspaceId: request.tabId.uuid,
+            surfaceId: request.tabId.uuid,
             toWorkspace: id,
             targetPane: targetPane,
             targetIndex: targetIndex,
@@ -11324,9 +11324,9 @@ extension Workspace: BonsplitDelegate {
     }
 
     /// Hide browser portals for tabs that are no longer selected in the given pane.
-    private func hideBrowserPortalsForDeselectedTabs(inPane pane: PaneID, selectedWorkspaceId: TabID) {
+    private func hideBrowserPortalsForDeselectedTabs(inPane pane: PaneID, selectedTabId: TabID) {
         for tab in bonsplitController.tabs(inPane: pane) {
-            guard tab.id != selectedWorkspaceId else { continue }
+            guard tab.id != selectedTabId else { continue }
             guard let panelId = panelIdFromSurfaceId(tab.id),
                   let browserPanel = panels[panelId] as? BrowserPanel else { continue }
             browserPanel.hideBrowserPortalView(source: "tabDeselected")
@@ -11417,7 +11417,7 @@ extension Workspace: BonsplitDelegate {
         // but portal-hosted WKWebViews render at the window level in AppKit and are not
         // affected by SwiftUI opacity. Without an explicit hide, the deselected browser's
         // portal layer can remain visible above the newly selected tab.
-        hideBrowserPortalsForDeselectedTabs(inPane: focusedPane, selectedWorkspaceId: selectedWorkspaceId)
+        hideBrowserPortalsForDeselectedTabs(inPane: focusedPane, selectedTabId: selectedWorkspaceId)
 
         if let focusWindow = activationWindow(for: panel) {
             yieldForeignOwnedFocusIfNeeded(
