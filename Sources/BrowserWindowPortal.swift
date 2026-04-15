@@ -1518,7 +1518,7 @@ final class BrowserPaneDropTargetView: NSView {
             return true
         case .move(let tabId, let workspaceId, let targetPane, let splitTarget):
             let moved = AppDelegate.shared?.moveBonsplitTab(
-                tabId: tabId,
+                workspaceId: tabId,
                 toWorkspace: workspaceId,
                 targetPane: targetPane,
                 splitTarget: splitTarget.map { ($0.orientation, $0.insertFirst) },

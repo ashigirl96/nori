@@ -133,7 +133,7 @@ final class WorkspaceContentViewVisibilityTests: XCTestCase {
             return
         }
 
-        store.setFocusedReadIndicator(forTabId: workspace.id, surfaceId: panelId)
+        store.setFocusedReadIndicator(forWorkspaceId: workspace.id, surfaceId: panelId)
 
         let snapshot = LayoutSnapshot(
             containerFrame: PixelRect(x: 200, y: 32, width: 1200, height: 800),

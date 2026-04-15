@@ -972,7 +972,7 @@ final class GhosttySpaceReleaseRegressionTests: XCTestCase {
         _ = NSApplication.shared
 
         let surface = TerminalSurface(
-            tabId: UUID(),
+            workspaceId: UUID(),
             context: GHOSTTY_SURFACE_CONTEXT_SPLIT,
             configTemplate: nil,
             workingDirectory: nil
@@ -1039,7 +1039,7 @@ final class KoreanIMEReturnCommitRegressionTests: XCTestCase {
         _ = NSApplication.shared
 
         let surface = TerminalSurface(
-            tabId: UUID(),
+            workspaceId: UUID(),
             context: GHOSTTY_SURFACE_CONTEXT_SPLIT,
             configTemplate: nil,
             workingDirectory: nil
@@ -1131,7 +1131,7 @@ final class KoreanIMEMarkedTextLeakRegressionTests: XCTestCase {
         _ = NSApplication.shared
 
         let surface = TerminalSurface(
-            tabId: UUID(),
+            workspaceId: UUID(),
             context: GHOSTTY_SURFACE_CONTEXT_SPLIT,
             configTemplate: nil,
             workingDirectory: nil
@@ -1229,7 +1229,7 @@ final class AccessibilityInsertTextRegressionTests: XCTestCase {
         _ = NSApplication.shared
 
         let surface = TerminalSurface(
-            tabId: UUID(),
+            workspaceId: UUID(),
             context: GHOSTTY_SURFACE_CONTEXT_SPLIT,
             configTemplate: nil,
             workingDirectory: nil
@@ -1289,7 +1289,7 @@ final class AccessibilityInsertTextRegressionTests: XCTestCase {
         _ = NSApplication.shared
 
         let surface = TerminalSurface(
-            tabId: UUID(),
+            workspaceId: UUID(),
             context: GHOSTTY_SURFACE_CONTEXT_SPLIT,
             configTemplate: nil,
             workingDirectory: nil
@@ -1349,7 +1349,7 @@ final class AccessibilityInsertTextRegressionTests: XCTestCase {
         _ = NSApplication.shared
 
         let surface = TerminalSurface(
-            tabId: UUID(),
+            workspaceId: UUID(),
             context: GHOSTTY_SURFACE_CONTEXT_SPLIT,
             configTemplate: nil,
             workingDirectory: nil
@@ -1411,7 +1411,7 @@ final class GhosttyBackquoteRegressionTests: XCTestCase {
         _ = NSApplication.shared
 
         let surface = TerminalSurface(
-            tabId: UUID(),
+            workspaceId: UUID(),
             context: GHOSTTY_SURFACE_CONTEXT_SPLIT,
             configTemplate: nil,
             workingDirectory: nil
@@ -1481,7 +1481,7 @@ final class GhosttyPrintableShiftKeyEquivalentRegressionTests: XCTestCase {
         _ = NSApplication.shared
 
         let surface = TerminalSurface(
-            tabId: UUID(),
+            workspaceId: UUID(),
             context: GHOSTTY_SURFACE_CONTEXT_SPLIT,
             configTemplate: nil,
             workingDirectory: nil
@@ -1589,7 +1589,7 @@ final class GhosttyOptionDeleteRegressionTests: XCTestCase {
         _ = NSApplication.shared
 
         let surface = TerminalSurface(
-            tabId: UUID(),
+            workspaceId: UUID(),
             context: GHOSTTY_SURFACE_CONTEXT_SPLIT,
             configTemplate: nil,
             workingDirectory: nil

@@ -2697,7 +2697,7 @@ class TerminalController {
            let wsId = v2UUIDAny(callerObj["workspace_id"]) {
             let surfaceId = v2UUIDAny(callerObj["surface_id"]) ?? v2UUIDAny(callerObj["tab_id"])
             v2MainSync {
-                let callerWorkspaceManager = AppDelegate.shared?.workspaceManagerFor(tabId: wsId) ?? workspaceManager
+                let callerWorkspaceManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: wsId) ?? workspaceManager
                 if let ws = callerWorkspaceManager.workspaces.first(where: { $0.id == wsId }) {
                     let callerWindowId = v2ResolveWindowId(workspaceManager: callerWorkspaceManager)
                     var payload: [String: Any] = [
@@ -3217,7 +3217,7 @@ class TerminalController {
             return v2MainSync { AppDelegate.shared?.workspaceManagerFor(windowId: windowId) }
         }
         if let wsId = v2UUID(params, "workspace_id") {
-            if let tm = v2MainSync({ AppDelegate.shared?.workspaceManagerFor(tabId: wsId) }) {
+            if let tm = v2MainSync({ AppDelegate.shared?.workspaceManagerFor(workspaceId: wsId) }) {
                 return tm
             }
         }
@@ -3545,7 +3545,7 @@ class TerminalController {
 
         var result: V2CallResult = .err(code: "internal_error", message: "Failed to move workspace", data: nil)
         v2MainSync {
-            guard let srcTM = AppDelegate.shared?.workspaceManagerFor(tabId: wsId) else {
+            guard let srcTM = AppDelegate.shared?.workspaceManagerFor(workspaceId: wsId) else {
                 result = .err(code: "not_found", message: "Workspace not found", data: ["workspace_id": wsId.uuidString])
                 return
             }
@@ -3553,7 +3553,7 @@ class TerminalController {
                 result = .err(code: "not_found", message: "Window not found", data: ["window_id": windowId.uuidString])
                 return
             }
-            guard let ws = srcTM.detachWorkspace(tabId: wsId) else {
+            guard let ws = srcTM.detachWorkspace(workspaceId: wsId) else {
                 result = .err(code: "not_found", message: "Workspace not found", data: ["workspace_id": wsId.uuidString])
                 return
             }
@@ -3597,9 +3597,9 @@ class TerminalController {
         var newIndex: Int?
         v2MainSync {
             if let index {
-                moved = workspaceManager.reorderWorkspace(tabId: workspaceId, toIndex: index)
+                moved = workspaceManager.reorderWorkspace(workspaceId: workspaceId, toIndex: index)
             } else {
-                moved = workspaceManager.reorderWorkspace(tabId: workspaceId, before: beforeId, after: afterId)
+                moved = workspaceManager.reorderWorkspace(workspaceId: workspaceId, before: beforeId, after: afterId)
             }
             newIndex = workspaceManager.workspaces.firstIndex(where: { $0.id == workspaceId })
         }
@@ -3633,7 +3633,7 @@ class TerminalController {
         var renamed = false
         v2MainSync {
             guard workspaceManager.workspaces.contains(where: { $0.id == workspaceId }) else { return }
-            workspaceManager.setCustomTitle(tabId: workspaceId, title: title)
+            workspaceManager.setCustomTitle(workspaceId: workspaceId, title: title)
             renamed = true
         }
 
@@ -3868,7 +3868,7 @@ class TerminalController {
 
         // Must run on main for v2MainSync because Workspace.configureRemoteConnection mutates WorkspaceManager/UI-owned workspace state.
         v2MainSync {
-            guard let owner = AppDelegate.shared?.workspaceManagerFor(tabId: workspaceId),
+            guard let owner = AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId),
                   let workspace = owner.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
@@ -3920,7 +3920,7 @@ class TerminalController {
 
         // Must run on main for v2MainSync because disconnect mutates WorkspaceManager/UI-owned workspace state.
         v2MainSync {
-            guard let owner = AppDelegate.shared?.workspaceManagerFor(tabId: workspaceId),
+            guard let owner = AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId),
                   let workspace = owner.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
@@ -3957,7 +3957,7 @@ class TerminalController {
 
         // Must run on main for v2MainSync because reconnect mutates WorkspaceManager/UI-owned workspace state.
         v2MainSync {
-            guard let owner = AppDelegate.shared?.workspaceManagerFor(tabId: workspaceId),
+            guard let owner = AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId),
                   let workspace = owner.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
@@ -4004,7 +4004,7 @@ class TerminalController {
 
         // Must run on main for v2MainSync because this may arm a pending connect or start reconnecting immediately.
         v2MainSync {
-            guard let owner = AppDelegate.shared?.workspaceManagerFor(tabId: workspaceId),
+            guard let owner = AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId),
                   let workspace = owner.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
@@ -4041,7 +4041,7 @@ class TerminalController {
 
         // Must run on main for v2MainSync because Workspace.remoteStatusPayload reads WorkspaceManager/UI-owned state.
         v2MainSync {
-            guard let owner = AppDelegate.shared?.workspaceManagerFor(tabId: workspaceId),
+            guard let owner = AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId),
                   let workspace = owner.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
@@ -4080,7 +4080,7 @@ class TerminalController {
         ])
 
         v2MainSync {
-            guard let owner = AppDelegate.shared?.workspaceManagerFor(tabId: workspaceId),
+            guard let owner = AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId),
                   let workspace = owner.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
@@ -4383,11 +4383,11 @@ class TerminalController {
                     return
                 }
                 let title = titleRaw.trimmingCharacters(in: .whitespacesAndNewlines)
-                workspaceManager.setCustomTitle(tabId: workspace.id, title: title)
+                workspaceManager.setCustomTitle(workspaceId: workspace.id, title: title)
                 finish(["title": title])
 
             case "clear_name":
-                workspaceManager.clearCustomTitle(tabId: workspace.id)
+                workspaceManager.clearCustomTitle(workspaceId: workspace.id)
                 finish(["title": workspace.title])
 
             case "set_description":
@@ -4396,11 +4396,11 @@ class TerminalController {
                     result = .err(code: "invalid_params", message: "Missing or invalid description", data: nil)
                     return
                 }
-                workspaceManager.setCustomDescription(tabId: workspace.id, description: descriptionRaw)
+                workspaceManager.setCustomDescription(workspaceId: workspace.id, description: descriptionRaw)
                 finish(["description": v2OrNull(workspace.customDescription)])
 
             case "clear_description":
-                workspaceManager.clearCustomDescription(tabId: workspace.id)
+                workspaceManager.clearCustomDescription(workspaceId: workspace.id)
                 finish(["description": NSNull()])
 
             case "move_up":
@@ -4408,7 +4408,7 @@ class TerminalController {
                     result = .err(code: "not_found", message: "Workspace not found", data: nil)
                     return
                 }
-                _ = workspaceManager.reorderWorkspace(tabId: workspace.id, toIndex: max(currentIndex - 1, 0))
+                _ = workspaceManager.reorderWorkspace(workspaceId: workspace.id, toIndex: max(currentIndex - 1, 0))
                 finish(["index": v2OrNull(workspaceManager.workspaces.firstIndex(where: { $0.id == workspace.id }))])
 
             case "move_down":
@@ -4416,7 +4416,7 @@ class TerminalController {
                     result = .err(code: "not_found", message: "Workspace not found", data: nil)
                     return
                 }
-                _ = workspaceManager.reorderWorkspace(tabId: workspace.id, toIndex: min(currentIndex + 1, workspaceManager.workspaces.count - 1))
+                _ = workspaceManager.reorderWorkspace(workspaceId: workspace.id, toIndex: min(currentIndex + 1, workspaceManager.workspaces.count - 1))
                 finish(["index": v2OrNull(workspaceManager.workspaces.firstIndex(where: { $0.id == workspace.id }))])
 
             case "move_top":
@@ -4452,11 +4452,11 @@ class TerminalController {
                 finish(["closed": closed])
 
             case "mark_read":
-                AppDelegate.shared?.notificationStore?.markRead(forTabId: workspace.id)
+                AppDelegate.shared?.notificationStore?.markRead(forWorkspaceId: workspace.id)
                 finish()
 
             case "mark_unread":
-                AppDelegate.shared?.notificationStore?.markUnread(forTabId: workspace.id)
+                AppDelegate.shared?.notificationStore?.markUnread(forWorkspaceId: workspace.id)
                 finish()
 
             case "set_color":
@@ -4482,11 +4482,11 @@ class TerminalController {
                     ])
                     return
                 }
-                workspaceManager.setTabColor(tabId: workspace.id, color: hex)
+                workspaceManager.setTabColor(workspaceId: workspace.id, color: hex)
                 finish(["color": hex])
 
             case "clear_color":
-                workspaceManager.setTabColor(tabId: workspace.id, color: nil)
+                workspaceManager.setTabColor(workspaceId: workspace.id, color: nil)
                 finish(["color": NSNull()])
 
             default:
@@ -4941,7 +4941,7 @@ class TerminalController {
             v2MaybeSelectWorkspace(workspaceManager, workspace: ws)
 
             let focus = v2Bool(params, "focus") ?? true
-            if let newId = workspaceManager.newSplit(tabId: ws.id, surfaceId: targetSurfaceId, direction: direction, focus: focus) {
+            if let newId = workspaceManager.newSplit(workspaceId: ws.id, surfaceId: targetSurfaceId, direction: direction, focus: focus) {
                 let paneUUID = ws.paneId(forPanelId: newId)?.id
                 let windowId = v2ResolveWindowId(workspaceManager: workspaceManager)
                 result = .ok([
@@ -5166,7 +5166,7 @@ class TerminalController {
                 targetWorkspace = located.workspace
                 targetPane = located.paneId
             } else if let workspaceUUID = requestedWorkspaceUUID {
-                guard let tm = app.workspaceManagerFor(tabId: workspaceUUID),
+                guard let tm = app.workspaceManagerFor(workspaceId: workspaceUUID),
                       let ws = tm.workspaces.first(where: { $0.id == workspaceUUID }) else {
                     result = .err(code: "not_found", message: "Workspace not found", data: ["workspace_id": workspaceUUID.uuidString])
                     return
@@ -6803,7 +6803,7 @@ class TerminalController {
             }
             let surfaceId = explicitSurfaceId ?? ws.focusedPanelId
             TerminalNotificationStore.shared.addNotification(
-                tabId: ws.id,
+                workspaceId: ws.id,
                 surfaceId: surfaceId,
                 title: title,
                 subtitle: subtitle,
@@ -6837,7 +6837,7 @@ class TerminalController {
                 return
             }
             TerminalNotificationStore.shared.addNotification(
-                tabId: ws.id,
+                workspaceId: ws.id,
                 surfaceId: surfaceId,
                 title: title,
                 subtitle: subtitle,
@@ -6874,7 +6874,7 @@ class TerminalController {
                 return
             }
             TerminalNotificationStore.shared.addNotification(
-                tabId: ws.id,
+                workspaceId: ws.id,
                 surfaceId: surfaceId,
                 title: title,
                 subtitle: subtitle,
@@ -6891,7 +6891,7 @@ class TerminalController {
             items = TerminalNotificationStore.shared.notifications.map { n in
                 return [
                     "id": n.id.uuidString,
-                    "workspace_id": n.tabId.uuidString,
+                    "workspace_id": n.workspaceId.uuidString,
                     "surface_id": v2OrNull(n.surfaceId?.uuidString),
                     "is_read": n.isRead,
                     "title": n.title,
@@ -11306,8 +11306,8 @@ class TerminalController {
         let trimmedSurfaceArg = surfaceArg.trimmingCharacters(in: .whitespacesAndNewlines)
         var result = "ERROR: No tab selected"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
@@ -12125,8 +12125,8 @@ class TerminalController {
 
         var result = "false"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 result = "false"
                 return
             }
@@ -12171,8 +12171,8 @@ class TerminalController {
 
         var result = "ERROR: No tab selected"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
@@ -12455,9 +12455,9 @@ class TerminalController {
         var ok = false
         let focus = socketCommandAllowsInAppFocusMutations()
         v2MainSync {
-            guard let srcTM = AppDelegate.shared?.workspaceManagerFor(tabId: wsId),
+            guard let srcTM = AppDelegate.shared?.workspaceManagerFor(workspaceId: wsId),
                   let dstTM = AppDelegate.shared?.workspaceManagerFor(windowId: windowId),
-                  let ws = srcTM.detachWorkspace(tabId: wsId) else {
+                  let ws = srcTM.detachWorkspace(workspaceId: wsId) else {
                 ok = false
                 return
             }
@@ -12492,13 +12492,13 @@ class TerminalController {
         let trimmed = args.trimmingCharacters(in: .whitespacesAndNewlines)
         let title: String? = trimmed.isEmpty ? nil : trimmed
 
-        var newTabId: UUID?
+        var newWorkspaceId: UUID?
         let focus = socketCommandAllowsInAppFocusMutations()
         DispatchQueue.main.sync {
             let workspace = workspaceManager.addWorkspace(title: title, select: focus, eagerLoadTerminal: !focus)
-            newTabId = workspace.id
+            newWorkspaceId = workspace.id
         }
-        return "OK \(newTabId?.uuidString ?? "unknown")"
+        return "OK \(newWorkspaceId?.uuidString ?? "unknown")"
     }
 
     private func newSplit(_ args: String) -> String {
@@ -12519,8 +12519,8 @@ class TerminalController {
 
         var result = "ERROR: Failed to create split"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
@@ -12541,7 +12541,7 @@ class TerminalController {
                 return
             }
 
-            if let newPanelId = workspaceManager.newSplit(tabId: tabId, surfaceId: targetSurface, direction: direction) {
+            if let newPanelId = workspaceManager.newSplit(workspaceId: workspaceId, surfaceId: targetSurface, direction: direction) {
                 result = "OK \(newPanelId.uuidString)"
             }
         }
@@ -12574,15 +12574,15 @@ class TerminalController {
 
         var success = false
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
             if let uuid = UUID(uuidString: trimmed),
                tab.panels[uuid] != nil {
                 guard tab.surfaceIdFromPanelId(uuid) != nil else { return }
-                workspaceManager.focusSurface(tabId: tab.id, surfaceId: uuid)
+                workspaceManager.focusSurface(workspaceId: tab.id, surfaceId: uuid)
                 success = true
                 return
             }
@@ -12591,7 +12591,7 @@ class TerminalController {
                 let panels = orderedPanels(in: tab)
                 guard index < panels.count else { return }
                 guard tab.surfaceIdFromPanelId(panels[index].id) != nil else { return }
-                workspaceManager.focusSurface(tabId: tab.id, surfaceId: panels[index].id)
+                workspaceManager.focusSurface(workspaceId: tab.id, surfaceId: panels[index].id)
                 success = true
             }
         }
@@ -12604,14 +12604,14 @@ class TerminalController {
 
         var result = "OK"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId else {
                 result = "ERROR: No tab selected"
                 return
             }
-            let surfaceId = workspaceManager.focusedSurfaceId(for: tabId)
+            let surfaceId = workspaceManager.focusedSurfaceId(for: workspaceId)
             let (title, subtitle, body) = parseNotificationPayload(args)
             TerminalNotificationStore.shared.addNotification(
-                tabId: tabId,
+                workspaceId: workspaceId,
                 surfaceId: surfaceId,
                 title: title,
                 subtitle: subtitle,
@@ -12632,8 +12632,8 @@ class TerminalController {
 
         var result = "OK"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 result = "ERROR: No tab selected"
                 return
             }
@@ -12643,7 +12643,7 @@ class TerminalController {
             }
             let (title, subtitle, body) = parseNotificationPayload(payload)
             TerminalNotificationStore.shared.addNotification(
-                tabId: tabId,
+                workspaceId: workspaceId,
                 surfaceId: surfaceId,
                 title: title,
                 subtitle: subtitle,
@@ -12679,7 +12679,7 @@ class TerminalController {
                     return
                 }
                 TerminalNotificationStore.shared.addNotification(
-                    tabId: workspaceId,
+                    workspaceId: workspaceId,
                     surfaceId: panelId,
                     title: title,
                     subtitle: subtitle,
@@ -12692,8 +12692,8 @@ class TerminalController {
         var result = "OK"
         DispatchQueue.main.sync {
             let tab: Workspace?
-            if let tabId = UUID(uuidString: tabArg) {
-                tab = tabForSidebarMutation(id: tabId)
+            if let workspaceId = UUID(uuidString: tabArg) {
+                tab = tabForSidebarMutation(id: workspaceId)
             } else {
                 tab = resolveTab(from: tabArg, workspaceManager: workspaceManager)
             }
@@ -12707,7 +12707,7 @@ class TerminalController {
                 return
             }
             TerminalNotificationStore.shared.addNotification(
-                tabId: tab.id,
+                workspaceId: tab.id,
                 surfaceId: panelId,
                 title: title,
                 subtitle: subtitle,
@@ -12723,7 +12723,7 @@ class TerminalController {
             let lines = TerminalNotificationStore.shared.notifications.enumerated().map { index, notification in
                 let surfaceText = notification.surfaceId?.uuidString ?? "none"
                 let readText = notification.isRead ? "read" : "unread"
-                return "\(index):\(notification.id.uuidString)|\(notification.tabId.uuidString)|\(surfaceText)|\(readText)|\(notification.title)|\(notification.subtitle)|\(notification.body)"
+                return "\(index):\(notification.id.uuidString)|\(notification.workspaceId.uuidString)|\(surfaceText)|\(readText)|\(notification.title)|\(notification.subtitle)|\(notification.body)"
             }
             result = lines.joined(separator: "\n")
         }
@@ -12748,7 +12748,7 @@ class TerminalController {
             return targetResolution.error ?? "ERROR: Tab not found"
         }
         scheduleSidebarMutation(target: target) { _, tab in
-            TerminalNotificationStore.shared.clearNotifications(forTabId: tab.id)
+            TerminalNotificationStore.shared.clearNotifications(forWorkspaceId: tab.id)
         }
         return "OK"
     }
@@ -12812,8 +12812,8 @@ class TerminalController {
 
         var result = "ERROR: Surface not found"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 result = "ERROR: No tab selected"
                 return
             }
@@ -12854,8 +12854,8 @@ class TerminalController {
 
         var result = "ERROR: No tab selected"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
             guard let panelId = resolveSurfaceId(from: panelArg, tab: tab) else {
@@ -12961,8 +12961,8 @@ class TerminalController {
 
         var result = "ERROR: No tab selected"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
@@ -13052,8 +13052,8 @@ class TerminalController {
 
         var result = "ERROR: No tab selected"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
@@ -13358,12 +13358,12 @@ class TerminalController {
         // Use bonsplit's tab ordering as the source of truth. This avoids relying on
         // Dictionary iteration order, and prevents indexing into panels that aren't
         // actually present in bonsplit anymore.
-        let orderedTabIds = tab.bonsplitController.allTabIds
+        let orderedWorkspaceIds = tab.bonsplitController.allTabIds
         var result: [any Panel] = []
         var seen = Set<UUID>()
 
-        for tabId in orderedTabIds {
-            guard let panelId = tab.panelIdFromSurfaceId(tabId),
+        for workspaceId in orderedWorkspaceIds {
+            guard let panelId = tab.panelIdFromSurfaceId(workspaceId),
                   let panel = tab.panels[panelId] else { continue }
             result.append(panel)
             seen.insert(panelId)
@@ -13379,8 +13379,8 @@ class TerminalController {
     }
 
     private func resolveTerminalPanel(from arg: String, workspaceManager: WorkspaceManager) -> TerminalPanel? {
-        guard let tabId = workspaceManager.selectedWorkspaceId,
-              let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+        guard let workspaceId = workspaceManager.selectedWorkspaceId,
+              let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
             return nil
         }
 
@@ -13479,9 +13479,9 @@ class TerminalController {
         return (title.isEmpty ? "Notification" : title, subtitle, body)
     }
 
-    private func closeWorkspace(_ tabId: String) -> String {
+    private func closeWorkspace(_ workspaceId: String) -> String {
         guard let workspaceManager = workspaceManager else { return "ERROR: WorkspaceManager not available" }
-        guard let uuid = UUID(uuidString: tabId) else { return "ERROR: Invalid tab ID" }
+        guard let uuid = UUID(uuidString: workspaceId) else { return "ERROR: Invalid tab ID" }
 
         var result = "ERROR: Tab not found"
         DispatchQueue.main.sync {
@@ -13697,7 +13697,7 @@ class TerminalController {
         var success = false
         var error: String?
         DispatchQueue.main.sync {
-            guard let targetManager = AppDelegate.shared?.workspaceManagerFor(tabId: workspaceId)
+            guard let targetManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId)
                 ?? (workspaceManager.workspaces.contains(where: { $0.id == workspaceId }) ? workspaceManager : nil) else {
                 error = "ERROR: Workspace not found"
                 return
@@ -13857,8 +13857,8 @@ class TerminalController {
         var result = "ERROR: Failed to create browser panel"
         let focus = socketCommandAllowsInAppFocusMutations()
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
                   let focusedPanelId = tab.focusedPanelId else {
                 return
             }
@@ -13886,8 +13886,8 @@ class TerminalController {
 
         var result = "ERROR: Panel not found or not a browser"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
                   let panelId = UUID(uuidString: panelArg),
                   let browserPanel = tab.browserPanel(for: panelId) else {
                 return
@@ -13907,8 +13907,8 @@ class TerminalController {
 
         var result = "ERROR: Panel not found or not a browser"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
                   let panelId = UUID(uuidString: panelArg),
                   let browserPanel = tab.browserPanel(for: panelId) else {
                 return
@@ -13928,8 +13928,8 @@ class TerminalController {
 
         var result = "ERROR: Panel not found or not a browser"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
                   let panelId = UUID(uuidString: panelArg),
                   let browserPanel = tab.browserPanel(for: panelId) else {
                 return
@@ -13949,8 +13949,8 @@ class TerminalController {
 
         var result = "ERROR: Panel not found or not a browser"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
                   let panelId = UUID(uuidString: panelArg),
                   let browserPanel = tab.browserPanel(for: panelId) else {
                 return
@@ -13970,8 +13970,8 @@ class TerminalController {
 
         var result = "ERROR: Panel not found or not a browser"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
                   let panelId = UUID(uuidString: panelArg),
                   let browserPanel = tab.browserPanel(for: panelId) else {
                 return
@@ -13990,8 +13990,8 @@ class TerminalController {
 
         var result = "ERROR: Panel not found or not a browser"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
                   let panelId = UUID(uuidString: panelArg),
                   let browserPanel = tab.browserPanel(for: panelId) else {
                 return
@@ -14043,8 +14043,8 @@ class TerminalController {
 
         var result = "ERROR: Panel not found or not a browser"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
                   let panelId = UUID(uuidString: panelArg),
                   let browserPanel = tab.browserPanel(for: panelId) else {
                 return
@@ -14067,8 +14067,8 @@ class TerminalController {
 
         var result = ""
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 result = "ERROR: No tab selected"
                 return
             }
@@ -14091,8 +14091,8 @@ class TerminalController {
 
         var result = ""
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 result = "ERROR: No tab selected"
                 return
             }
@@ -14147,8 +14147,8 @@ class TerminalController {
 
         var result = "ERROR: Pane not found"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
@@ -14175,8 +14175,8 @@ class TerminalController {
 
         var result = "ERROR: Panel not found"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
@@ -14185,7 +14185,7 @@ class TerminalController {
             if let panelUUID = UUID(uuidString: tabArg),
                tab.panels[panelUUID] != nil,
                tab.surfaceIdFromPanelId(panelUUID) != nil {
-                workspaceManager.focusSurface(tabId: tab.id, surfaceId: panelUUID)
+                workspaceManager.focusSurface(workspaceId: tab.id, surfaceId: panelUUID)
                 result = "OK"
             }
         }
@@ -14210,8 +14210,8 @@ class TerminalController {
 	
 	        var result = "ERROR: Failed to move surface"
 	        DispatchQueue.main.sync {
-	            guard let tabId = workspaceManager.selectedWorkspaceId,
-	                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+	            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+	                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
 	                result = "ERROR: No tab selected"
 	                return
 	            }
@@ -14274,8 +14274,8 @@ class TerminalController {
         var result = "ERROR: Failed to create pane"
         let focus = socketCommandAllowsInAppFocusMutations()
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
                   let focusedPanelId = tab.focusedPanelId else {
                 return
             }
@@ -14463,7 +14463,7 @@ class TerminalController {
             }
             // The tab may belong to a different window — search all contexts.
             if let uuid = UUID(uuidString: tabArg.trimmingCharacters(in: .whitespacesAndNewlines)),
-               let otherManager = AppDelegate.shared?.workspaceManagerFor(tabId: uuid) {
+               let otherManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: uuid) {
                 return otherManager.workspaces.first(where: { $0.id == uuid })
             }
             return nil
@@ -14488,8 +14488,8 @@ class TerminalController {
             guard !tabArg.isEmpty else {
                 return (nil, "ERROR: Tab not found")
             }
-            if let tabId = UUID(uuidString: tabArg) {
-                return (.workspace(tabId), nil)
+            if let workspaceId = UUID(uuidString: tabArg) {
+                return (.workspace(workspaceId), nil)
             }
             if let index = Int(tabArg), index >= 0 {
                 return (.index(index), nil)
@@ -14507,8 +14507,8 @@ class TerminalController {
                 return nil
             }
             return workspaceManager.workspaces.first(where: { $0.id == selectedId })
-        case .workspace(let tabId):
-            return tabForSidebarMutation(id: tabId)
+        case .workspace(let workspaceId):
+            return tabForSidebarMutation(id: workspaceId)
         case .index(let index):
             guard let workspaceManager = self.workspaceManager,
                   index < workspaceManager.workspaces.count else {
@@ -14522,7 +14522,7 @@ class TerminalController {
         if let tab = workspaceManager?.workspaces.first(where: { $0.id == id }) {
             return tab
         }
-        if let otherManager = AppDelegate.shared?.workspaceManagerFor(tabId: id) {
+        if let otherManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: id) {
             return otherManager.workspaces.first(where: { $0.id == id })
         }
         return nil
@@ -15053,7 +15053,7 @@ class TerminalController {
         // block socket handlers and starve subsequent branch updates.
         if let scope = Self.explicitSocketScope(options: parsed.options) {
             DispatchQueue.main.async {
-                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(tabId: scope.workspaceId),
+                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: scope.workspaceId),
                       let tab = workspaceManager.workspaces.first(where: { $0.id == scope.workspaceId }) else {
                     return
                 }
@@ -15061,7 +15061,7 @@ class TerminalController {
                 tab.pruneSurfaceMetadata(validSurfaceIds: validSurfaceIds)
                 guard validSurfaceIds.contains(scope.panelId) else { return }
                 workspaceManager.updateSurfaceGitBranch(
-                    tabId: scope.workspaceId,
+                    workspaceId: scope.workspaceId,
                     surfaceId: scope.panelId,
                     branch: branch,
                     isDirty: isDirty
@@ -15089,14 +15089,14 @@ class TerminalController {
         // block socket handlers and starve subsequent branch updates.
         if let scope = Self.explicitSocketScope(options: parsed.options) {
             DispatchQueue.main.async {
-                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(tabId: scope.workspaceId),
+                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: scope.workspaceId),
                       let tab = workspaceManager.workspaces.first(where: { $0.id == scope.workspaceId }) else {
                     return
                 }
                 let validSurfaceIds = Set(tab.panels.keys)
                 tab.pruneSurfaceMetadata(validSurfaceIds: validSurfaceIds)
                 guard validSurfaceIds.contains(scope.panelId) else { return }
-                workspaceManager.clearSurfaceGitBranch(tabId: scope.workspaceId, surfaceId: scope.panelId)
+                workspaceManager.clearSurfaceGitBranch(workspaceId: scope.workspaceId, surfaceId: scope.panelId)
             }
             return "OK"
         }
@@ -15249,14 +15249,14 @@ class TerminalController {
         let directory = parsed.positional.joined(separator: " ")
         if let scope = Self.explicitSocketScope(options: parsed.options) {
             DispatchQueue.main.async {
-                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(tabId: scope.workspaceId),
+                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: scope.workspaceId),
                       let tab = workspaceManager.workspaces.first(where: { $0.id == scope.workspaceId }) else {
                     return
                 }
                 let validSurfaceIds = Set(tab.panels.keys)
                 tab.pruneSurfaceMetadata(validSurfaceIds: validSurfaceIds)
                 guard validSurfaceIds.contains(scope.panelId) else { return }
-                workspaceManager.updateSurfaceDirectory(tabId: scope.workspaceId, surfaceId: scope.panelId, directory: directory)
+                workspaceManager.updateSurfaceDirectory(workspaceId: scope.workspaceId, surfaceId: scope.panelId, directory: directory)
             }
             return "OK"
         }
@@ -15295,7 +15295,7 @@ class TerminalController {
                 return
             }
 
-            workspaceManager.updateSurfaceDirectory(tabId: tab.id, surfaceId: surfaceId, directory: directory)
+            workspaceManager.updateSurfaceDirectory(workspaceId: tab.id, surfaceId: surfaceId, directory: directory)
         }
         return result
     }
@@ -15318,8 +15318,8 @@ class TerminalController {
                 return "OK"
             }
             DispatchQueue.main.async {
-                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(tabId: scope.workspaceId) else { return }
-                workspaceManager.updateSurfaceShellActivity(tabId: scope.workspaceId, surfaceId: scope.panelId, state: state)
+                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: scope.workspaceId) else { return }
+                workspaceManager.updateSurfaceShellActivity(workspaceId: scope.workspaceId, surfaceId: scope.panelId, state: state)
             }
             return "OK"
         }
@@ -15361,7 +15361,7 @@ class TerminalController {
                 return
             }
 
-            workspaceManager.updateSurfaceShellActivity(tabId: tab.id, surfaceId: surfaceId, state: state)
+            workspaceManager.updateSurfaceShellActivity(workspaceId: tab.id, surfaceId: surfaceId, state: state)
         }
         return result
     }
@@ -15384,9 +15384,9 @@ class TerminalController {
             options: parsed.options,
             missingPanelUsage: "report_pr_action <merge|close|reopen|create|checkout|ready|edit|view> [--target=X] [--tab=X] [--panel=Y]"
         ) { tab, surfaceId in
-            guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(tabId: tab.id) else { return }
+            guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: tab.id) else { return }
             workspaceManager.handleWorkspacePullRequestCommandHint(
-                tabId: tab.id,
+                workspaceId: tab.id,
                 surfaceId: surfaceId,
                 action: action,
                 target: target
@@ -15437,7 +15437,7 @@ class TerminalController {
 
         if let scope = Self.explicitSocketScope(options: parsed.options) {
             DispatchQueue.main.async {
-                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(tabId: scope.workspaceId),
+                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: scope.workspaceId),
                       let tab = workspaceManager.workspaces.first(where: { $0.id == scope.workspaceId }) else {
                     return
                 }
@@ -15513,7 +15513,7 @@ class TerminalController {
 
         if let scope = Self.explicitSocketScope(options: parsed.options) {
             DispatchQueue.main.async {
-                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(tabId: scope.workspaceId),
+                guard let workspaceManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: scope.workspaceId),
                       let tab = workspaceManager.workspaces.first(where: { $0.id == scope.workspaceId }) else {
                     return
                 }
@@ -15665,8 +15665,8 @@ class TerminalController {
 
         var refreshedCount = 0
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
@@ -15737,8 +15737,8 @@ class TerminalController {
 
         var result = "ERROR: Failed to close surface"
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 
@@ -15793,8 +15793,8 @@ class TerminalController {
         var result = "ERROR: Failed to create tab"
         let focus = socketCommandAllowsInAppFocusMutations()
         DispatchQueue.main.sync {
-            guard let tabId = workspaceManager.selectedWorkspaceId,
-                  let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }) else {
+            guard let workspaceId = workspaceManager.selectedWorkspaceId,
+                  let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }) else {
                 return
             }
 

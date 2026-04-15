@@ -1518,38 +1518,38 @@ final class WorkspaceRemoteDaemonPendingCallRegistryTests: XCTestCase {
 
 final class WindowBackgroundSelectionGateTests: XCTestCase {
     func testShouldApplyWindowBackgroundUsesOwningWindowSelectionWhenAvailable() {
-        let tabId = UUID()
+        let workspaceId = UUID()
         let activeSelectedTabId = UUID()
 
         XCTAssertTrue(
             GhosttyNSView.shouldApplyWindowBackground(
-                surfaceTabId: tabId,
+                surfaceTabId: workspaceId,
                 owningManagerExists: true,
-                owningSelectedTabId: tabId,
+                owningSelectedTabId: workspaceId,
                 activeSelectedTabId: activeSelectedTabId
             )
         )
     }
 
     func testShouldApplyWindowBackgroundRejectsWhenOwningSelectionDiffers() {
-        let tabId = UUID()
+        let workspaceId = UUID()
 
         XCTAssertFalse(
             GhosttyNSView.shouldApplyWindowBackground(
-                surfaceTabId: tabId,
+                surfaceTabId: workspaceId,
                 owningManagerExists: true,
                 owningSelectedTabId: UUID(),
-                activeSelectedTabId: tabId
+                activeSelectedTabId: workspaceId
             )
         )
     }
 
     func testShouldApplyWindowBackgroundAllowsWhenOwningManagerSelectionIsTemporarilyNil() {
-        let tabId = UUID()
+        let workspaceId = UUID()
 
         XCTAssertTrue(
             GhosttyNSView.shouldApplyWindowBackground(
-                surfaceTabId: tabId,
+                surfaceTabId: workspaceId,
                 owningManagerExists: true,
                 owningSelectedTabId: nil,
                 activeSelectedTabId: UUID()
@@ -1558,19 +1558,19 @@ final class WindowBackgroundSelectionGateTests: XCTestCase {
     }
 
     func testShouldApplyWindowBackgroundFallsBackToActiveSelection() {
-        let tabId = UUID()
+        let workspaceId = UUID()
 
         XCTAssertTrue(
             GhosttyNSView.shouldApplyWindowBackground(
-                surfaceTabId: tabId,
+                surfaceTabId: workspaceId,
                 owningManagerExists: false,
                 owningSelectedTabId: nil,
-                activeSelectedTabId: tabId
+                activeSelectedTabId: workspaceId
             )
         )
         XCTAssertFalse(
             GhosttyNSView.shouldApplyWindowBackground(
-                surfaceTabId: tabId,
+                surfaceTabId: workspaceId,
                 owningManagerExists: false,
                 owningSelectedTabId: nil,
                 activeSelectedTabId: UUID()

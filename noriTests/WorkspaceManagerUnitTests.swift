@@ -138,7 +138,7 @@ final class WorkspaceManagerChildExitCloseTests: XCTestCase {
             return
         }
 
-        manager.closePanelAfterChildExited(tabId: second.id, surfaceId: secondPanelId)
+        manager.closePanelAfterChildExited(workspaceId: second.id, surfaceId: secondPanelId)
 
         XCTAssertEqual(manager.workspaces.map(\.id), [first.id, third.id])
         XCTAssertEqual(
@@ -161,7 +161,7 @@ final class WorkspaceManagerChildExitCloseTests: XCTestCase {
             return
         }
 
-        manager.closePanelAfterChildExited(tabId: second.id, surfaceId: secondPanelId)
+        manager.closePanelAfterChildExited(workspaceId: second.id, surfaceId: secondPanelId)
 
         XCTAssertEqual(manager.workspaces.map(\.id), [first.id])
         XCTAssertEqual(
@@ -198,7 +198,7 @@ final class WorkspaceManagerChildExitCloseTests: XCTestCase {
         XCTAssertTrue(workspace.isRemoteWorkspace)
         XCTAssertTrue(workspace.isRemoteTerminalSurface(remotePanelId))
 
-        manager.closePanelAfterChildExited(tabId: workspace.id, surfaceId: remotePanelId)
+        manager.closePanelAfterChildExited(workspaceId: workspace.id, surfaceId: remotePanelId)
         drainMainQueue()
         drainMainQueue()
 
@@ -240,7 +240,7 @@ final class WorkspaceManagerChildExitCloseTests: XCTestCase {
 
         XCTAssertFalse(workspace.isRemoteWorkspace)
 
-        manager.closePanelAfterChildExited(tabId: workspace.id, surfaceId: remotePanelId)
+        manager.closePanelAfterChildExited(workspaceId: workspace.id, surfaceId: remotePanelId)
         drainMainQueue()
         drainMainQueue()
 
@@ -268,7 +268,7 @@ final class WorkspaceManagerChildExitCloseTests: XCTestCase {
         }
 
         let panelCountBefore = workspace.panels.count
-        manager.closePanelAfterChildExited(tabId: workspace.id, surfaceId: splitPanel.id)
+        manager.closePanelAfterChildExited(workspaceId: workspace.id, surfaceId: splitPanel.id)
 
         XCTAssertEqual(manager.workspaces.count, 1)
         XCTAssertEqual(manager.workspaces.first?.id, workspace.id)
@@ -283,8 +283,8 @@ final class WorkspaceManagerWorkspaceOwnershipTests: XCTestCase {
     func testCloseWorkspaceIgnoresWorkspaceNotOwnedByManager() {
         let manager = WorkspaceManager()
         _ = manager.addWorkspace()
-        let initialTabIds = manager.workspaces.map(\.id)
-        let initialSelectedTabId = manager.selectedWorkspaceId
+        let initialWorkspaceIds = manager.workspaces.map(\.id)
+        let initialSelectedWorkspaceId = manager.selectedWorkspaceId
 
         let externalWorkspace = Workspace(title: "External workspace")
         let externalPanelCountBefore = externalWorkspace.panels.count
@@ -292,8 +292,8 @@ final class WorkspaceManagerWorkspaceOwnershipTests: XCTestCase {
 
         manager.closeWorkspace(externalWorkspace)
 
-        XCTAssertEqual(manager.workspaces.map(\.id), initialTabIds)
-        XCTAssertEqual(manager.selectedWorkspaceId, initialSelectedTabId)
+        XCTAssertEqual(manager.workspaces.map(\.id), initialWorkspaceIds)
+        XCTAssertEqual(manager.selectedWorkspaceId, initialSelectedWorkspaceId)
         XCTAssertEqual(externalWorkspace.panels.count, externalPanelCountBefore)
         XCTAssertEqual(externalWorkspace.panelTitles, externalPanelTitlesBefore)
     }
@@ -512,7 +512,7 @@ final class WorkspaceManagerPullRequestProbeTests: XCTestCase {
             return
         }
 
-        manager.updateSurfaceDirectory(tabId: workspace.id, surfaceId: panelId, directory: directoryURL.path)
+        manager.updateSurfaceDirectory(workspaceId: workspace.id, surfaceId: panelId, directory: directoryURL.path)
 
         XCTAssertTrue(
             waitForCondition {
@@ -590,8 +590,8 @@ final class WorkspaceManagerPullRequestProbeTests: XCTestCase {
             return
         }
 
-        manager.updateSurfaceDirectory(tabId: workspace.id, surfaceId: panelId, directory: repoURL.path)
-        manager.updateSurfaceGitBranch(tabId: workspace.id, surfaceId: panelId, branch: "main", isDirty: false)
+        manager.updateSurfaceDirectory(workspaceId: workspace.id, surfaceId: panelId, directory: repoURL.path)
+        manager.updateSurfaceGitBranch(workspaceId: workspace.id, surfaceId: panelId, branch: "main", isDirty: false)
 
         XCTAssertEqual(
             manager.trackedWorkspaceGitMetadataPollCandidatePanelIdsForTesting(workspaceId: workspace.id),
@@ -637,9 +637,9 @@ final class WorkspaceManagerPullRequestProbeTests: XCTestCase {
             return
         }
 
-        manager.updateSurfaceDirectory(tabId: workspace.id, surfaceId: panelId, directory: repoURL.path)
-        manager.updateSurfaceGitBranch(tabId: workspace.id, surfaceId: panelId, branch: "main", isDirty: false)
-        manager.clearSurfaceGitBranch(tabId: workspace.id, surfaceId: panelId)
+        manager.updateSurfaceDirectory(workspaceId: workspace.id, surfaceId: panelId, directory: repoURL.path)
+        manager.updateSurfaceGitBranch(workspaceId: workspace.id, surfaceId: panelId, branch: "main", isDirty: false)
+        manager.clearSurfaceGitBranch(workspaceId: workspace.id, surfaceId: panelId)
 
         XCTAssertNil(workspace.panelGitBranches[panelId])
 
@@ -746,8 +746,8 @@ final class WorkspaceManagerPullRequestProbeTests: XCTestCase {
             return
         }
 
-        manager.updateSurfaceDirectory(tabId: workspace.id, surfaceId: panelId, directory: repoURL.path)
-        manager.updateSurfaceGitBranch(tabId: workspace.id, surfaceId: panelId, branch: "feature/sidebar-pr", isDirty: false)
+        manager.updateSurfaceDirectory(workspaceId: workspace.id, surfaceId: panelId, directory: repoURL.path)
+        manager.updateSurfaceGitBranch(workspaceId: workspace.id, surfaceId: panelId, branch: "feature/sidebar-pr", isDirty: false)
         workspace.updatePanelPullRequest(
             panelId: panelId,
             number: 1052,
@@ -784,9 +784,9 @@ final class WorkspaceManagerCloseWorkspacesWithConfirmationTests: XCTestCase {
         let manager = WorkspaceManager()
         let second = manager.addWorkspace()
         let third = manager.addWorkspace()
-        manager.setCustomTitle(tabId: manager.workspaces[0].id, title: "Alpha")
-        manager.setCustomTitle(tabId: second.id, title: "Beta")
-        manager.setCustomTitle(tabId: third.id, title: "Gamma")
+        manager.setCustomTitle(workspaceId: manager.workspaces[0].id, title: "Alpha")
+        manager.setCustomTitle(workspaceId: second.id, title: "Beta")
+        manager.setCustomTitle(workspaceId: third.id, title: "Gamma")
 
         var prompts: [(title: String, message: String, acceptCmdD: Bool)] = []
         manager.confirmCloseHandler = { title, message, acceptCmdD in
@@ -818,8 +818,8 @@ final class WorkspaceManagerCloseWorkspacesWithConfirmationTests: XCTestCase {
     func testCloseWorkspacesWithConfirmationKeepsWorkspacesWhenCancelled() {
         let manager = WorkspaceManager()
         let second = manager.addWorkspace()
-        manager.setCustomTitle(tabId: manager.workspaces[0].id, title: "Alpha")
-        manager.setCustomTitle(tabId: second.id, title: "Beta")
+        manager.setCustomTitle(workspaceId: manager.workspaces[0].id, title: "Alpha")
+        manager.setCustomTitle(workspaceId: second.id, title: "Beta")
 
         var prompts: [(title: String, message: String, acceptCmdD: Bool)] = []
         manager.confirmCloseHandler = { title, message, acceptCmdD in
@@ -852,9 +852,9 @@ final class WorkspaceManagerCloseWorkspacesWithConfirmationTests: XCTestCase {
         let manager = WorkspaceManager()
         let second = manager.addWorkspace()
         let third = manager.addWorkspace()
-        manager.setCustomTitle(tabId: manager.workspaces[0].id, title: "Alpha")
-        manager.setCustomTitle(tabId: second.id, title: "Beta")
-        manager.setCustomTitle(tabId: third.id, title: "Gamma")
+        manager.setCustomTitle(workspaceId: manager.workspaces[0].id, title: "Alpha")
+        manager.setCustomTitle(workspaceId: second.id, title: "Beta")
+        manager.setCustomTitle(workspaceId: third.id, title: "Gamma")
         manager.selectWorkspace(second)
         manager.setSidebarSelectedWorkspaceIds([manager.workspaces[0].id, second.id])
 
@@ -907,7 +907,7 @@ final class WorkspaceManagerCloseCurrentPanelTests: XCTestCase {
             return false
         }
 
-        manager.closeRuntimeSurfaceWithConfirmation(tabId: workspace.id, surfaceId: panelId)
+        manager.closeRuntimeSurfaceWithConfirmation(workspaceId: workspace.id, surfaceId: panelId)
         drainMainQueue()
         drainMainQueue()
 
@@ -934,7 +934,7 @@ final class WorkspaceManagerCloseCurrentPanelTests: XCTestCase {
             return false
         }
 
-        manager.closeRuntimeSurfaceWithConfirmation(tabId: workspace.id, surfaceId: panelId)
+        manager.closeRuntimeSurfaceWithConfirmation(workspaceId: workspace.id, surfaceId: panelId)
 
         XCTAssertEqual(promptCount, 1, "Running commands should still require confirmation")
         XCTAssertNotNil(workspace.panels[panelId], "Prompt rejection should keep the original panel open")
@@ -1163,7 +1163,7 @@ final class WorkspaceManagerCloseCurrentPanelTests: XCTestCase {
         let firstWorkspace = manager.workspaces[0]
         let secondWorkspace = manager.addWorkspace()
 
-        manager.closePanelWithConfirmation(tabId: secondWorkspace.id, surfaceId: UUID())
+        manager.closePanelWithConfirmation(workspaceId: secondWorkspace.id, surfaceId: UUID())
 
         XCTAssertEqual(manager.workspaces.map(\.id), [firstWorkspace.id, secondWorkspace.id])
     }
@@ -1194,19 +1194,19 @@ final class WorkspaceManagerCloseCurrentPanelTests: XCTestCase {
         }
 
         store.addNotification(
-            tabId: workspace.id,
+            workspaceId: workspace.id,
             surfaceId: initialPanelId,
             title: "Unread",
             subtitle: "",
             body: ""
         )
-        XCTAssertTrue(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: initialPanelId))
+        XCTAssertTrue(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: initialPanelId))
 
         manager.closeCurrentPanelWithConfirmation()
         drainMainQueue()
         drainMainQueue()
 
-        XCTAssertFalse(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: initialPanelId))
+        XCTAssertFalse(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: initialPanelId))
     }
 }
 
@@ -1294,15 +1294,15 @@ final class WorkspaceManagerNotificationFocusTests: XCTestCase {
 
         workspace.focusPanel(leftPanelId)
         store.addNotification(
-            tabId: workspace.id,
+            workspaceId: workspace.id,
             surfaceId: rightPanel.id,
             title: "Unread",
             subtitle: "",
             body: "Right pane should dismiss attention when focused from a notification"
         )
 
-        XCTAssertTrue(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: rightPanel.id))
-        XCTAssertTrue(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: rightPanel.id))
+        XCTAssertTrue(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: rightPanel.id))
+        XCTAssertTrue(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: rightPanel.id))
         XCTAssertEqual(workspace.tmuxWorkspaceFlashToken, 0)
 
         XCTAssertTrue(manager.focusTabFromNotification(workspace.id, surfaceId: rightPanel.id))
@@ -1314,8 +1314,8 @@ final class WorkspaceManagerNotificationFocusTests: XCTestCase {
         wait(for: [expectation], timeout: 1)
 
         XCTAssertEqual(workspace.focusedPanelId, rightPanel.id)
-        XCTAssertFalse(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: rightPanel.id))
-        XCTAssertFalse(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: rightPanel.id))
+        XCTAssertFalse(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: rightPanel.id))
+        XCTAssertFalse(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: rightPanel.id))
         XCTAssertEqual(workspace.tmuxWorkspaceFlashToken, 1)
         XCTAssertEqual(workspace.tmuxWorkspaceFlashPanelId, rightPanel.id)
         XCTAssertEqual(workspace.tmuxWorkspaceFlashReason, .notificationDismiss)
@@ -1326,12 +1326,12 @@ final class WorkspaceManagerNotificationFocusTests: XCTestCase {
 @MainActor
 final class WorkspaceManagerPendingUnfocusPolicyTests: XCTestCase {
     func testDoesNotUnfocusWhenPendingTabIsCurrentlySelected() {
-        let tabId = UUID()
+        let workspaceId = UUID()
 
         XCTAssertFalse(
             WorkspaceManager.shouldUnfocusPendingWorkspace(
-                pendingTabId: tabId,
-                selectedWorkspaceId: tabId
+                pendingWorkspaceId: workspaceId,
+                selectedWorkspaceId: workspaceId
             )
         )
     }
@@ -1339,13 +1339,13 @@ final class WorkspaceManagerPendingUnfocusPolicyTests: XCTestCase {
     func testUnfocusesWhenPendingTabIsNotSelected() {
         XCTAssertTrue(
             WorkspaceManager.shouldUnfocusPendingWorkspace(
-                pendingTabId: UUID(),
+                pendingWorkspaceId: UUID(),
                 selectedWorkspaceId: UUID()
             )
         )
         XCTAssertTrue(
             WorkspaceManager.shouldUnfocusPendingWorkspace(
-                pendingTabId: UUID(),
+                pendingWorkspaceId: UUID(),
                 selectedWorkspaceId: nil
             )
         )
@@ -1531,7 +1531,7 @@ final class WorkspaceManagerEqualizeSplitsTests: XCTestCase {
             )
         }
 
-        XCTAssertTrue(manager.equalizeSplits(tabId: workspace.id), "Expected equalize splits command to succeed")
+        XCTAssertTrue(manager.equalizeSplits(workspaceId: workspace.id), "Expected equalize splits command to succeed")
 
         let equalizedSplits = splitNodes(in: workspace.bonsplitController.treeSnapshot())
         XCTAssertEqual(equalizedSplits.count, initialSplits.count)
@@ -1564,7 +1564,7 @@ final class WorkspaceManagerResizeSplitsTests: XCTestCase {
         )
 
         XCTAssertTrue(
-            manager.resizeSplit(tabId: workspace.id, surfaceId: leftPanelId, direction: .right, amount: 120),
+            manager.resizeSplit(workspaceId: workspace.id, surfaceId: leftPanelId, direction: .right, amount: 120),
             "Expected resizeSplit to succeed for the right edge of the left pane"
         )
 
@@ -1601,7 +1601,7 @@ final class WorkspaceManagerResizeSplitsTests: XCTestCase {
         )
 
         XCTAssertTrue(
-            manager.resizeSplit(tabId: workspace.id, surfaceId: rightPanel.id, direction: .left, amount: 120),
+            manager.resizeSplit(workspaceId: workspace.id, surfaceId: rightPanel.id, direction: .left, amount: 120),
             "Expected resizeSplit to succeed for the left edge of the right pane"
         )
 
@@ -1638,7 +1638,7 @@ final class WorkspaceManagerResizeSplitsTests: XCTestCase {
         )
 
         XCTAssertTrue(
-            manager.resizeSplit(tabId: workspace.id, surfaceId: topPanelId, direction: .down, amount: 120),
+            manager.resizeSplit(workspaceId: workspace.id, surfaceId: topPanelId, direction: .down, amount: 120),
             "Expected resizeSplit to succeed for the bottom edge of the top pane"
         )
 
@@ -1675,7 +1675,7 @@ final class WorkspaceManagerResizeSplitsTests: XCTestCase {
         )
 
         XCTAssertTrue(
-            manager.resizeSplit(tabId: workspace.id, surfaceId: bottomPanel.id, direction: .up, amount: 120),
+            manager.resizeSplit(workspaceId: workspace.id, surfaceId: bottomPanel.id, direction: .up, amount: 120),
             "Expected resizeSplit to succeed for the top edge of the bottom pane"
         )
 
@@ -1706,7 +1706,7 @@ final class WorkspaceManagerResizeSplitsTests: XCTestCase {
         }
 
         XCTAssertFalse(
-            manager.resizeSplit(tabId: workspace.id, surfaceId: leftPanelId, direction: .left, amount: 120),
+            manager.resizeSplit(workspaceId: workspace.id, surfaceId: leftPanelId, direction: .left, amount: 120),
             "Expected resizeSplit to fail when the pane has no adjacent border in that direction"
         )
 
@@ -1738,7 +1738,7 @@ final class WorkspaceManagerResizeSplitsTests: XCTestCase {
         )
 
         XCTAssertTrue(
-            manager.resizeSplit(tabId: workspace.id, surfaceId: leftPanelId, direction: .right, amount: 10_000),
+            manager.resizeSplit(workspaceId: workspace.id, surfaceId: leftPanelId, direction: .right, amount: 10_000),
             "Expected resizeSplit to clamp instead of failing"
         )
 
@@ -1771,7 +1771,7 @@ final class WorkspaceManagerResizeSplitsTests: XCTestCase {
         )
 
         XCTAssertTrue(
-            manager.resizeSplit(tabId: workspace.id, surfaceId: bottomPanel.id, direction: .up, amount: 10_000),
+            manager.resizeSplit(workspaceId: workspace.id, surfaceId: bottomPanel.id, direction: .up, amount: 10_000),
             "Expected resizeSplit to clamp instead of failing"
         )
 
@@ -1891,23 +1891,23 @@ final class WorkspaceManagerFocusedNotificationIndicatorTests: XCTestCase {
         }
 
         store.addNotification(
-            tabId: workspace.id,
+            workspaceId: workspace.id,
             surfaceId: leftPanelId,
             title: "Unread",
             subtitle: "",
             body: "Left pane should dismiss attention when focused"
         )
 
-        XCTAssertTrue(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: leftPanelId))
-        XCTAssertTrue(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: leftPanelId))
+        XCTAssertTrue(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: leftPanelId))
+        XCTAssertTrue(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: leftPanelId))
         XCTAssertEqual(workspace.focusedPanelId, rightPanel.id)
         XCTAssertEqual(workspace.tmuxWorkspaceFlashToken, 0)
 
         workspace.focusPanel(leftPanelId)
 
         XCTAssertEqual(workspace.focusedPanelId, leftPanelId)
-        XCTAssertFalse(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: leftPanelId))
-        XCTAssertFalse(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: leftPanelId))
+        XCTAssertFalse(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: leftPanelId))
+        XCTAssertFalse(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: leftPanelId))
         XCTAssertEqual(workspace.tmuxWorkspaceFlashToken, 1)
         XCTAssertEqual(workspace.tmuxWorkspaceFlashPanelId, leftPanelId)
         XCTAssertEqual(workspace.tmuxWorkspaceFlashReason, .notificationDismiss)
@@ -1942,13 +1942,13 @@ final class WorkspaceManagerFocusedNotificationIndicatorTests: XCTestCase {
             return
         }
 
-        store.setFocusedReadIndicator(forTabId: workspace.id, surfaceId: panelId)
-        XCTAssertTrue(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: panelId))
+        store.setFocusedReadIndicator(forWorkspaceId: workspace.id, surfaceId: panelId)
+        XCTAssertTrue(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: panelId))
 
         XCTAssertTrue(
-            manager.dismissNotificationOnDirectInteraction(tabId: workspace.id, surfaceId: panelId)
+            manager.dismissNotificationOnDirectInteraction(workspaceId: workspace.id, surfaceId: panelId)
         )
-        XCTAssertFalse(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: panelId))
+        XCTAssertFalse(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: panelId))
     }
 
     func testDismissNotificationOnDirectInteractionTriggersDismissFlashForFocusedIndicatorOnly() {
@@ -1995,16 +1995,16 @@ final class WorkspaceManagerFocusedNotificationIndicatorTests: XCTestCase {
             return
         }
 
-        store.setFocusedReadIndicator(forTabId: workspace.id, surfaceId: panelId)
-        XCTAssertTrue(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: panelId))
-        XCTAssertFalse(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: panelId))
+        store.setFocusedReadIndicator(forWorkspaceId: workspace.id, surfaceId: panelId)
+        XCTAssertTrue(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: panelId))
+        XCTAssertFalse(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: panelId))
         XCTAssertEqual(workspace.tmuxWorkspaceFlashToken, 0)
 
         XCTAssertTrue(
-            manager.dismissNotificationOnDirectInteraction(tabId: workspace.id, surfaceId: panelId)
+            manager.dismissNotificationOnDirectInteraction(workspaceId: workspace.id, surfaceId: panelId)
         )
 
-        XCTAssertFalse(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: panelId))
+        XCTAssertFalse(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: panelId))
         XCTAssertEqual(
             workspace.tmuxWorkspaceFlashToken,
             1,
@@ -2069,7 +2069,7 @@ final class WorkspaceManagerReopenClosedBrowserFocusTests: XCTestCase {
         guard let workspace1 = manager.selectedWorkspace,
               let sourcePanelId = workspace1.focusedPanelId,
               let splitBrowserId = manager.newBrowserSplit(
-                tabId: workspace1.id,
+                workspaceId: workspace1.id,
                 fromPanelId: sourcePanelId,
                 orientation: .horizontal,
                 insertFirst: false,

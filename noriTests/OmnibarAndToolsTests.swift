@@ -700,7 +700,7 @@ final class OmnibarSuggestionRankingTests: XCTestCase {
             historyEntries: entries,
             openTabMatches: [
                 .init(
-                    tabId: UUID(),
+                    workspaceId: UUID(),
                     panelId: UUID(),
                     url: "https://gmail.com/",
                     title: "Gmail",
@@ -833,7 +833,7 @@ final class OmnibarSuggestionRankingTests: XCTestCase {
             historyEntries: entries,
             openTabMatches: [
                 .init(
-                    tabId: UUID(),
+                    workspaceId: UUID(),
                     panelId: UUID(),
                     url: "https://google.com/maps",
                     title: "Google Maps",

@@ -98,7 +98,7 @@ final class TerminalPanel: Panel, ObservableObject {
         additionalEnvironment: [String: String] = [:]
     ) {
         let surface = TerminalSurface(
-            tabId: workspaceId,
+            workspaceId: workspaceId,
             context: context,
             configTemplate: configTemplate,
             workingDirectory: workingDirectory,

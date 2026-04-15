@@ -837,13 +837,13 @@ struct noriApp: App {
     }
 
     private func notificationMenuItemTitle(for notification: TerminalNotification) -> String {
-        let tabTitle = appDelegate.tabTitle(for: notification.tabId)
+        let tabTitle = appDelegate.tabTitle(for: notification.workspaceId)
         return MenuBarNotificationLineFormatter.menuTitle(notification: notification, tabTitle: tabTitle)
     }
 
     private func openNotificationFromMainMenu(_ notification: TerminalNotification) {
         _ = appDelegate.openNotification(
-            tabId: notification.tabId,
+            workspaceId: notification.workspaceId,
             surfaceId: notification.surfaceId,
             notificationId: notification.id
         )
@@ -879,7 +879,7 @@ struct noriApp: App {
 
     private func clearSelectedWorkspaceCustomName(in manager: WorkspaceManager) {
         guard let workspace = manager.selectedWorkspace else { return }
-        manager.clearCustomTitle(tabId: workspace.id)
+        manager.clearCustomTitle(workspaceId: workspace.id)
     }
 
     private func moveSelectedWorkspace(in manager: WorkspaceManager, by delta: Int) {
@@ -887,7 +887,7 @@ struct noriApp: App {
               let currentIndex = selectedWorkspaceIndex(in: manager, workspaceId: workspace.id) else { return }
         let targetIndex = currentIndex + delta
         guard targetIndex >= 0, targetIndex < manager.workspaces.count else { return }
-        _ = manager.reorderWorkspace(tabId: workspace.id, toIndex: targetIndex)
+        _ = manager.reorderWorkspace(workspaceId: workspace.id, toIndex: targetIndex)
         manager.selectWorkspace(workspace)
     }
 
@@ -937,22 +937,22 @@ struct noriApp: App {
 
     private func selectedWorkspaceHasUnreadNotifications(in manager: WorkspaceManager) -> Bool {
         guard let workspaceId = manager.selectedWorkspace?.id else { return false }
-        return notificationStore.notifications.contains { $0.tabId == workspaceId && !$0.isRead }
+        return notificationStore.notifications.contains { $0.workspaceId == workspaceId && !$0.isRead }
     }
 
     private func selectedWorkspaceHasReadNotifications(in manager: WorkspaceManager) -> Bool {
         guard let workspaceId = manager.selectedWorkspace?.id else { return false }
-        return notificationStore.notifications.contains { $0.tabId == workspaceId && $0.isRead }
+        return notificationStore.notifications.contains { $0.workspaceId == workspaceId && $0.isRead }
     }
 
     private func markSelectedWorkspaceRead(in manager: WorkspaceManager) {
         guard let workspaceId = manager.selectedWorkspace?.id else { return }
-        notificationStore.markRead(forTabId: workspaceId)
+        notificationStore.markRead(forWorkspaceId: workspaceId)
     }
 
     private func markSelectedWorkspaceUnread(in manager: WorkspaceManager) {
         guard let workspaceId = manager.selectedWorkspace?.id else { return }
-        notificationStore.markUnread(forTabId: workspaceId)
+        notificationStore.markUnread(forWorkspaceId: workspaceId)
     }
 
     @ViewBuilder

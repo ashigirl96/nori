@@ -295,9 +295,9 @@ final class NoriConfigStore: ObservableObject {
         cancellables.removeAll()
 
         workspaceManager.$selectedWorkspaceId
-            .compactMap { [weak workspaceManager] tabId -> Workspace? in
-                guard let tabId, let workspaceManager else { return nil }
-                return workspaceManager.workspaces.first(where: { $0.id == tabId })
+            .compactMap { [weak workspaceManager] workspaceId -> Workspace? in
+                guard let workspaceId, let workspaceManager else { return nil }
+                return workspaceManager.workspaces.first(where: { $0.id == workspaceId })
             }
             .removeDuplicates(by: { $0.id == $1.id })
             .map { workspace -> AnyPublisher<String, Never> in

@@ -1219,7 +1219,7 @@ final class AppDelegateShortcutRoutingTests: XCTestCase {
         leftPanel.hostedView.clearSuppressReparentFocus()
         XCTAssertTrue(window.firstResponder === leftSurfaceView, "Expected left Ghostty surface to stay first responder")
         XCTAssertEqual(workspace.focusedPanelId, rightPanel.id, "Expected selected pane to stay stale after first-responder change")
-        XCTAssertEqual(leftSurfaceView.tabId, workspace.id, "Expected focused Ghostty view to keep its workspace ID")
+        XCTAssertEqual(leftSurfaceView.workspaceId, workspace.id, "Expected focused Ghostty view to keep its workspace ID")
         XCTAssertEqual(leftSurfaceView.terminalSurface?.id, leftPanel.id, "Expected focused Ghostty view to keep its surface ID")
 
         XCTAssertTrue(

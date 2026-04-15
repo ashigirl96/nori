@@ -491,7 +491,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         }
 
         store.addNotification(
-            tabId: workspace.id,
+            workspaceId: workspace.id,
             surfaceId: terminalPanel.id,
             title: "Unread",
             subtitle: "",
@@ -499,7 +499,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         )
 
         let createdNotificationID = try XCTUnwrap(store.notifications.first?.id)
-        XCTAssertTrue(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: terminalPanel.id))
+        XCTAssertTrue(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: terminalPanel.id))
         XCTAssertTrue(deliveredNotificationIDs.isEmpty)
         XCTAssertEqual(localFeedbackNotificationIDs.count, 1)
         XCTAssertEqual(localFeedbackNotificationIDs, [createdNotificationID])
@@ -564,7 +564,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         }
 
         store.addNotification(
-            tabId: workspace.id,
+            workspaceId: workspace.id,
             surfaceId: terminalPanel.id,
             title: "",
             subtitle: "Focused subtitle",
@@ -719,7 +719,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         let surfaceB = UUID()
         let notificationAUnread = TerminalNotification(
             id: UUID(),
-            tabId: tabA,
+            workspaceId: tabA,
             surfaceId: surfaceA,
             title: "A unread",
             subtitle: "",
@@ -729,7 +729,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         )
         let notificationARead = TerminalNotification(
             id: UUID(),
-            tabId: tabA,
+            workspaceId: tabA,
             surfaceId: surfaceB,
             title: "A read",
             subtitle: "",
@@ -739,7 +739,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         )
         let notificationBUnread = TerminalNotification(
             id: UUID(),
-            tabId: tabB,
+            workspaceId: tabB,
             surfaceId: nil,
             title: "B unread",
             subtitle: "",
@@ -756,13 +756,13 @@ final class NotificationDockBadgeTests: XCTestCase {
         ])
 
         XCTAssertEqual(store.unreadCount, 2)
-        XCTAssertEqual(store.unreadCount(forTabId: tabA), 1)
-        XCTAssertEqual(store.unreadCount(forTabId: tabB), 1)
-        XCTAssertTrue(store.hasUnreadNotification(forTabId: tabA, surfaceId: surfaceA))
-        XCTAssertFalse(store.hasUnreadNotification(forTabId: tabA, surfaceId: surfaceB))
-        XCTAssertTrue(store.hasUnreadNotification(forTabId: tabB, surfaceId: nil))
-        XCTAssertEqual(store.latestNotification(forTabId: tabA)?.id, notificationAUnread.id)
-        XCTAssertEqual(store.latestNotification(forTabId: tabB)?.id, notificationBUnread.id)
+        XCTAssertEqual(store.unreadCount(forWorkspaceId: tabA), 1)
+        XCTAssertEqual(store.unreadCount(forWorkspaceId: tabB), 1)
+        XCTAssertTrue(store.hasUnreadNotification(forWorkspaceId: tabA, surfaceId: surfaceA))
+        XCTAssertFalse(store.hasUnreadNotification(forWorkspaceId: tabA, surfaceId: surfaceB))
+        XCTAssertTrue(store.hasUnreadNotification(forWorkspaceId: tabB, surfaceId: nil))
+        XCTAssertEqual(store.latestNotification(forWorkspaceId: tabA)?.id, notificationAUnread.id)
+        XCTAssertEqual(store.latestNotification(forWorkspaceId: tabB)?.id, notificationBUnread.id)
     }
 
     func testNotificationIndexesUpdateAfterReadAndClearMutations() {
@@ -771,7 +771,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         let surfaceRead = UUID()
         let unreadNotification = TerminalNotification(
             id: UUID(),
-            tabId: tab,
+            workspaceId: tab,
             surfaceId: surfaceUnread,
             title: "Unread",
             subtitle: "",
@@ -781,7 +781,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         )
         let readNotification = TerminalNotification(
             id: UUID(),
-            tabId: tab,
+            workspaceId: tab,
             surfaceId: surfaceRead,
             title: "Read",
             subtitle: "",
@@ -792,17 +792,17 @@ final class NotificationDockBadgeTests: XCTestCase {
 
         let store = TerminalNotificationStore.shared
         store.replaceNotificationsForTesting([unreadNotification, readNotification])
-        XCTAssertEqual(store.unreadCount(forTabId: tab), 1)
-        XCTAssertTrue(store.hasUnreadNotification(forTabId: tab, surfaceId: surfaceUnread))
+        XCTAssertEqual(store.unreadCount(forWorkspaceId: tab), 1)
+        XCTAssertTrue(store.hasUnreadNotification(forWorkspaceId: tab, surfaceId: surfaceUnread))
 
-        store.markRead(forTabId: tab, surfaceId: surfaceUnread)
-        XCTAssertEqual(store.unreadCount(forTabId: tab), 0)
-        XCTAssertFalse(store.hasUnreadNotification(forTabId: tab, surfaceId: surfaceUnread))
-        XCTAssertEqual(store.latestNotification(forTabId: tab)?.id, unreadNotification.id)
+        store.markRead(forWorkspaceId: tab, surfaceId: surfaceUnread)
+        XCTAssertEqual(store.unreadCount(forWorkspaceId: tab), 0)
+        XCTAssertFalse(store.hasUnreadNotification(forWorkspaceId: tab, surfaceId: surfaceUnread))
+        XCTAssertEqual(store.latestNotification(forWorkspaceId: tab)?.id, unreadNotification.id)
 
-        store.clearNotifications(forTabId: tab)
-        XCTAssertEqual(store.unreadCount(forTabId: tab), 0)
-        XCTAssertNil(store.latestNotification(forTabId: tab))
+        store.clearNotifications(forWorkspaceId: tab)
+        XCTAssertEqual(store.unreadCount(forWorkspaceId: tab), 0)
+        XCTAssertNil(store.latestNotification(forWorkspaceId: tab))
     }
 
     func testClearLatestNotificationRemovesOnlyCurrentSidebarPreviewSource() {
@@ -811,7 +811,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         let previousSurface = UUID()
         let latestNotification = TerminalNotification(
             id: UUID(),
-            tabId: tab,
+            workspaceId: tab,
             surfaceId: latestSurface,
             title: "Latest",
             subtitle: "",
@@ -821,7 +821,7 @@ final class NotificationDockBadgeTests: XCTestCase {
         )
         let previousNotification = TerminalNotification(
             id: UUID(),
-            tabId: tab,
+            workspaceId: tab,
             surfaceId: previousSurface,
             title: "Previous",
             subtitle: "",
@@ -832,10 +832,10 @@ final class NotificationDockBadgeTests: XCTestCase {
 
         let store = TerminalNotificationStore.shared
         store.replaceNotificationsForTesting([latestNotification, previousNotification])
-        XCTAssertEqual(store.latestNotification(forTabId: tab)?.id, latestNotification.id)
+        XCTAssertEqual(store.latestNotification(forWorkspaceId: tab)?.id, latestNotification.id)
 
-        store.clearLatestNotification(forTabId: tab)
-        XCTAssertEqual(store.latestNotification(forTabId: tab)?.id, previousNotification.id)
+        store.clearLatestNotification(forWorkspaceId: tab)
+        XCTAssertEqual(store.latestNotification(forWorkspaceId: tab)?.id, previousNotification.id)
     }
 }
 
@@ -882,24 +882,24 @@ final class FocusedNotificationIndicatorTests: XCTestCase {
         }
 
         store.addNotification(
-            tabId: workspace.id,
+            workspaceId: workspace.id,
             surfaceId: panelId,
             title: "Focused",
             subtitle: "",
             body: ""
         )
 
-        XCTAssertTrue(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: panelId))
-        XCTAssertTrue(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: panelId))
+        XCTAssertTrue(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: panelId))
+        XCTAssertTrue(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: panelId))
 
-        store.markRead(forTabId: workspace.id, surfaceId: panelId)
+        store.markRead(forWorkspaceId: workspace.id, surfaceId: panelId)
 
-        XCTAssertFalse(store.hasUnreadNotification(forTabId: workspace.id, surfaceId: panelId))
-        XCTAssertTrue(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: panelId))
+        XCTAssertFalse(store.hasUnreadNotification(forWorkspaceId: workspace.id, surfaceId: panelId))
+        XCTAssertTrue(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: panelId))
 
-        store.clearFocusedReadIndicator(forTabId: workspace.id, surfaceId: panelId)
+        store.clearFocusedReadIndicator(forWorkspaceId: workspace.id, surfaceId: panelId)
 
-        XCTAssertFalse(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: panelId))
+        XCTAssertFalse(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: panelId))
     }
 
     func testNewNotificationOnDifferentSurfaceClearsPreviousFocusedReadIndicator() {
@@ -934,18 +934,18 @@ final class FocusedNotificationIndicatorTests: XCTestCase {
 
         workspace.focusPanel(rightPanel.id)
 
-        store.setFocusedReadIndicator(forTabId: workspace.id, surfaceId: rightPanel.id)
-        XCTAssertTrue(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: rightPanel.id))
+        store.setFocusedReadIndicator(forWorkspaceId: workspace.id, surfaceId: rightPanel.id)
+        XCTAssertTrue(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: rightPanel.id))
 
         store.addNotification(
-            tabId: workspace.id,
+            workspaceId: workspace.id,
             surfaceId: leftPanelId,
             title: "Left",
             subtitle: "",
             body: ""
         )
 
-        XCTAssertFalse(store.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: rightPanel.id))
+        XCTAssertFalse(store.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: rightPanel.id))
     }
 }
 
@@ -955,7 +955,7 @@ final class NotificationMenuSnapshotBuilderTests: XCTestCase {
         let notifications = (0..<8).map { index in
             TerminalNotification(
                 id: UUID(),
-                tabId: UUID(),
+                workspaceId: UUID(),
                 surfaceId: nil,
                 title: "N\(index)",
                 subtitle: "",
@@ -1010,7 +1010,7 @@ final class MenuBarNotificationLineFormatterTests: XCTestCase {
     func testPlainTitleContainsUnreadDotBodyAndTab() {
         let notification = TerminalNotification(
             id: UUID(),
-            tabId: UUID(),
+            workspaceId: UUID(),
             surfaceId: nil,
             title: "Build finished",
             subtitle: "",
@@ -1028,7 +1028,7 @@ final class MenuBarNotificationLineFormatterTests: XCTestCase {
     func testPlainTitleFallsBackToSubtitleWhenBodyEmpty() {
         let notification = TerminalNotification(
             id: UUID(),
-            tabId: UUID(),
+            workspaceId: UUID(),
             surfaceId: nil,
             title: "Deploy",
             subtitle: "staging",
@@ -1045,7 +1045,7 @@ final class MenuBarNotificationLineFormatterTests: XCTestCase {
     func testMenuTitleWrapsAndTruncatesToThreeLines() {
         let notification = TerminalNotification(
             id: UUID(),
-            tabId: UUID(),
+            workspaceId: UUID(),
             surfaceId: nil,
             title: "Extremely long notification title for wrapping behavior validation",
             subtitle: "",
@@ -1068,7 +1068,7 @@ final class MenuBarNotificationLineFormatterTests: XCTestCase {
     func testMenuTitlePreservesShortTextWithoutEllipsis() {
         let notification = TerminalNotification(
             id: UUID(),
-            tabId: UUID(),
+            workspaceId: UUID(),
             surfaceId: nil,
             title: "Done",
             subtitle: "",

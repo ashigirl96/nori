@@ -1274,8 +1274,8 @@ private final class GhosttySurfaceCallbackContext {
         self.surfaceId = terminalSurface.id
     }
 
-    var tabId: UUID? {
-        terminalSurface?.tabId ?? surfaceView?.tabId
+    var workspaceId: UUID? {
+        terminalSurface?.workspaceId ?? surfaceView?.workspaceId
     }
 
     var runtimeSurface: ghostty_surface_t? {
@@ -1672,13 +1672,13 @@ class GhosttyApp {
         runtimeConfig.close_surface_cb = { userdata, needsConfirmClose in
             guard let callbackContext = GhosttyApp.callbackContext(from: userdata) else { return }
             let callbackSurfaceId = callbackContext.surfaceId
-            let callbackTabId = callbackContext.tabId
+            let callbackWorkspaceId = callbackContext.workspaceId
 
 #if DEBUG
             noriWriteChildExitProbe(
                 [
                     "probeCloseSurfaceNeedsConfirm": needsConfirmClose ? "1" : "0",
-                    "probeCloseSurfaceTabId": callbackTabId?.uuidString ?? "",
+                    "probeCloseSurfaceWorkspaceId": callbackWorkspaceId?.uuidString ?? "",
                     "probeCloseSurfaceSurfaceId": callbackSurfaceId.uuidString,
                 ],
                 increments: ["probeCloseSurfaceCbCount": 1]
@@ -1689,18 +1689,18 @@ class GhosttyApp {
                 guard let app = AppDelegate.shared else { return }
                 // Close requests must be resolved by the callback's workspace/surface IDs only.
                 // If the mapping is already gone (duplicate/stale callback), ignore it.
-                if let callbackTabId,
-                   let manager = app.workspaceManagerFor(tabId: callbackTabId) ?? app.workspaceManager,
-                   let workspace = manager.workspaces.first(where: { $0.id == callbackTabId }),
+                if let callbackWorkspaceId,
+                   let manager = app.workspaceManagerFor(workspaceId: callbackWorkspaceId) ?? app.workspaceManager,
+                   let workspace = manager.workspaces.first(where: { $0.id == callbackWorkspaceId }),
                    workspace.panels[callbackSurfaceId] != nil {
                     if needsConfirmClose {
                         manager.closeRuntimeSurfaceWithConfirmation(
-                            tabId: callbackTabId,
+                            workspaceId: callbackWorkspaceId,
                             surfaceId: callbackSurfaceId
                         )
                     } else {
                         manager.closeRuntimeSurface(
-                            tabId: callbackTabId,
+                            workspaceId: callbackWorkspaceId,
                             surfaceId: callbackSurfaceId
                         )
                     }
@@ -2754,11 +2754,11 @@ class GhosttyApp {
         }
     }
 
-    private func logAction(_ action: ghostty_action_s, target: ghostty_target_s, tabId: UUID?, surfaceId: UUID?) {
+    private func logAction(_ action: ghostty_action_s, target: ghostty_target_s, workspaceId: UUID?, surfaceId: UUID?) {
         guard backgroundLogEnabled else { return }
         let targetLabel = target.tag == GHOSTTY_TARGET_SURFACE ? "surface" : "app"
         logBackground(
-            "action event target=\(targetLabel) action=\(actionLabel(for: action)) tab=\(tabId?.uuidString ?? "nil") surface=\(surfaceId?.uuidString ?? "nil")"
+            "action event target=\(targetLabel) action=\(actionLabel(for: action)) tab=\(workspaceId?.uuidString ?? "nil") surface=\(surfaceId?.uuidString ?? "nil")"
         )
     }
 
@@ -2815,7 +2815,7 @@ class GhosttyApp {
             if action.tag == GHOSTTY_ACTION_RELOAD_CONFIG ||
                 action.tag == GHOSTTY_ACTION_CONFIG_CHANGE ||
                 action.tag == GHOSTTY_ACTION_COLOR_CHANGE {
-                logAction(action, target: target, tabId: nil, surfaceId: nil)
+                logAction(action, target: target, workspaceId: nil, surfaceId: nil)
             }
 
             if action.tag == GHOSTTY_ACTION_DESKTOP_NOTIFICATION {
@@ -2825,23 +2825,23 @@ class GhosttyApp {
                     .flatMap { String(cString: $0) } ?? ""
                 return performOnMain {
                     guard let workspaceManager = AppDelegate.shared?.workspaceManager,
-                          let tabId = workspaceManager.selectedWorkspaceId else {
+                          let workspaceId = workspaceManager.selectedWorkspaceId else {
                         return false
                     }
                     // Suppress OSC notifications for workspaces with active Claude hook sessions.
                     // The hook system manages notifications with proper lifecycle tracking;
                     // raw OSC notifications would duplicate or outlive the structured hooks.
-                    let owningManager = AppDelegate.shared?.workspaceManagerFor(tabId: tabId) ?? workspaceManager
-                    if let workspace = owningManager.workspaces.first(where: { $0.id == tabId }),
+                    let owningManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId) ?? workspaceManager
+                    if let workspace = owningManager.workspaces.first(where: { $0.id == workspaceId }),
                        workspace.agentPIDs["claude_code"] != nil {
                         return true
                     }
-                    let tabTitle = owningManager.titleForTab(tabId) ?? "Terminal"
+                    let tabTitle = owningManager.titleForTab(workspaceId) ?? "Terminal"
                     let command = actionTitle.isEmpty ? tabTitle : actionTitle
                     let body = actionBody
-                    let surfaceId = workspaceManager.focusedSurfaceId(for: tabId)
+                    let surfaceId = workspaceManager.focusedSurfaceId(for: workspaceId)
                     TerminalNotificationStore.shared.addNotification(
-                        tabId: tabId,
+                        workspaceId: workspaceId,
                         surfaceId: surfaceId,
                         title: command,
                         subtitle: "",
@@ -2903,7 +2903,7 @@ class GhosttyApp {
             return false
         }
         let callbackContext = Self.callbackContext(from: ghostty_surface_userdata(target.target.surface))
-        let callbackTabId = callbackContext?.tabId
+        let callbackWorkspaceId = callbackContext?.workspaceId
         let callbackSurfaceId = callbackContext?.surfaceId
 
         if action.tag == GHOSTTY_ACTION_SHOW_CHILD_EXITED {
@@ -2913,14 +2913,14 @@ class GhosttyApp {
             // the panel immediately (no prompt).
 #if DEBUG
             dlog(
-                "surface.action.showChildExited tab=\(callbackTabId?.uuidString.prefix(5) ?? "nil") " +
+                "surface.action.showChildExited tab=\(callbackWorkspaceId?.uuidString.prefix(5) ?? "nil") " +
                 "surface=\(callbackSurfaceId?.uuidString.prefix(5) ?? "nil")"
             )
 #endif
 #if DEBUG
             noriWriteChildExitProbe(
                 [
-                    "probeShowChildExitedTabId": callbackTabId?.uuidString ?? "",
+                    "probeShowChildExitedWorkspaceId": callbackWorkspaceId?.uuidString ?? "",
                     "probeShowChildExitedSurfaceId": callbackSurfaceId?.uuidString ?? "",
                 ],
                 increments: ["probeShowChildExitedCount": 1]
@@ -2930,12 +2930,12 @@ class GhosttyApp {
             // dispatching this action callback.
             DispatchQueue.main.async {
                 guard let app = AppDelegate.shared else { return }
-                if let callbackTabId,
+                if let callbackWorkspaceId,
                    let callbackSurfaceId,
-                   let manager = app.workspaceManagerFor(tabId: callbackTabId) ?? app.workspaceManager,
-                   let workspace = manager.workspaces.first(where: { $0.id == callbackTabId }),
+                   let manager = app.workspaceManagerFor(workspaceId: callbackWorkspaceId) ?? app.workspaceManager,
+                   let workspace = manager.workspaces.first(where: { $0.id == callbackWorkspaceId }),
                    workspace.panels[callbackSurfaceId] != nil {
-                    manager.closePanelAfterChildExited(tabId: callbackTabId, surfaceId: callbackSurfaceId)
+                    manager.closePanelAfterChildExited(workspaceId: callbackWorkspaceId, surfaceId: callbackSurfaceId)
                 }
             }
             // Always report handled so Ghostty doesn't print the fallback prompt.
@@ -2949,24 +2949,24 @@ class GhosttyApp {
             logAction(
                 action,
                 target: target,
-                tabId: callbackTabId ?? surfaceView.tabId,
+                workspaceId: callbackWorkspaceId ?? surfaceView.workspaceId,
                 surfaceId: callbackSurfaceId ?? surfaceView.terminalSurface?.id
             )
         }
 
         switch action.tag {
         case GHOSTTY_ACTION_NEW_SPLIT:
-            guard let tabId = surfaceView.tabId,
+            guard let workspaceId = surfaceView.workspaceId,
                   let surfaceId = surfaceView.terminalSurface?.id,
                   let direction = splitDirection(from: action.action.new_split) else {
                 return false
             }
             return performOnMain {
                 guard let app = AppDelegate.shared,
-                      let workspaceManager = app.workspaceManagerFor(tabId: tabId) ?? app.workspaceManager else {
+                      let workspaceManager = app.workspaceManagerFor(workspaceId: workspaceId) ?? app.workspaceManager else {
                     return false
                 }
-                return workspaceManager.createSplit(tabId: tabId, surfaceId: surfaceId, direction: direction) != nil
+                return workspaceManager.createSplit(workspaceId: workspaceId, surfaceId: surfaceId, direction: direction) != nil
             }
         case GHOSTTY_ACTION_RING_BELL:
             performOnMain {
@@ -2974,17 +2974,17 @@ class GhosttyApp {
             }
             return true
         case GHOSTTY_ACTION_GOTO_SPLIT:
-            guard let tabId = surfaceView.tabId,
+            guard let workspaceId = surfaceView.workspaceId,
                   let surfaceId = surfaceView.terminalSurface?.id,
                   let direction = focusDirection(from: action.action.goto_split) else {
                 return false
             }
             return performOnMain {
                 guard let workspaceManager = AppDelegate.shared?.workspaceManager else { return false }
-                return workspaceManager.moveSplitFocus(tabId: tabId, surfaceId: surfaceId, direction: direction)
+                return workspaceManager.moveSplitFocus(workspaceId: workspaceId, surfaceId: surfaceId, direction: direction)
             }
         case GHOSTTY_ACTION_RESIZE_SPLIT:
-            guard let tabId = surfaceView.tabId,
+            guard let workspaceId = surfaceView.workspaceId,
                   let surfaceId = surfaceView.terminalSurface?.id,
                   let direction = resizeDirection(from: action.action.resize_split.direction) else {
                 return false
@@ -2993,28 +2993,28 @@ class GhosttyApp {
             return performOnMain {
                 guard let workspaceManager = AppDelegate.shared?.workspaceManager else { return false }
                 return workspaceManager.resizeSplit(
-                    tabId: tabId,
+                    workspaceId: workspaceId,
                     surfaceId: surfaceId,
                     direction: direction,
                     amount: amount
                 )
             }
         case GHOSTTY_ACTION_EQUALIZE_SPLITS:
-            guard let tabId = surfaceView.tabId else {
+            guard let workspaceId = surfaceView.workspaceId else {
                 return false
             }
             return performOnMain {
                 guard let workspaceManager = AppDelegate.shared?.workspaceManager else { return false }
-                return workspaceManager.equalizeSplits(tabId: tabId)
+                return workspaceManager.equalizeSplits(workspaceId: workspaceId)
             }
         case GHOSTTY_ACTION_TOGGLE_SPLIT_ZOOM:
-            guard let tabId = surfaceView.tabId,
+            guard let workspaceId = surfaceView.workspaceId,
                   let surfaceId = surfaceView.terminalSurface?.id else {
                 return false
             }
             return performOnMain {
                 guard let workspaceManager = AppDelegate.shared?.workspaceManager else { return false }
-                return workspaceManager.toggleSplitZoom(tabId: tabId, surfaceId: surfaceId)
+                return workspaceManager.toggleSplitZoom(workspaceId: workspaceId, surfaceId: surfaceId)
             }
         case GHOSTTY_ACTION_SCROLLBAR:
             let scrollbar = GhosttyScrollbar(c: action.action.scrollbar)
@@ -3073,14 +3073,14 @@ class GhosttyApp {
         case GHOSTTY_ACTION_SET_TITLE:
             let title = action.action.set_title.title
                 .flatMap { String(cString: $0) } ?? ""
-            if let tabId = surfaceView.tabId,
+            if let workspaceId = surfaceView.workspaceId,
                let surfaceId = surfaceView.terminalSurface?.id {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(
                         name: .ghosttyDidSetTitle,
                         object: surfaceView,
                         userInfo: [
-                            GhosttyNotificationKey.tabId: tabId,
+                            GhosttyNotificationKey.workspaceId: workspaceId,
                             GhosttyNotificationKey.surfaceId: surfaceId,
                             GhosttyNotificationKey.title: title,
                         ]
@@ -3089,19 +3089,19 @@ class GhosttyApp {
             }
             return true
         case GHOSTTY_ACTION_PWD:
-            guard let tabId = surfaceView.tabId,
+            guard let workspaceId = surfaceView.workspaceId,
                   let surfaceId = surfaceView.terminalSurface?.id else { return true }
             let pwd = action.action.pwd.pwd.flatMap { String(cString: $0) } ?? ""
             DispatchQueue.main.async {
-                AppDelegate.shared?.workspaceManagerFor(tabId: tabId)?.updateSurfaceDirectory(
-                    tabId: tabId,
+                AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId)?.updateSurfaceDirectory(
+                    workspaceId: workspaceId,
                     surfaceId: surfaceId,
                     directory: pwd
                 )
             }
             return true
         case GHOSTTY_ACTION_DESKTOP_NOTIFICATION:
-            guard let tabId = surfaceView.tabId else { return true }
+            guard let workspaceId = surfaceView.workspaceId else { return true }
             let surfaceId = surfaceView.terminalSurface?.id
             let actionTitle = action.action.desktop_notification.title
                 .flatMap { String(cString: $0) } ?? ""
@@ -3109,16 +3109,16 @@ class GhosttyApp {
                 .flatMap { String(cString: $0) } ?? ""
             performOnMain {
                 // Suppress OSC notifications for workspaces with active Claude hook sessions.
-                let owningManager = AppDelegate.shared?.workspaceManagerFor(tabId: tabId) ?? AppDelegate.shared?.workspaceManager
-                if let workspace = owningManager?.workspaces.first(where: { $0.id == tabId }),
+                let owningManager = AppDelegate.shared?.workspaceManagerFor(workspaceId: workspaceId) ?? AppDelegate.shared?.workspaceManager
+                if let workspace = owningManager?.workspaces.first(where: { $0.id == workspaceId }),
                    workspace.agentPIDs["claude_code"] != nil {
                     return
                 }
-                let tabTitle = owningManager?.titleForTab(tabId) ?? "Terminal"
+                let tabTitle = owningManager?.titleForTab(workspaceId) ?? "Terminal"
                 let command = actionTitle.isEmpty ? tabTitle : actionTitle
                 let body = actionBody
                 TerminalNotificationStore.shared.addNotification(
-                    tabId: tabId,
+                    workspaceId: workspaceId,
                     surfaceId: surfaceId,
                     title: command,
                     subtitle: "",
@@ -3137,14 +3137,14 @@ class GhosttyApp {
                 )
                 if backgroundLogEnabled {
                     logBackground(
-                        "surface override set tab=\(surfaceView.tabId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil") override=\(newColor.hexString()) default=\(defaultBackgroundColor.hexString()) source=action.color_change.surface"
+                        "surface override set tab=\(surfaceView.workspaceId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil") override=\(newColor.hexString()) default=\(defaultBackgroundColor.hexString()) source=action.color_change.surface"
                     )
                 }
                 DispatchQueue.main.async { [self] in
                     surfaceView.backgroundColor = newColor
                     surfaceView.applySurfaceBackground()
                     if backgroundLogEnabled {
-                        logBackground("OSC background change tab=\(surfaceView.tabId?.uuidString ?? "unknown") color=\(surfaceView.backgroundColor?.description ?? "nil")")
+                        logBackground("OSC background change tab=\(surfaceView.workspaceId?.uuidString ?? "unknown") color=\(surfaceView.backgroundColor?.description ?? "nil")")
                     }
                     surfaceView.applyWindowBackgroundIfActive()
                 }
@@ -3156,7 +3156,7 @@ class GhosttyApp {
                     surfaceView.backgroundColor = nil
                     if backgroundLogEnabled {
                         logBackground(
-                            "surface override cleared tab=\(surfaceView.tabId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil") cleared=\(staleOverride.hexString()) source=action.config_change.surface"
+                            "surface override cleared tab=\(surfaceView.workspaceId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil") cleared=\(staleOverride.hexString()) source=action.config_change.surface"
                         )
                     }
                     surfaceView.applySurfaceBackground()
@@ -3165,25 +3165,25 @@ class GhosttyApp {
             }
             updateDefaultBackground(
                 from: action.action.config_change.config,
-                source: "action.config_change.surface tab=\(surfaceView.tabId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil")",
+                source: "action.config_change.surface tab=\(surfaceView.workspaceId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil")",
                 scope: .surface
             )
             if backgroundLogEnabled {
                 logBackground(
-                    "surface config change deferred terminal bg apply tab=\(surfaceView.tabId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil") override=\(surfaceView.backgroundColor?.hexString() ?? "nil") default=\(defaultBackgroundColor.hexString())"
+                    "surface config change deferred terminal bg apply tab=\(surfaceView.workspaceId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil") override=\(surfaceView.backgroundColor?.hexString() ?? "nil") default=\(defaultBackgroundColor.hexString())"
                 )
             }
             return true
         case GHOSTTY_ACTION_RELOAD_CONFIG:
             let soft = action.action.reload_config.soft
             logThemeAction(
-                "reload request target=surface tab=\(surfaceView.tabId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil") soft=\(soft)"
+                "reload request target=surface tab=\(surfaceView.workspaceId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil") soft=\(soft)"
             )
             return performOnMain {
                 // Keep all runtime theme/default-background state in the same path.
                 GhosttyApp.shared.reloadConfiguration(
                     soft: soft,
-                    source: "action.reload_config.surface tab=\(surfaceView.tabId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil")"
+                    source: "action.reload_config.surface tab=\(surfaceView.workspaceId?.uuidString ?? "nil") surface=\(surfaceView.terminalSurface?.id.uuidString ?? "nil")"
                 )
                 return true
             }
@@ -3275,19 +3275,19 @@ class GhosttyApp {
                         NSWorkspace.shared.open(url)
                     }
                 }
-                let sourceWorkspaceId = callbackTabId ?? surfaceView.tabId
+                let sourceWorkspaceId = callbackWorkspaceId ?? surfaceView.workspaceId
                 let sourcePanelId = callbackSurfaceId ?? surfaceView.terminalSurface?.id
                 guard let sourceWorkspaceId,
                       let sourcePanelId else {
                     #if DEBUG
-                    dlog("link.openURL target=embedded but tabId/surfaceId=nil")
+                    dlog("link.openURL target=embedded but workspaceId/surfaceId=nil")
                     #endif
                     return false
                 }
                 #if DEBUG
                 dlog(
                     "link.openURL target=embedded, opening in browser pane " +
-                    "host=\(host) url=\(url) tabId=\(sourceWorkspaceId) surfaceId=\(sourcePanelId)"
+                    "host=\(host) url=\(url) workspaceId=\(sourceWorkspaceId) surfaceId=\(sourcePanelId)"
                 )
                 #endif
                 return performOnMain {
@@ -3299,7 +3299,7 @@ class GhosttyApp {
                         #if DEBUG
                         dlog(
                             "link.openURL embedded but workspace lookup failed " +
-                            "tabId=\(sourceWorkspaceId) surfaceId=\(sourcePanelId)"
+                            "workspaceId=\(sourceWorkspaceId) surfaceId=\(sourcePanelId)"
                         )
                         #endif
                         return false
@@ -3521,7 +3521,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
     /// is already in the window.
     var isViewInWindow: Bool { hostedView.window != nil }
     let id: UUID
-    private(set) var tabId: UUID
+    private(set) var workspaceId: UUID
     /// Port ordinal for NORI_PORT range assignment
     var portOrdinal: Int = 0
     /// Snapshotted once per app session so all workspaces use consistent values
@@ -3590,7 +3590,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
 	            if let searchState {
 	                hostedView.cancelFocusRequest()
 #if DEBUG
-                dlog("find.searchState created tab=\(tabId.uuidString.prefix(5)) surface=\(id.uuidString.prefix(5))")
+                dlog("find.searchState created tab=\(workspaceId.uuidString.prefix(5)) surface=\(id.uuidString.prefix(5))")
 #endif
                 searchNeedleCancellable = searchState.$needle
                     .removeDuplicates()
@@ -3606,14 +3606,14 @@ final class TerminalSurface: Identifiable, ObservableObject {
                     .switchToLatest()
                     .sink { [weak self] needle in
 #if DEBUG
-                        dlog("find.needle updated tab=\(self?.tabId.uuidString.prefix(5) ?? "?") surface=\(self?.id.uuidString.prefix(5) ?? "?") chars=\(needle.count)")
+                        dlog("find.needle updated tab=\(self?.workspaceId.uuidString.prefix(5) ?? "?") surface=\(self?.id.uuidString.prefix(5) ?? "?") chars=\(needle.count)")
 #endif
                         _ = self?.performBindingAction("search:\(needle)")
                     }
             } else if oldValue != nil {
                 searchNeedleCancellable = nil
 #if DEBUG
-                dlog("find.searchState cleared tab=\(tabId.uuidString.prefix(5)) surface=\(id.uuidString.prefix(5))")
+                dlog("find.searchState cleared tab=\(workspaceId.uuidString.prefix(5)) surface=\(id.uuidString.prefix(5))")
 #endif
                 _ = performBindingAction("end_search")
             }
@@ -3624,7 +3624,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
     var currentKeyStateIndicatorText: String? { surfaceView.currentKeyStateIndicatorText }
 
     init(
-        tabId: UUID,
+        workspaceId: UUID,
         context: ghostty_surface_context_e,
         configTemplate: NoriSurfaceConfigTemplate?,
         workingDirectory: String? = nil,
@@ -3633,7 +3633,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
         additionalEnvironment: [String: String] = [:]
     ) {
         self.id = UUID()
-        self.tabId = tabId
+        self.workspaceId = workspaceId
         self.surfaceContext = context
         self.configTemplate = configTemplate
         self.workingDirectory = workingDirectory?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -3653,10 +3653,10 @@ final class TerminalSurface: Identifiable, ObservableObject {
     }
 
 
-    func updateWorkspaceId(_ newTabId: UUID) {
-        tabId = newTabId
-        attachedView?.tabId = newTabId
-        surfaceView.tabId = newTabId
+    func updateWorkspaceId(_ newWorkspaceId: UUID) {
+        workspaceId = newWorkspaceId
+        attachedView?.workspaceId = newWorkspaceId
+        surfaceView.workspaceId = newWorkspaceId
     }
 
     private static func mergedNormalizedEnvironment(
@@ -3741,7 +3741,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
     }
 
     func debugLastKnownWorkspaceId() -> UUID {
-        tabId
+        workspaceId
     }
 
     func debugSurfaceContextLabel() -> String {
@@ -3793,7 +3793,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
             let registeredOwnerToken = registeredOwnerId.map { String($0.uuidString.prefix(5)) } ?? "nil"
             dlog(
                 "surface.lifecycle.stale surface=\(id.uuidString.prefix(5)) " +
-                "workspace=\(tabId.uuidString.prefix(5)) reason=\(reason) " +
+                "workspace=\(workspaceId.uuidString.prefix(5)) reason=\(reason) " +
                 "registryOwner=\(registeredOwnerToken)"
             )
 #endif
@@ -3962,7 +3962,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
 #if DEBUG
         dlog(
             "surface.lifecycle.close.begin surface=\(id.uuidString.prefix(5)) " +
-            "workspace=\(tabId.uuidString.prefix(5)) reason=\(reason) " +
+            "workspace=\(workspaceId.uuidString.prefix(5)) reason=\(reason) " +
             "generation=\(portalLifecycleGeneration)"
         )
 #endif
@@ -3975,7 +3975,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
 #if DEBUG
         dlog(
             "surface.lifecycle.close.sealed surface=\(id.uuidString.prefix(5)) " +
-            "workspace=\(tabId.uuidString.prefix(5)) reason=\(reason) " +
+            "workspace=\(workspaceId.uuidString.prefix(5)) reason=\(reason) " +
             "generation=\(portalLifecycleGeneration)"
         )
 #endif
@@ -4172,7 +4172,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
                 "reason=lifecycle.\(portalLifecycleState.rawValue)"
             )
             Self.surfaceLog(
-                "createSurface SKIPPED surface=\(id.uuidString) tab=\(tabId.uuidString) lifecycle=\(portalLifecycleState.rawValue)"
+                "createSurface SKIPPED surface=\(id.uuidString) tab=\(workspaceId.uuidString) lifecycle=\(portalLifecycleState.rawValue)"
             )
 #endif
             return
@@ -4182,7 +4182,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
         let terminfo = getenv("TERMINFO").flatMap { String(cString: $0) } ?? "(unset)"
         let xdg = getenv("XDG_DATA_DIRS").flatMap { String(cString: $0) } ?? "(unset)"
         let manpath = getenv("MANPATH").flatMap { String(cString: $0) } ?? "(unset)"
-        Self.surfaceLog("createSurface start surface=\(id.uuidString) tab=\(tabId.uuidString) bounds=\(view.bounds) inWindow=\(view.window != nil) resources=\(resourcesDir) terminfo=\(terminfo) xdg=\(xdg) manpath=\(manpath)")
+        Self.surfaceLog("createSurface start surface=\(id.uuidString) tab=\(workspaceId.uuidString) bounds=\(view.bounds) inWindow=\(view.window != nil) resources=\(resourcesDir) terminfo=\(terminfo) xdg=\(xdg) manpath=\(manpath)")
         #endif
 
         guard let app = GhosttyApp.shared.app else {
@@ -4238,10 +4238,10 @@ final class TerminalSurface: Identifiable, ObservableObject {
         }
 
         setManagedEnvironmentValue("NORI_SURFACE_ID", id.uuidString)
-        setManagedEnvironmentValue("NORI_WORKSPACE_ID", tabId.uuidString)
+        setManagedEnvironmentValue("NORI_WORKSPACE_ID", workspaceId.uuidString)
         // Backward-compatible shell integration keys used by existing scripts/tests.
         setManagedEnvironmentValue("NORI_PANEL_ID", id.uuidString)
-        setManagedEnvironmentValue("NORI_TAB_ID", tabId.uuidString)
+        setManagedEnvironmentValue("NORI_TAB_ID", workspaceId.uuidString)
         let socketPath = SocketControlSettings.socketPath()
         setManagedEnvironmentValue("NORI_SOCKET_PATH", socketPath)
         // Backward-compatible alias expected by older scripts and third-party integrations.
@@ -4499,7 +4499,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
             object: self,
             userInfo: [
                 "surfaceId": id,
-                "workspaceId": tabId
+                "workspaceId": workspaceId
             ]
         )
 
@@ -5065,7 +5065,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
 #if DEBUG
             dlog(
                 "surface.lifecycle.deinit.skip surface=\(id.uuidString.prefix(5)) " +
-                "workspace=\(tabId.uuidString.prefix(5)) reason=noRuntimeSurface"
+                "workspace=\(workspaceId.uuidString.prefix(5)) reason=noRuntimeSurface"
             )
 #endif
             callbackContext?.release()
@@ -5082,7 +5082,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
 
 #if DEBUG
         let surfaceToken = String(id.uuidString.prefix(5))
-        let workspaceToken = String(tabId.uuidString.prefix(5))
+        let workspaceToken = String(workspaceId.uuidString.prefix(5))
         dlog(
             "surface.lifecycle.deinit.begin surface=\(surfaceToken) " +
             "workspace=\(workspaceToken) hasAttachedView=\(attachedView != nil ? 1 : 0) " +
@@ -5109,7 +5109,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
 extension TerminalSurface {
     @MainActor
     func owningWorkspace() -> Workspace? {
-        AppDelegate.shared?.workspaceFor(tabId: tabId)
+        AppDelegate.shared?.workspaceFor(workspaceId: workspaceId)
     }
 }
 
@@ -5221,7 +5221,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 
     var desiredFocus: Bool = false
     var suppressingReparentFocus: Bool = false
-    var tabId: UUID?
+    var workspaceId: UUID?
     var onFocus: (() -> Void)?
     var onTriggerFlash: (() -> Void)?
     var backgroundColor: NSColor?
@@ -5364,7 +5364,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 let defaultHex = GhosttyApp.shared.defaultBackgroundColor.hexString()
                 let source = useHostLayerBackground ? (hasOverride ? "surfaceOverride" : "defaultBackground") : "ghosttyNativeBackground"
                 GhosttyApp.shared.logBackground(
-                    "surface background applied tab=\(tabId?.uuidString ?? "unknown") surface=\(terminalSurface?.id.uuidString ?? "unknown") source=\(source) override=\(overrideHex) default=\(defaultHex) color=\(color.hexString()) opacity=\(String(format: "%.3f", color.alphaComponent))"
+                    "surface background applied tab=\(workspaceId?.uuidString ?? "unknown") surface=\(terminalSurface?.id.uuidString ?? "unknown") source=\(source) override=\(overrideHex) default=\(defaultHex) color=\(color.hexString()) opacity=\(String(format: "%.3f", color.alphaComponent))"
                 )
             }
         }
@@ -5374,18 +5374,18 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
     // switches (e.g. jump-to-unread), the global active tab manager can lag behind.
     // Prefer the owning window's selected workspace when available.
     static func shouldApplyWindowBackground(
-        surfaceTabId: UUID?,
+        surfaceWorkspaceId: UUID?,
         owningManagerExists: Bool,
-        owningSelectedTabId: UUID?,
-        activeSelectedTabId: UUID?
+        owningSelectedWorkspaceId: UUID?,
+        activeSelectedWorkspaceId: UUID?
     ) -> Bool {
-        guard let surfaceTabId else { return true }
+        guard let surfaceWorkspaceId else { return true }
         if owningManagerExists {
-            guard let owningSelectedTabId else { return true }
-            return owningSelectedTabId == surfaceTabId
+            guard let owningSelectedWorkspaceId else { return true }
+            return owningSelectedWorkspaceId == surfaceWorkspaceId
         }
-        if let activeSelectedTabId {
-            return activeSelectedTabId == surfaceTabId
+        if let activeSelectedWorkspaceId {
+            return activeSelectedWorkspaceId == surfaceWorkspaceId
         }
         return true
     }
@@ -5393,14 +5393,14 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
     func applyWindowBackgroundIfActive() {
         guard let window else { return }
         let appDelegate = AppDelegate.shared
-        let owningManager = tabId.flatMap { appDelegate?.workspaceManagerFor(tabId: $0) }
-        let owningSelectedTabId = owningManager?.selectedWorkspaceId
-        let activeSelectedTabId = owningManager == nil ? appDelegate?.workspaceManager?.selectedWorkspaceId : nil
+        let owningManager = workspaceId.flatMap { appDelegate?.workspaceManagerFor(workspaceId: $0) }
+        let owningSelectedWorkspaceId = owningManager?.selectedWorkspaceId
+        let activeSelectedWorkspaceId = owningManager == nil ? appDelegate?.workspaceManager?.selectedWorkspaceId : nil
         guard Self.shouldApplyWindowBackground(
-            surfaceTabId: tabId,
+            surfaceWorkspaceId: workspaceId,
             owningManagerExists: owningManager != nil,
-            owningSelectedTabId: owningSelectedTabId,
-            activeSelectedTabId: activeSelectedTabId
+            owningSelectedWorkspaceId: owningSelectedWorkspaceId,
+            activeSelectedWorkspaceId: activeSelectedWorkspaceId
         ) else {
             return
         }
@@ -5423,7 +5423,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 let defaultHex = GhosttyApp.shared.defaultBackgroundColor.hexString()
                 let source = hasOverride ? "surfaceOverride" : "defaultBackground"
                 GhosttyApp.shared.logBackground(
-                    "window background applied tab=\(tabId?.uuidString ?? "unknown") surface=\(terminalSurface?.id.uuidString ?? "unknown") source=\(source) override=\(overrideHex) default=\(defaultHex) transparent=\(noriShouldUseClearWindowBackground(for: color.alphaComponent)) color=\(color.hexString()) opacity=\(String(format: "%.3f", color.alphaComponent))"
+                    "window background applied tab=\(workspaceId?.uuidString ?? "unknown") surface=\(terminalSurface?.id.uuidString ?? "unknown") source=\(source) override=\(overrideHex) default=\(defaultHex) transparent=\(noriShouldUseClearWindowBackground(for: color.alphaComponent)) color=\(color.hexString()) opacity=\(String(format: "%.3f", color.alphaComponent))"
                 )
             }
         }
@@ -5464,7 +5464,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             appliedColorScheme = nil
         }
         terminalSurface = surface
-        tabId = surface.tabId
+        workspaceId = surface.workspaceId
         if !isAlreadyAttached {
             surface.attachToView(self)
         }
@@ -5504,7 +5504,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                 object: terminalSurface,
                 userInfo: [
                     "surfaceId": terminalSurface.id,
-                    "workspaceId": terminalSurface.tabId
+                    "workspaceId": terminalSurface.workspaceId
                 ]
             )
         }
@@ -5543,7 +5543,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         if GhosttyApp.shared.backgroundLogEnabled {
             let bestMatch = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])
             GhosttyApp.shared.logBackground(
-                "surface appearance changed tab=\(tabId?.uuidString ?? "nil") surface=\(terminalSurface?.id.uuidString ?? "nil") bestMatch=\(bestMatch?.rawValue ?? "nil")"
+                "surface appearance changed tab=\(workspaceId?.uuidString ?? "nil") surface=\(terminalSurface?.id.uuidString ?? "nil") bestMatch=\(bestMatch?.rawValue ?? "nil")"
             )
         }
         applySurfaceColorScheme()
@@ -5807,7 +5807,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             if GhosttyApp.shared.backgroundLogEnabled {
                 let schemeLabel = scheme == GHOSTTY_COLOR_SCHEME_DARK ? "dark" : "light"
                 GhosttyApp.shared.logBackground(
-                    "surface color scheme tab=\(tabId?.uuidString ?? "nil") surface=\(terminalSurface?.id.uuidString ?? "nil") bestMatch=\(bestMatch?.rawValue ?? "nil") scheme=\(schemeLabel) force=\(force) applied=false"
+                    "surface color scheme tab=\(workspaceId?.uuidString ?? "nil") surface=\(terminalSurface?.id.uuidString ?? "nil") bestMatch=\(bestMatch?.rawValue ?? "nil") scheme=\(schemeLabel) force=\(force) applied=false"
                 )
             }
             return
@@ -5817,7 +5817,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         if GhosttyApp.shared.backgroundLogEnabled {
             let schemeLabel = scheme == GHOSTTY_COLOR_SCHEME_DARK ? "dark" : "light"
             GhosttyApp.shared.logBackground(
-                "surface color scheme tab=\(tabId?.uuidString ?? "nil") surface=\(terminalSurface?.id.uuidString ?? "nil") bestMatch=\(bestMatch?.rawValue ?? "nil") scheme=\(schemeLabel) force=\(force) applied=true"
+                "surface color scheme tab=\(workspaceId?.uuidString ?? "nil") surface=\(terminalSurface?.id.uuidString ?? "nil") bestMatch=\(bestMatch?.rawValue ?? "nil") scheme=\(schemeLabel) force=\(force) applied=true"
             )
         }
     }
@@ -6248,7 +6248,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             dlog("focus.firstResponder surface=\(terminalSurface?.id.uuidString.prefix(5) ?? "nil")")
             if let terminalSurface {
                 AppDelegate.shared?.recordJumpUnreadFocusIfExpected(
-                    tabId: terminalSurface.tabId,
+                    workspaceId: terminalSurface.workspaceId,
                     surfaceId: terminalSurface.id
                 )
             }
@@ -6258,7 +6258,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
                     name: .ghosttyDidBecomeFirstResponderSurface,
                     object: nil,
                     userInfo: [
-                        GhosttyNotificationKey.tabId: terminalSurface.tabId,
+                        GhosttyNotificationKey.workspaceId: terminalSurface.workspaceId,
                         GhosttyNotificationKey.surfaceId: terminalSurface.id,
                     ]
                 )
@@ -6552,7 +6552,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             let dismissNotificationStart = ProcessInfo.processInfo.systemUptime
 #endif
             AppDelegate.shared?.workspaceManager?.dismissNotificationOnDirectInteraction(
-                tabId: terminalSurface.tabId,
+                workspaceId: terminalSurface.workspaceId,
                 surfaceId: terminalSurface.id
             )
 #if DEBUG
@@ -7356,7 +7356,7 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
         window?.makeFirstResponder(self)
         if let terminalSurface {
             AppDelegate.shared?.workspaceManager?.dismissNotificationOnDirectInteraction(
-                tabId: terminalSurface.tabId,
+                workspaceId: terminalSurface.workspaceId,
                 surfaceId: terminalSurface.id
             )
         }
@@ -8076,11 +8076,11 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
     }
 
     private func canSplitCurrentSurface() -> Bool {
-        guard let tabId,
+        guard let workspaceId,
               let surfaceId = terminalSurface?.id,
               let app = AppDelegate.shared,
-              let manager = app.workspaceManagerFor(tabId: tabId) ?? app.workspaceManager,
-              let workspace = manager.workspaces.first(where: { $0.id == tabId }) else {
+              let manager = app.workspaceManagerFor(workspaceId: workspaceId) ?? app.workspaceManager,
+              let workspace = manager.workspaces.first(where: { $0.id == workspaceId }) else {
             return false
         }
         return workspace.panels[surfaceId] != nil
@@ -8096,13 +8096,13 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 
     @discardableResult
     private func splitCurrentSurface(direction: SplitDirection) -> Bool {
-        guard let tabId,
+        guard let workspaceId,
               let surfaceId = terminalSurface?.id,
               let app = AppDelegate.shared,
-              let manager = app.workspaceManagerFor(tabId: tabId) ?? app.workspaceManager else {
+              let manager = app.workspaceManagerFor(workspaceId: workspaceId) ?? app.workspaceManager else {
             return false
         }
-        return manager.createSplit(tabId: tabId, surfaceId: surfaceId, direction: direction) != nil
+        return manager.createSplit(workspaceId: workspaceId, surfaceId: surfaceId, direction: direction) != nil
     }
 
     @objc private func triggerFlash(_ sender: Any?) {
@@ -8588,7 +8588,7 @@ struct GhosttyScrollbar {
 enum GhosttyNotificationKey {
     static let scrollbar = "ghostty.scrollbar"
     static let cellSize = "ghostty.cellSize"
-    static let tabId = "ghostty.tabId"
+    static let workspaceId = "ghostty.workspaceId"
     static let surfaceId = "ghostty.surfaceId"
     static let title = "ghostty.title"
     static let backgroundColor = "ghostty.backgroundColor"
@@ -9746,7 +9746,7 @@ final class GhosttySurfaceScrollView: NSView {
         searchState: TerminalSurface.SearchState
     ) -> SurfaceSearchOverlay {
         SurfaceSearchOverlay(
-            tabId: terminalSurface.tabId,
+            workspaceId: terminalSurface.workspaceId,
             surfaceId: terminalSurface.id,
             searchState: searchState,
             canApplyFocusRequest: { [weak self] in
@@ -9826,9 +9826,9 @@ final class GhosttySurfaceScrollView: NSView {
     private func canApplyMountedSearchFieldFocusRequest() -> Bool {
         guard let terminalSurface = surfaceView.terminalSurface,
               let app = AppDelegate.shared,
-              let manager = app.workspaceManagerFor(tabId: terminalSurface.tabId),
-              manager.selectedWorkspaceId == terminalSurface.tabId,
-              let workspace = manager.workspaces.first(where: { $0.id == terminalSurface.tabId }) else {
+              let manager = app.workspaceManagerFor(workspaceId: terminalSurface.workspaceId),
+              manager.selectedWorkspaceId == terminalSurface.workspaceId,
+              let workspace = manager.workspaces.first(where: { $0.id == terminalSurface.workspaceId }) else {
             return false
         }
         return workspace.focusedPanelId == terminalSurface.id
@@ -10236,7 +10236,7 @@ final class GhosttySurfaceScrollView: NSView {
                 object: self,
                 userInfo: [
                     GhosttyNotificationKey.surfaceId: surfaceView.terminalSurface?.id as Any,
-                    GhosttyNotificationKey.tabId: surfaceView.tabId as Any
+                    GhosttyNotificationKey.workspaceId: surfaceView.workspaceId as Any
                 ]
             )
         }
@@ -10498,7 +10498,7 @@ final class GhosttySurfaceScrollView: NSView {
     }
     #endif
 
-    func ensureFocus(for tabId: UUID, surfaceId: UUID) {
+    func ensureFocus(for workspaceId: UUID, surfaceId: UUID) {
         let hasUsablePortalGeometry: Bool = {
             let size = bounds.size
             return size.width > 1 && size.height > 1
@@ -10530,22 +10530,22 @@ final class GhosttySurfaceScrollView: NSView {
         }
 
         guard let delegate = AppDelegate.shared,
-              let workspaceManager = delegate.workspaceManagerFor(tabId: tabId) ?? delegate.workspaceManager,
-              workspaceManager.selectedWorkspaceId == tabId else {
+              let workspaceManager = delegate.workspaceManagerFor(workspaceId: workspaceId) ?? delegate.workspaceManager,
+              workspaceManager.selectedWorkspaceId == workspaceId else {
             scheduleAutomaticFirstResponderApply(reason: "ensureFocus.inactiveTab")
             return
         }
 
-        guard let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
-              let tabIdForSurface = tab.surfaceIdFromPanelId(surfaceId),
+        guard let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
+              let workspaceIdForSurface = tab.surfaceIdFromPanelId(surfaceId),
               let paneId = tab.bonsplitController.allPaneIds.first(where: { paneId in
-                  tab.bonsplitController.tabs(inPane: paneId).contains(where: { $0.id == tabIdForSurface })
+                  tab.bonsplitController.tabs(inPane: paneId).contains(where: { $0.id == workspaceIdForSurface })
               }) else {
             scheduleAutomaticFirstResponderApply(reason: "ensureFocus.missingPane")
             return
         }
 
-        guard tab.bonsplitController.selectedTab(inPane: paneId)?.id == tabIdForSurface,
+        guard tab.bonsplitController.selectedTab(inPane: paneId)?.id == workspaceIdForSurface,
               tab.bonsplitController.focusedPaneId == paneId else {
             scheduleAutomaticFirstResponderApply(reason: "ensureFocus.unfocusedPane")
             return
@@ -10556,7 +10556,7 @@ final class GhosttySurfaceScrollView: NSView {
 #if DEBUG
             dlog(
                 "focus.ensure.search surface=\(surfaceView.terminalSurface?.id.uuidString.prefix(5) ?? "nil") " +
-                "tab=\(tabId.uuidString.prefix(5)) panel=\(surfaceId.uuidString.prefix(5)) " +
+                "tab=\(workspaceId.uuidString.prefix(5)) panel=\(surfaceId.uuidString.prefix(5)) " +
                 "firstResponder=\(String(describing: window.firstResponder))"
             )
 #endif
@@ -10586,7 +10586,7 @@ final class GhosttySurfaceScrollView: NSView {
 #if DEBUG
         dlog(
             "focus.ensure.apply surface=\(surfaceView.terminalSurface?.id.uuidString.prefix(5) ?? "nil") " +
-            "tab=\(tabId.uuidString.prefix(5)) panel=\(surfaceId.uuidString.prefix(5)) " +
+            "tab=\(workspaceId.uuidString.prefix(5)) panel=\(surfaceId.uuidString.prefix(5)) " +
             "result=\(result ? 1 : 0) firstResponder=\(String(describing: window.firstResponder))"
         )
 #endif
@@ -10598,19 +10598,19 @@ final class GhosttySurfaceScrollView: NSView {
         }
     }
 
-    private func matchesCurrentTerminalFocusTarget(tabId: UUID, surfaceId: UUID) -> Bool {
+    private func matchesCurrentTerminalFocusTarget(workspaceId: UUID, surfaceId: UUID) -> Bool {
         guard let delegate = AppDelegate.shared,
-              let workspaceManager = delegate.workspaceManagerFor(tabId: tabId) ?? delegate.workspaceManager,
-              workspaceManager.selectedWorkspaceId == tabId,
-              let tab = workspaceManager.workspaces.first(where: { $0.id == tabId }),
-              let tabIdForSurface = tab.surfaceIdFromPanelId(surfaceId),
+              let workspaceManager = delegate.workspaceManagerFor(workspaceId: workspaceId) ?? delegate.workspaceManager,
+              workspaceManager.selectedWorkspaceId == workspaceId,
+              let tab = workspaceManager.workspaces.first(where: { $0.id == workspaceId }),
+              let workspaceIdForSurface = tab.surfaceIdFromPanelId(surfaceId),
               let paneId = tab.bonsplitController.allPaneIds.first(where: { paneId in
-                  tab.bonsplitController.tabs(inPane: paneId).contains(where: { $0.id == tabIdForSurface })
+                  tab.bonsplitController.tabs(inPane: paneId).contains(where: { $0.id == workspaceIdForSurface })
               }) else {
             return false
         }
 
-        return tab.bonsplitController.selectedTab(inPane: paneId)?.id == tabIdForSurface &&
+        return tab.bonsplitController.selectedTab(inPane: paneId)?.id == workspaceIdForSurface &&
             tab.bonsplitController.focusedPaneId == paneId
     }
 
@@ -10732,9 +10732,9 @@ final class GhosttySurfaceScrollView: NSView {
             return
         }
         guard let window, window.isKeyWindow else { return }
-        guard let tabId = surfaceView.tabId,
+        guard let workspaceId = surfaceView.workspaceId,
               let panelId = surfaceView.terminalSurface?.id,
-              matchesCurrentTerminalFocusTarget(tabId: tabId, surfaceId: panelId) else {
+              matchesCurrentTerminalFocusTarget(workspaceId: workspaceId, surfaceId: panelId) else {
 #if DEBUG
             dlog("focus.apply.skip surface=\(surfaceShort) reason=stale_target")
 #endif

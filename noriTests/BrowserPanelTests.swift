@@ -1922,7 +1922,7 @@ final class BrowserPaneDropRoutingTests: XCTestCase {
             paneId: paneId
         )
         let transfer = BrowserPaneDragTransfer(
-            tabId: UUID(),
+            workspaceId: UUID(),
             sourcePaneId: paneId.id,
             sourceProcessId: Int32(ProcessInfo.processInfo.processIdentifier)
         )
@@ -1940,9 +1940,9 @@ final class BrowserPaneDropRoutingTests: XCTestCase {
             panelId: UUID(),
             paneId: paneId
         )
-        let tabId = UUID()
+        let workspaceId = UUID()
         let transfer = BrowserPaneDragTransfer(
-            tabId: tabId,
+            workspaceId: workspaceId,
             sourcePaneId: UUID(),
             sourceProcessId: Int32(ProcessInfo.processInfo.processIdentifier)
         )
@@ -1950,7 +1950,7 @@ final class BrowserPaneDropRoutingTests: XCTestCase {
         XCTAssertEqual(
             BrowserPaneDropRouting.action(for: transfer, target: target, zone: .right),
             .move(
-                tabId: tabId,
+                workspaceId: workspaceId,
                 targetWorkspaceId: target.workspaceId,
                 targetPane: paneId,
                 splitTarget: BrowserPaneSplitTarget(orientation: .horizontal, insertFirst: false)
@@ -1959,11 +1959,11 @@ final class BrowserPaneDropRoutingTests: XCTestCase {
     }
 
     func testDecodeTransferPayloadReadsTabAndSourcePane() {
-        let tabId = UUID()
+        let workspaceId = UUID()
         let sourcePaneId = UUID()
         let payload = try! JSONSerialization.data(
             withJSONObject: [
-                "tab": ["id": tabId.uuidString],
+                "tab": ["id": workspaceId.uuidString],
                 "sourcePaneId": sourcePaneId.uuidString,
                 "sourceProcessId": ProcessInfo.processInfo.processIdentifier,
             ]
@@ -1971,7 +1971,7 @@ final class BrowserPaneDropRoutingTests: XCTestCase {
 
         let transfer = BrowserPaneDragTransfer.decode(from: payload)
 
-        XCTAssertEqual(transfer?.tabId, tabId)
+        XCTAssertEqual(transfer?.workspaceId, workspaceId)
         XCTAssertEqual(transfer?.sourcePaneId, sourcePaneId)
         XCTAssertTrue(transfer?.isFromCurrentProcess == true)
     }

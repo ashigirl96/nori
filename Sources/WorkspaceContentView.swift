@@ -271,8 +271,8 @@ struct WorkspaceContentView: View {
             workspace.bonsplitController.onFileDrop = { [weak workspace] urls, paneId in
                 guard let workspace else { return false }
                 // Find the focused panel in this pane and drop the files into it.
-                guard let tabId = workspace.bonsplitController.selectedTab(inPane: paneId)?.id,
-                      let panelId = workspace.panelIdFromSurfaceId(tabId),
+                guard let workspaceId = workspace.bonsplitController.selectedTab(inPane: paneId)?.id,
+                      let panelId = workspace.panelIdFromSurfaceId(workspaceId),
                       let panel = workspace.panels[panelId] as? TerminalPanel else { return false }
                 return panel.hostedView.handleDroppedURLs(urls)
             }
@@ -291,7 +291,7 @@ struct WorkspaceContentView: View {
                 )
                 let showsNotificationRing = Workspace.shouldShowUnreadIndicator(
                     hasUnreadNotification: notificationStore.hasVisibleNotificationIndicator(
-                        forTabId: workspace.id,
+                        forWorkspaceId: workspace.id,
                         surfaceId: panel.id
                     ),
                     isManuallyUnread: workspace.manualUnreadPanelIds.contains(panel.id)
@@ -396,7 +396,7 @@ struct WorkspaceContentView: View {
                 let expectedKind = panelId.flatMap { workspace.panelKind(panelId: $0) }
                 let expectedPinned = panelId.map { workspace.isPanelPinned($0) } ?? false
                 let shouldShow = panelId.map {
-                    notificationStore.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: $0) ||
+                    notificationStore.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: $0) ||
                         manualUnread.contains($0)
                 } ?? false
                 let kindUpdate: String?? = expectedKind.map { .some($0) }
@@ -490,7 +490,7 @@ struct WorkspaceContentView: View {
 
             let shouldShowUnread = Workspace.shouldShowUnreadIndicator(
                 hasUnreadNotification: notificationStore.hasVisibleNotificationIndicator(
-                    forTabId: workspace.id,
+                    forWorkspaceId: workspace.id,
                     surfaceId: panelId
                 ),
                 isManuallyUnread: workspace.manualUnreadPanelIds.contains(panelId)
@@ -692,7 +692,7 @@ extension WorkspaceContentView {
         let found = workspace.panel(for: tab.id) != nil
         if !found {
             let ts = ISO8601DateFormatter().string(from: Date())
-            let line = "[\(ts)] PANEL NOT FOUND for tabId=\(tab.id) ws=\(workspace.id) panelCount=\(workspace.panels.count)\n"
+            let line = "[\(ts)] PANEL NOT FOUND for workspaceId=\(tab.id) ws=\(workspace.id) panelCount=\(workspace.panels.count)\n"
             let logPath = "/tmp/nori-panel-debug.log"
             if let handle = FileHandle(forWritingAtPath: logPath) {
                 handle.seekToEndOfFile()

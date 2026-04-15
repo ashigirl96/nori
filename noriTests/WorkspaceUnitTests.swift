@@ -1599,7 +1599,7 @@ final class WorkspaceCreationPlacementTests: XCTestCase {
 
         manager.afterCaptureWorkspaceCreationSnapshot = {
             XCTAssertTrue(
-                manager.reorderWorkspace(tabId: third.id, toIndex: 0),
+                manager.reorderWorkspace(workspaceId: third.id, toIndex: 0),
                 "Expected to reorder live workspaces after the snapshot is captured"
             )
         }
@@ -2028,7 +2028,7 @@ final class WorkspaceReorderTests: XCTestCase {
         manager.selectWorkspace(second)
         XCTAssertEqual(manager.selectedWorkspaceId, second.id)
 
-        XCTAssertTrue(manager.reorderWorkspace(tabId: second.id, toIndex: 0))
+        XCTAssertTrue(manager.reorderWorkspace(workspaceId: second.id, toIndex: 0))
         XCTAssertEqual(manager.workspaces.map(\.id), [second.id, first.id, third.id])
         XCTAssertEqual(manager.selectedWorkspaceId, second.id)
     }
@@ -2040,14 +2040,14 @@ final class WorkspaceReorderTests: XCTestCase {
         let second = manager.addWorkspace()
         let third = manager.addWorkspace()
 
-        XCTAssertTrue(manager.reorderWorkspace(tabId: first.id, toIndex: 999))
+        XCTAssertTrue(manager.reorderWorkspace(workspaceId: first.id, toIndex: 999))
         XCTAssertEqual(manager.workspaces.map(\.id), [second.id, third.id, first.id])
     }
 
     @MainActor
     func testReorderWorkspaceReturnsFalseForUnknownWorkspace() {
         let manager = WorkspaceManager()
-        XCTAssertFalse(manager.reorderWorkspace(tabId: UUID(), toIndex: 0))
+        XCTAssertFalse(manager.reorderWorkspace(workspaceId: UUID(), toIndex: 0))
     }
 
     @MainActor
@@ -2059,7 +2059,7 @@ final class WorkspaceReorderTests: XCTestCase {
         manager.setPinned(secondPinned, pinned: true)
         let unpinned = manager.addWorkspace()
 
-        XCTAssertTrue(manager.reorderWorkspace(tabId: unpinned.id, toIndex: 0))
+        XCTAssertTrue(manager.reorderWorkspace(workspaceId: unpinned.id, toIndex: 0))
         XCTAssertEqual(manager.workspaces.map(\.id), [firstPinned.id, secondPinned.id, unpinned.id])
     }
 
@@ -2072,7 +2072,7 @@ final class WorkspaceReorderTests: XCTestCase {
         manager.setPinned(secondPinned, pinned: true)
         let unpinned = manager.addWorkspace()
 
-        XCTAssertTrue(manager.reorderWorkspace(tabId: firstPinned.id, toIndex: 999))
+        XCTAssertTrue(manager.reorderWorkspace(workspaceId: firstPinned.id, toIndex: 999))
         XCTAssertEqual(manager.workspaces.map(\.id), [secondPinned.id, firstPinned.id, unpinned.id])
     }
 }
@@ -2119,7 +2119,7 @@ final class WorkspaceNotificationReorderTests: XCTestCase {
         let expectedOrder = [firstPinned.id, secondPinned.id, unpinned.id]
 
         notificationStore.addNotification(
-            tabId: secondPinned.id,
+            workspaceId: secondPinned.id,
             surfaceId: nil,
             title: "Build finished",
             subtitle: "",
@@ -2719,7 +2719,7 @@ final class WorkspaceAttentionFlashTests: XCTestCase {
         workspace.moveFocus(direction: .left)
 
         notificationStore.addNotification(
-            tabId: workspace.id,
+            workspaceId: workspace.id,
             surfaceId: leftPanelId,
             title: "Unread",
             subtitle: "",
@@ -2727,7 +2727,7 @@ final class WorkspaceAttentionFlashTests: XCTestCase {
         )
 
         XCTAssertTrue(
-            notificationStore.hasVisibleNotificationIndicator(forTabId: workspace.id, surfaceId: leftPanelId),
+            notificationStore.hasVisibleNotificationIndicator(forWorkspaceId: workspace.id, surfaceId: leftPanelId),
             "Expected the left pane to own visible notification attention before moving focus"
         )
 

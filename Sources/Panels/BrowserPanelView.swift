@@ -536,7 +536,7 @@ struct BrowserPanelView: View {
 
     private var owningWorkspace: Workspace? {
         guard let app = AppDelegate.shared,
-              let manager = app.workspaceManagerFor(tabId: panel.workspaceId) else {
+              let manager = app.workspaceManagerFor(workspaceId: panel.workspaceId) else {
             return nil
         }
         return manager.workspaces.first(where: { $0.id == panel.workspaceId })
@@ -1410,7 +1410,7 @@ struct BrowserPanelView: View {
 
     private func isPanelFocusedInModel() -> Bool {
         guard let app = AppDelegate.shared,
-              let manager = app.workspaceManagerFor(tabId: panel.workspaceId),
+              let manager = app.workspaceManagerFor(workspaceId: panel.workspaceId),
               manager.selectedWorkspaceId == panel.workspaceId,
               let workspace = manager.workspaces.first(where: { $0.id == panel.workspaceId }) else {
             return false
@@ -1475,7 +1475,7 @@ struct BrowserPanelView: View {
             return true
         }
 
-        if let manager = app.workspaceManagerFor(tabId: panel.workspaceId),
+        if let manager = app.workspaceManagerFor(workspaceId: panel.workspaceId),
            let windowId = app.windowId(for: manager),
            let window = app.mainWindow(for: windowId),
            app.isCommandPaletteVisible(for: window) {
@@ -1848,8 +1848,8 @@ struct BrowserPanelView: View {
         omnibarState.buffer = suggestion.completion
         omnibarState.isUserEditing = false
         switch suggestion.kind {
-        case .switchToTab(let tabId, let panelId, _, _):
-            AppDelegate.shared?.workspaceManager?.focusTab(tabId, surfaceId: panelId)
+        case .switchToTab(let workspaceId, let panelId, _, _):
+            AppDelegate.shared?.workspaceManager?.focusTab(workspaceId, surfaceId: panelId)
         default:
             panel.navigateSmart(suggestion.completion)
         }
@@ -2112,7 +2112,7 @@ struct BrowserPanelView: View {
         }
 
         func addMatch(
-            tabId: UUID,
+            workspaceId: UUID,
             panelId: UUID,
             url: String,
             title: String?,
@@ -2120,12 +2120,12 @@ struct BrowserPanelView: View {
             matches: inout [OmnibarOpenTabMatch],
             seenKeys: inout Set<String>
         ) {
-            let key = "\(tabId.uuidString.lowercased())|\(panelId.uuidString.lowercased())|\(url.lowercased())"
+            let key = "\(workspaceId.uuidString.lowercased())|\(panelId.uuidString.lowercased())|\(url.lowercased())"
             guard !seenKeys.contains(key) else { return }
             seenKeys.insert(key)
             matches.append(
                 OmnibarOpenTabMatch(
-                    tabId: tabId,
+                    workspaceId: workspaceId,
                     panelId: panelId,
                     url: url,
                     title: title,
@@ -2142,7 +2142,7 @@ struct BrowserPanelView: View {
             let title = rawTitle.isEmpty ? nil : rawTitle
             if omnibarHasSingleCharacterPrefixMatch(query: query, url: currentURL, title: title) {
                 addMatch(
-                    tabId: currentPanelWorkspaceId ?? panel.workspaceId,
+                    workspaceId: currentPanelWorkspaceId ?? panel.workspaceId,
                     panelId: panel.id,
                     url: currentURL,
                     title: title,
@@ -2184,7 +2184,7 @@ struct BrowserPanelView: View {
                 guard isMatch else { continue }
 
                 addMatch(
-                    tabId: tab.id,
+                    workspaceId: tab.id,
                     panelId: panelId,
                     url: currentURL,
                     title: title,
@@ -2303,14 +2303,14 @@ enum OmnibarInputIntent: Equatable {
 }
 
     struct OmnibarOpenTabMatch: Equatable {
-        let tabId: UUID
+        let workspaceId: UUID
         let panelId: UUID
         let url: String
         let title: String?
         let isKnownOpenTab: Bool
 
-        init(tabId: UUID, panelId: UUID, url: String, title: String?, isKnownOpenTab: Bool = true) {
-            self.tabId = tabId
+        init(workspaceId: UUID, panelId: UUID, url: String, title: String?, isKnownOpenTab: Bool = true) {
+            self.workspaceId = workspaceId
             self.panelId = panelId
             self.url = url
             self.title = title
@@ -2641,7 +2641,7 @@ func buildOmnibarSuggestions(
         let total = intentBaseScore + urlMatch + titleMatch + positionScore + resolvedURLBonus
         if match.isKnownOpenTab {
             insert(
-                .switchToTab(tabId: match.tabId, panelId: match.panelId, url: match.url, title: match.title),
+                .switchToTab(workspaceId: match.workspaceId, panelId: match.panelId, url: match.url, title: match.title),
                 score: total
             )
         } else {
@@ -3146,7 +3146,7 @@ struct OmnibarSuggestion: Identifiable, Hashable {
         case search(engineName: String, query: String)
         case navigate(url: String)
         case history(url: String, title: String?)
-        case switchToTab(tabId: UUID, panelId: UUID, url: String, title: String?)
+        case switchToTab(workspaceId: UUID, panelId: UUID, url: String, title: String?)
         case remote(query: String)
     }
 
@@ -3161,8 +3161,8 @@ struct OmnibarSuggestion: Identifiable, Hashable {
             return "navigate|\(url.lowercased())"
         case .history(let url, _):
             return "history|\(url.lowercased())"
-        case .switchToTab(let tabId, let panelId, let url, _):
-            return "switch-tab|\(tabId.uuidString.lowercased())|\(panelId.uuidString.lowercased())|\(url.lowercased())"
+        case .switchToTab(let workspaceId, let panelId, let url, _):
+            return "switch-tab|\(workspaceId.uuidString.lowercased())|\(panelId.uuidString.lowercased())|\(url.lowercased())"
         case .remote(let query):
             return "remote|\(query.lowercased())"
         }
@@ -3249,8 +3249,8 @@ struct OmnibarSuggestion: Identifiable, Hashable {
         OmnibarSuggestion(kind: .navigate(url: url))
     }
 
-    static func switchToTab(tabId: UUID, panelId: UUID, url: String, title: String?) -> OmnibarSuggestion {
-        OmnibarSuggestion(kind: .switchToTab(tabId: tabId, panelId: panelId, url: url, title: title))
+    static func switchToTab(workspaceId: UUID, panelId: UUID, url: String, title: String?) -> OmnibarSuggestion {
+        OmnibarSuggestion(kind: .switchToTab(workspaceId: workspaceId, panelId: panelId, url: url, title: title))
     }
 
     private static func singleLineText(_ value: String?) -> String {
@@ -6777,7 +6777,7 @@ struct WebViewRepresentable: NSViewRepresentable {
 
     private func currentPaneDropContext() -> BrowserPaneDropContext? {
         guard let app = AppDelegate.shared,
-              let manager = app.workspaceManagerFor(tabId: panel.workspaceId),
+              let manager = app.workspaceManagerFor(workspaceId: panel.workspaceId),
               let workspace = manager.workspaces.first(where: { $0.id == panel.workspaceId }),
               let paneId = workspace.paneId(forPanelId: panel.id) else {
             return nil

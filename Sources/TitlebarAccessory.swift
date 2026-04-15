@@ -1080,7 +1080,7 @@ private struct NotificationsPopoverView: View {
                         ForEach(notificationStore.notifications) { notification in
                             NotificationPopoverRow(
                                 notification: notification,
-                                tabTitle: tabTitle(for: notification.tabId),
+                                tabTitle: tabTitle(for: notification.workspaceId),
                                 onOpen: { open(notification) },
                                 onClear: { notificationStore.remove(id: notification.id) }
                             )
@@ -1094,8 +1094,8 @@ private struct NotificationsPopoverView: View {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    private func tabTitle(for tabId: UUID) -> String? {
-        AppDelegate.shared?.tabTitle(for: tabId)
+    private func tabTitle(for workspaceId: UUID) -> String? {
+        AppDelegate.shared?.tabTitle(for: workspaceId)
     }
 
     private var jumpToUnreadShortcut: StoredShortcut {
@@ -1119,7 +1119,7 @@ private struct NotificationsPopoverView: View {
         // Ensure window focus + tab selection happens on the main thread.
         DispatchQueue.main.async {
             _ = AppDelegate.shared?.openNotification(
-                tabId: notification.tabId,
+                workspaceId: notification.workspaceId,
                 surfaceId: notification.surfaceId,
                 notificationId: notification.id
             )
