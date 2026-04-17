@@ -8984,6 +8984,14 @@ final class Workspace: Identifiable, ObservableObject {
             )
         }
 
+        // Portal-hosted views start hidden; without this the new surface stays blank and ctrl+d
+        // inert until a workspace switch re-runs the follow-up pass.
+        reconcileTerminalPortalVisibilityForCurrentRenderedLayout()
+        beginEventDrivenLayoutFollowUp(
+            reason: "workspace.newTerminalSurface",
+            includeGeometry: true
+        )
+
         owningWorkspaceManager?.scheduleInitialWorkspaceGitMetadataRefreshIfPossible(
             workspaceId: id,
             panelId: newPanel.id,
